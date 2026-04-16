@@ -1,0 +1,82 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
+enum TransactionType {
+  DEPOSIT
+  WITHDRAW
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  REJECTED
+}
+
+model User {
+  id            String         @id @default(uuid())
+  email         String         @unique
+  role          Role           @default(USER)
+  balance       Float          @default(0)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  transactions  Transaction[]
+  otps          Otp[]
+}
+
+model Transaction {
+  id            String            @id @default(uuid())
+  userId        String
+  user          User              @relation(fields: [userId], references: [id])
+  type          TransactionType
+  amount        Float
+  status        TransactionStatus @default(PENDING)
+  bankDetails   String?           // Stores E2EE encrypted JSON string
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  logs          TransactionLog[]
+}
+
+model TransactionLog {
+  id            String      @id @default(uuid())
+  transactionId String
+  transaction   Transaction @relation(fields: [transactionId], references: [id])
+  status        TransactionStatus
+  note          String?
+  actor         String      // email of who triggered this (system / admin email)
+  createdAt     DateTime    @default(now())
+
+  @@index([transactionId])
+}
+
+model Otp {
+  id            String    @id @default(uuid())
+  email         String
+  code          String
+  expiresAt     DateTime
+  user          User?     @relation(fields: [email], references: [email])
+  createdAt     DateTime  @default(now())
+
+  @@index([email])
+}
+
+model AdminPublicKey {
+  id            String    @id @default(uuid())
+  publicKey     String    @db.Text
+  createdAt     DateTime  @default(now())
+}
+
+model GlobalSettings {
+  id        String   @id @default("global_settings")
+  walletId  String?
+  updatedAt DateTime @updatedAt
+}

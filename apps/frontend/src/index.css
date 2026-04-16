@@ -1,0 +1,65 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #00ff9d;
+  --color-primary-dim: rgba(0, 255, 157, 0.2);
+  --color-bg-dark: #0a0b0d;
+  --color-bg-card: #15171c;
+  --color-border: rgba(255, 255, 255, 0.05);
+  --color-text-main: #ffffff;
+  --color-text-dim: #94a3b8;
+  --color-accent-blue: #3b82f6;
+
+  --radius-12: 12px;
+  --radius-24: 24px;
+}
+
+body {
+  background-color: var(--color-bg-dark);
+  color: var(--color-text-main);
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+h1, h2, h3, h4, .outfit {
+  font-family: 'Outfit', sans-serif;
+}
+
+.glass {
+  background: rgba(21, 23, 28, 0.4);
+  backdrop-filter: blur(24px);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-24);
+}
+
+.glass-panel {
+  background: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-12);
+}
+
+.btn-primary {
+  @apply bg-[#00ff9d] text-black font-semibold px-6 py-3 rounded-xl transition-all duration-300;
+  box-shadow: 0 4px 20px var(--color-primary-dim);
+}
+
+.btn-primary:not(:disabled):hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px var(--color-primary-dim);
+}
+
+.btn-primary:disabled {
+  @apply opacity-50 cursor-not-allowed;
+}
+
+.input-field {
+  @apply w-full bg-white/5 border border-white/10 rounded-xl px-5 py-3.5 text-white transition-colors duration-300;
+}
+
+.input-field:focus {
+  @apply outline-none border-[#00ff9d] bg-white/10;
+}
