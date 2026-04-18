@@ -63,3 +63,14 @@ h1, h2, h3, h4, .outfit {
 .input-field:focus {
   @apply outline-none border-[#00ff9d] bg-white/10;
 }
+
+/* Hide number input arrows */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}

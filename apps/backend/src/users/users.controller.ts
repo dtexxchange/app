@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, UseGuards, Request, Query } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, Param, UseGuards, Request, Query } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -13,6 +13,21 @@ export class UsersController {
   @Get('me')
   async getMe(@Request() req) {
     return this.usersService.getMe(req.user.userId);
+  }
+
+  @Patch('me/passcode')
+  async updatePasscode(
+    @Request() req, 
+    @Body('passcode') passcode: string,
+    @Body('oldPasscode') oldPasscode?: string
+  ) {
+    return this.usersService.updatePasscode(req.user.userId, passcode, oldPasscode);
+  }
+
+  @Post('me/passcode/verify')
+  async verifyPasscode(@Request() req, @Body('passcode') passcode: string) {
+    const isValid = await this.usersService.verifyPasscode(req.user.userId, passcode);
+    return { isValid };
   }
 
   @Post()

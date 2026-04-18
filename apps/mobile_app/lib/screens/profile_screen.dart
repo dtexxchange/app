@@ -31,11 +31,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _fetchProfile() async {
     try {
       final res = await _api.getRequest('/users/me');
-      if (res.statusCode == 200 && mounted) {
-        setState(() {
-          _user = jsonDecode(res.body);
-          _isLoading = false;
-        });
+      if (mounted) {
+        if (res.statusCode == 200) {
+          setState(() {
+            _user = jsonDecode(res.body);
+            _isLoading = false;
+          });
+        } else {
+          setState(() => _isLoading = false);
+        }
       }
     } catch (_) {
       if (mounted) setState(() => _isLoading = false);
@@ -181,6 +185,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
             value: 'OTP Auth',
             valueColor: _primary,
           ),
+          Divider(height: 1, color: _border),
+          _ActionRow(
+            icon: Icons.lock_outline,
+            label: 'Passcode Settings',
+            onTap: () => Navigator.pushNamed(context, '/passcode').then((_) => _fetchProfile()),
+          ),
+          Divider(height: 1, color: _border),
+          _ActionRow(
+            icon: Icons.account_balance_outlined,
+            label: 'Saved Bank Accounts',
+            onTap: () => Navigator.pushNamed(context, '/bank-accounts'),
+          ),
         ],
       ),
     );
@@ -258,3 +274,38 @@ class _InfoRow extends StatelessWidget {
     );
   }
 }
+
+class _ActionRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  const _ActionRow({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        child: Row(
+          children: [
+            Icon(icon, color: Colors.white, size: 20),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Text(
+                label,
+                style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500),
+              ),
+            ),
+            const Icon(Icons.chevron_right, color: _textDim, size: 20),
+          ],
+        ),
+      ),
+    );
+  }
+}
+

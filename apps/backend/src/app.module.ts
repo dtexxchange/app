@@ -1,11 +1,12 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
+import { BankAccountsModule } from './bank-accounts/bank-accounts.module';
+import { EmailModule } from './email/email.module';
+import { PrismaModule } from './prisma/prisma.module';
+import { SettingsModule } from './settings/settings.module';
 import { UsersModule } from './users/users.module';
 import { WalletModule } from './wallet/wallet.module';
-import { EmailModule } from './email/email.module';
-import { SettingsModule } from './settings/settings.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { SettingsModule } from './settings/settings.module';
     UsersModule,
     WalletModule,
     SettingsModule,
+    BankAccountsModule,
   ],
 })
 export class AppModule {}

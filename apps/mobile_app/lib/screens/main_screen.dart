@@ -17,11 +17,39 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
 
-  final List<Widget> _pages = const [
-    HomeScreen(),
-    TransactionsScreen(),
-    ProfileScreen(),
-  ];
+  final _homeKey = GlobalKey<HomeScreenState>();
+  final _txKey = GlobalKey<TransactionsScreenState>();
+
+  late final List<Widget> _pages;
+
+  @override
+  void initState() {
+    super.initState();
+    _pages = [
+      HomeScreen(
+        key: _homeKey,
+        // Switches to the History tab instead of pushing a new route.
+        onViewHistory: () => _onTabSelected(1),
+      ),
+      TransactionsScreen(key: _txKey),
+      const ProfileScreen(),
+    ];
+  }
+
+  void _onTabSelected(int index) {
+    if (index == _currentIndex) {
+      // Re-tapping the active tab refreshes it.
+      _refreshTab(index);
+    } else {
+      setState(() => _currentIndex = index);
+      _refreshTab(index);
+    }
+  }
+
+  void _refreshTab(int index) {
+    if (index == 0) _homeKey.currentState?.fetchData();
+    if (index == 1) _txKey.currentState?.fetchPage(reset: true);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +65,7 @@ class _MainScreenState extends State<MainScreen> {
           backgroundColor: _bgDark,
           indicatorColor: _primary.withOpacity(0.15),
           selectedIndex: _currentIndex,
-          onDestinationSelected: (i) => setState(() => _currentIndex = i),
+          onDestinationSelected: _onTabSelected,
           labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
           destinations: [
             _navDest(

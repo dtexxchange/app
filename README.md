@@ -1,13 +1,13 @@
 # USDT Exchange & Banking Simulation
 
-A high-performance, secure banking simulation platform allowing users to manage a virtual USDT wallet with simulated deposits and withdrawals, managed by an administrator.
+A high-performance, secure banking simulation platform allowing users to manage a virtual USDT wallet with simulated deposits and exchanges, managed by an administrator.
 
 ## 🛡️ Key Features
 
 - **End-to-End Encryption (E2EE)**: Sensitive bank details are encrypted on the client-side using the Admin's RSA public key. Only the Admin's physical device can decrypt this data.
 - **Role-Based Access Control**:
   - **Admin**: Whitelist users, approve/reject transactions, view decrypted bank details for fulfillment.
-  - **User**: View balance, request deposits, request withdrawals with encrypted bank details.
+  - **User**: View balance, request deposits, request exchanges with encrypted bank details.
 - **OTP Authentication**: Secure login via Resend Email OTP.
 - **Simulated Wallet**: Transactional integrity (deduction on request, refund on rejection).
 - **Premium Aesthetics**: Sleek dark-mode interface with toxic green and gold accents.
@@ -67,7 +67,7 @@ flutter run
 
 1.  **Key Generation**: The Admin logs into the Web app and generates an RSA Key Pair.
 2.  **Public Key**: The Public Key is stored on the server.
-3.  **Encryption**: When a User requests a withdrawal, the app fetches the Admin's Public Key and encrypts their Bank Name, Acc No, etc.
+3.  **Encryption**: When a User requests an exchange, the app fetches the Admin's Public Key and encrypts their Bank Name, Acc No, etc.
 4.  **Storage**: The server only holds the encrypted ciphertext. Even a database breach does not leak user details.
 5.  **Decryption**: The Admin fetches the ciphertext and uses their **locally stored private key** to reveal the details.
 

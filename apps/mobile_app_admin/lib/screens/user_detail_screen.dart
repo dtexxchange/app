@@ -99,6 +99,10 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                     _buildHeader(),
                     const SizedBox(height: 20),
                     _buildInfoCard(),
+                    if (_user?['role'] == 'USER') ...[
+                      const SizedBox(height: 20),
+                      _buildAdminActions(),
+                    ],
                     const SizedBox(height: 24),
                     _buildTransactionsSection(),
                   ]),
@@ -186,6 +190,99 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
           _InfoRow(icon: Icons.calendar_today_outlined, label: 'Joined', value: DateFormat('MMM dd, yyyy').format(joined)),
         ],
       ]),
+    );
+  }
+
+  // ─── Admin Actions ─────────────────────────────────────────────────────────
+  Widget _buildAdminActions() {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton.icon(
+        icon: const Icon(Icons.add, size: 18),
+        onPressed: _showManualDepositModal,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: _primary.withOpacity(0.1),
+          foregroundColor: _primary,
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(color: _primary.withOpacity(0.3)),
+          ),
+        ),
+        label: const Text('Manual USDT Deposit', style: TextStyle(fontWeight: FontWeight.bold)),
+      ),
+    );
+  }
+
+  void _showManualDepositModal() {
+    final amountCtrl = TextEditingController();
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: _bgCard,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.fromLTRB(24, 24, 24, MediaQuery.of(ctx).viewInsets.bottom + 40),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.account_balance_wallet, color: _primary),
+                const SizedBox(width: 12),
+                Text('Credit Account', style: GoogleFonts.outfit(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
+              ],
+            ),
+            const SizedBox(height: 8),
+            const Text('Manually credit USDT balance for this user. This creates a COMPLETED deposit logging.', style: TextStyle(color: _textDim, fontSize: 12)),
+            const SizedBox(height: 24),
+            TextField(
+              controller: amountCtrl,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+              decoration: InputDecoration(
+                labelText: 'Amount (USDT)',
+                labelStyle: const TextStyle(color: _textDim, fontSize: 14),
+                filled: true,
+                fillColor: _bgDark,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _border)),
+                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _primary)),
+              ),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: () async {
+                final amount = double.tryParse(amountCtrl.text);
+                if (amount == null || amount <= 0) return;
+                try {
+                  final res = await _api.postRequest('/wallet/admin/deposit', {
+                    'userId': widget.userId,
+                    'amount': amount,
+                  });
+                  if (res.statusCode == 200 || res.statusCode == 201) {
+                    Navigator.pop(ctx);
+                    if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Account Credited', style: TextStyle(color: Colors.white)), backgroundColor: _primary));
+                    _fetchUser();
+                  }
+                } catch (e) {
+                  debugPrint(e.toString());
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _primary,
+                foregroundColor: Colors.black,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: const Text('Confirm Deposit', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -365,7 +462,7 @@ class _TransactionDetailSheetState extends State<_TransactionDetailSheet> {
   @override
   void initState() {
     super.initState();
-    if (widget.tx['type'] == 'WITHDRAW') {
+    if (widget.tx['type'] == 'EXCHANGE') {
       _loadDetails();
     }
   }

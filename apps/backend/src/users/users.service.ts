@@ -55,4 +55,35 @@ export class UsersService {
     if (!user) throw new NotFoundException('User not found');
     return user;
   }
+  async updatePasscode(userId: string, passcode: string, oldPasscode?: string) {
+    if (!/^\d{6}$/.test(passcode)) {
+        throw new ConflictException('Passcode must be purely 6 digits');
+    }
+    
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundException('User not found');
+
+    if (user.passcode) {
+        if (!oldPasscode) {
+            throw new ConflictException('Old passcode is required to update');
+        }
+        if (user.passcode !== oldPasscode) {
+            throw new ConflictException('Invalid old passcode');
+        }
+        if (user.passcode === passcode) {
+            throw new ConflictException('New passcode cannot be the same as the current one');
+        }
+    }
+
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { passcode },
+    });
+  }
+  async verifyPasscode(userId: string, passcode: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundException('User not found');
+    if (!user.passcode) return true;
+    return user.passcode === passcode;
+  }
 }

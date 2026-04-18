@@ -4,6 +4,8 @@ import 'screens/auth_screen.dart';
 import 'screens/dashboard_screen.dart';
 import 'services/api_service.dart';
 
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
 void main() {
   runApp(const AdminApp());
 }
@@ -14,6 +16,7 @@ class AdminApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: navigatorKey,
       title: 'USDT Admin',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(

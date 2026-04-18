@@ -1,27 +1,52 @@
-import { Controller, Get, Post, Body, Patch, Param, UseGuards, Request, Query } from '@nestjs/common';
-import { WalletService } from './wallet.service';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { RolesGuard } from '../common/guards/roles.guard';
-import { Roles } from '../common/decorators/roles.decorator';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Request,
+  UseGuards,
+} from '@nestjs/common';
 import { Role, TransactionStatus } from '@prisma/client';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { Roles } from '../common/decorators/roles.decorator';
+import { RolesGuard } from '../common/guards/roles.guard';
+import { WalletService } from './wallet.service';
 
 @Controller('wallet')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class WalletController {
   constructor(private walletService: WalletService) {}
 
-  @Post('deposit')
-  async deposit(@Request() req, @Body('amount') amount: number) {
-    return this.walletService.deposit(req.user.userId, amount, req.user.email);
+  @Post('admin/deposit')
+  @Roles(Role.ADMIN)
+  async adminDeposit(
+    @Request() req,
+    @Body() data: { userId: string; amount: number },
+  ) {
+    return this.walletService.adminDeposit(
+      data.userId,
+      data.amount,
+      req.user.email,
+    );
   }
 
-  @Post('withdraw')
-  async withdraw(
+  @Post('exchange')
+  async exchange(
     @Request() req,
     @Body('amount') amount: number,
     @Body('bankDetails') bankDetails: string,
+    @Body('passcode') passcode: string,
   ) {
-    return this.walletService.withdraw(req.user.userId, amount, bankDetails, req.user.email);
+    return this.walletService.exchange(
+      req.user.userId,
+      amount,
+      bankDetails,
+      req.user.email,
+      passcode,
+    );
   }
 
   @Get('transactions')
@@ -30,13 +55,27 @@ export class WalletController {
     @Query('status') status?: TransactionStatus,
     @Query('type') type?: string,
     @Query('userId') reqUserId?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
   ) {
-    return this.walletService.getTransactions(req.user.userId, req.user.role, status, type, reqUserId);
+    return this.walletService.getTransactions(
+      req.user.userId,
+      req.user.role,
+      status,
+      type,
+      reqUserId,
+      page ? parseInt(page, 10) : undefined,
+      limit ? parseInt(limit, 10) : undefined,
+    );
   }
 
   @Get('transactions/:id')
   async getTransaction(@Request() req, @Param('id') id: string) {
-    return this.walletService.getTransaction(id, req.user.userId, req.user.role);
+    return this.walletService.getTransaction(
+      id,
+      req.user.userId,
+      req.user.role,
+    );
   }
 
   @Patch('transactions/:id/status')

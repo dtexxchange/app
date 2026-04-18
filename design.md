@@ -103,7 +103,7 @@ labelColor:   #94A3B8
 | Type     | Icon bg                     | Icon color   |
 |----------|-----------------------------|--------------|
 | DEPOSIT  | `rgba(0,255,157,0.10)`      | `#00FF9D`    |
-| WITHDRAW | `rgba(255,255,255,0.05)`    | `#FFFFFF`    |
+| EXCHANGE | `rgba(255,255,255,0.05)`    | `#FFFFFF`    |
 
 ---
 
@@ -168,9 +168,9 @@ App name: "USDT.EX" — Font: Outfit Bold, ".EX" in gray
 
 ## Home / Dashboard Specifics
 - Balance card spans full width on mobile: Outfit Bold 48–56sp balance amount + "USDT" in primary green
-- Two action buttons below balance: `Add Money` (primary) and `Withdraw` (ghost)
+- Two action buttons below balance: `Add Money` (primary) and `Exchange` (ghost)
 - Transaction list: card container, each row is a tile with icon + type + amount + status badge + date
-- Amount format: `+1,234.00 USDT` in primary for deposits, `-1,234.00 USDT` in white for withdrawals
+- Amount format: `+1,234.00 USDT` in primary for deposits, `-1,234.00 USDT` in white for exchanges
 - Empty state: centered icon + `text-dim` message
 
 ---

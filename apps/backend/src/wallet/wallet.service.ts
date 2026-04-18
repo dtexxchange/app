@@ -1,6 +1,10 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { TransactionStatus, TransactionType } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { TransactionType, TransactionStatus } from '@prisma/client';
 
 @Injectable()
 export class WalletService {
@@ -25,29 +29,70 @@ export class WalletService {
     });
   }
 
-  // ─── Deposit ──────────────────────────────────────────────────────────────────
-  async deposit(userId: string, amount: number, userEmail: string) {
+  // ─── Admin Deposit ────────────────────────────────────────────────────────────
+  async adminDeposit(userId: string, amount: number, adminEmail: string) {
     if (amount <= 0) throw new BadRequestException('Invalid amount');
+
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundException('User not found');
+
     return this.prisma.$transaction(async (tx) => {
+      await tx.user.update({
+        where: { id: userId },
+        data: { balance: { increment: amount } },
+      });
+
       const transaction = await tx.transaction.create({
         data: {
           userId,
           type: TransactionType.DEPOSIT,
           amount,
-          status: TransactionStatus.PENDING,
+          status: TransactionStatus.COMPLETED,
         },
       });
-      await this.writeLog(tx, transaction.id, TransactionStatus.PENDING, userEmail, 'Deposit request submitted');
+      await this.writeLog(
+        tx,
+        transaction.id,
+        TransactionStatus.COMPLETED,
+        adminEmail,
+        'Manual deposit processed by admin',
+      );
       return transaction;
     });
   }
 
-  // ─── Withdraw ─────────────────────────────────────────────────────────────────
-  async withdraw(userId: string, amount: number, encryptedBankDetails: string, userEmail: string) {
+  // ─── Exchange ─────────────────────────────────────────────────────────────────
+  async exchange(
+    userId: string,
+    amount: number,
+    encryptedBankDetails: string,
+    userEmail: string,
+    passcode: string,
+  ) {
     if (amount <= 0) throw new BadRequestException('Invalid amount');
+
+    const settings = await this.prisma.globalSettings.findUnique({
+      where: { id: 'global_settings' },
+    });
+    if (
+      !settings ||
+      settings.usdtToInrRate === null ||
+      settings.usdtToInrRate === undefined
+    ) {
+      throw new BadRequestException(
+        'Conversion rate not set by admin. Exchanges are currently disabled.',
+      );
+    }
+
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundException('User not found');
-    if (user.balance < amount) throw new BadRequestException('Insufficient balance');
+
+    if (user.passcode && user.passcode !== passcode) {
+      throw new BadRequestException('Invalid passcode for authorization');
+    }
+
+    if (user.balance < amount)
+      throw new BadRequestException('Insufficient balance');
 
     return this.prisma.$transaction(async (tx) => {
       await tx.user.update({
@@ -57,22 +102,45 @@ export class WalletService {
       const transaction = await tx.transaction.create({
         data: {
           userId,
-          type: TransactionType.WITHDRAW,
+          type: TransactionType.EXCHANGE,
           amount,
           status: TransactionStatus.PENDING,
           bankDetails: encryptedBankDetails,
+          conversionRate: settings.usdtToInrRate,
         },
       });
-      await this.writeLog(tx, transaction.id, TransactionStatus.PENDING, userEmail, 'Withdrawal request submitted');
+      await this.writeLog(
+        tx,
+        transaction.id,
+        TransactionStatus.PENDING,
+        userEmail,
+        'Exchange request submitted',
+      );
       return transaction;
     });
   }
 
   // ─── Get all transactions ─────────────────────────────────────────────────────
-  async getTransactions(userId: string, role: string, status?: TransactionStatus, type?: string, reqUserId?: string) {
+  async getTransactions(
+    userId: string,
+    role: string,
+    status?: TransactionStatus,
+    type?: string,
+    reqUserId?: string,
+    page?: number,
+    limit?: number,
+  ) {
     const whereClause: any = {};
     if (status) whereClause.status = status;
     if (type) whereClause.type = type as TransactionType;
+
+    // Pagination (only applied when both page and limit are provided)
+    const paginationArgs =
+      page && limit
+        ? { skip: (page - 1) * limit, take: limit }
+        : limit
+          ? { take: limit }
+          : {};
 
     if (role === 'ADMIN') {
       if (reqUserId) whereClause.userId = reqUserId;
@@ -80,6 +148,7 @@ export class WalletService {
         where: whereClause,
         orderBy: { createdAt: 'desc' },
         include: this.includeLogsAndUser,
+        ...paginationArgs,
       });
     }
 
@@ -88,6 +157,7 @@ export class WalletService {
       where: whereClause,
       orderBy: { createdAt: 'desc' },
       include: this.includeLogsAndUser,
+      ...paginationArgs,
     });
   }
 
@@ -98,12 +168,17 @@ export class WalletService {
       include: this.includeLogsAndUser,
     });
     if (!tx) throw new NotFoundException('Transaction not found');
-    if (role !== 'ADMIN' && tx.userId !== userId) throw new NotFoundException('Transaction not found');
+    if (role !== 'ADMIN' && tx.userId !== userId)
+      throw new NotFoundException('Transaction not found');
     return tx;
   }
 
   // ─── Update status ────────────────────────────────────────────────────────────
-  async updateStatus(transactionId: string, status: TransactionStatus, adminEmail: string) {
+  async updateStatus(
+    transactionId: string,
+    status: TransactionStatus,
+    adminEmail: string,
+  ) {
     const transaction = await this.prisma.transaction.findUnique({
       where: { id: transactionId },
     });
@@ -121,9 +196,9 @@ export class WalletService {
             data: { balance: { increment: transaction.amount } },
           });
         }
-        // Withdrawal balance was already deducted on request
+        // Exchange balance was already deducted on request
       } else if (status === TransactionStatus.REJECTED) {
-        if (transaction.type === TransactionType.WITHDRAW) {
+        if (transaction.type === TransactionType.EXCHANGE) {
           await tx.user.update({
             where: { id: transaction.userId },
             data: { balance: { increment: transaction.amount } },
@@ -133,8 +208,12 @@ export class WalletService {
 
       const note =
         status === TransactionStatus.COMPLETED
-          ? transaction.type === TransactionType.DEPOSIT ? 'Deposit approved and funds credited' : 'Withdrawal approved and processed'
-          : transaction.type === TransactionType.WITHDRAW ? 'Withdrawal rejected and balance refunded' : 'Deposit rejected';
+          ? transaction.type === TransactionType.DEPOSIT
+            ? 'Deposit approved and funds credited'
+            : 'Exchange approved and processed'
+          : transaction.type === TransactionType.EXCHANGE
+            ? 'Exchange rejected and balance refunded'
+            : 'Deposit rejected';
 
       await this.writeLog(tx, transactionId, status, adminEmail, note);
 
@@ -156,7 +235,9 @@ export class WalletService {
     if (!WalletService.ENABLE_E2EE) {
       return { publicKey: 'E2EE_DISABLED_BY_FEATURE_FLAG' };
     }
-    const key = await this.prisma.adminPublicKey.findFirst({ orderBy: { createdAt: 'desc' } });
+    const key = await this.prisma.adminPublicKey.findFirst({
+      orderBy: { createdAt: 'desc' },
+    });
     if (!key) throw new NotFoundException('Admin has not set a public key yet');
     return key;
   }

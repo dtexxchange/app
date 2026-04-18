@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../services/api_service.dart';
 import '../services/crypto_service.dart';
+import '../main.dart' show routeObserver;
 
 const _bgDark = Color(0xFF0A0B0D);
 const _bgCard = Color(0xFF15171C);
@@ -12,45 +13,136 @@ const _blue = Color(0xFF3B82F6);
 const _textDim = Color(0xFF94A3B8);
 const _border = Color(0x0DFFFFFF);
 
+/// Number of items to fetch per page.
+const _pageSize = 15;
+
 class TransactionsScreen extends StatefulWidget {
   const TransactionsScreen({super.key});
 
   @override
-  State<TransactionsScreen> createState() => _TransactionsScreenState();
+  State<TransactionsScreen> createState() => TransactionsScreenState();
 }
 
-class _TransactionsScreenState extends State<TransactionsScreen> {
+// State exposed so MainScreen can refresh via GlobalKey<TransactionsScreenState>.
+class TransactionsScreenState extends State<TransactionsScreen> with RouteAware {
   List _transactions = [];
   bool _isLoading = true;
+  bool _isFetchingMore = false;
+  bool _hasMore = true;
+  int _page = 1;
+
   String _filterType = '';
   String _filterStatus = '';
+
   final _api = ApiService();
+  final _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
-    _fetchTransactions();
+    _fetchPage(reset: true);
+    _scrollController.addListener(_onScroll);
   }
 
-  Future<void> _fetchTransactions() async {
-    setState(() => _isLoading = true);
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route != null) {
+      routeObserver.subscribe(this, route);
+    }
+  }
+
+  /// Refresh when navigated back to from another screen.
+  @override
+  void didPopNext() {
+    _fetchPage(reset: true);
+  }
+
+  @override
+  void dispose() {
+    routeObserver.unsubscribe(this);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      _loadMore();
+    }
+  }
+
+  /// Public so MainScreen can trigger a reset via GlobalKey.
+  Future<void> fetchPage({bool reset = false}) => _fetchPage(reset: reset);
+
+  Future<void> _fetchPage({bool reset = false}) async {
+    if (reset) {
+      setState(() {
+        _isLoading = true;
+        _page = 1;
+        _hasMore = true;
+        _transactions = [];
+      });
+    }
+
     try {
-      final params = <String, String>{};
+      final params = <String, String>{
+        'page': '1',
+        'limit': '$_pageSize',
+      };
       if (_filterType.isNotEmpty) params['type'] = _filterType;
       if (_filterStatus.isNotEmpty) params['status'] = _filterStatus;
+
       final query = params.entries.map((e) => '${e.key}=${e.value}').join('&');
-      final txRes = await _api.getRequest(
-        '/wallet/transactions${query.isNotEmpty ? '?$query' : ''}',
-      );
-      if (txRes.statusCode == 200 && mounted) {
+      final res = await _api.getRequest('/wallet/transactions?$query');
+
+      if (res.statusCode == 200 && mounted) {
+        final List data = jsonDecode(res.body);
         setState(() {
-          _transactions = jsonDecode(txRes.body);
+          _transactions = data;
+          _page = 2;
+          _hasMore = data.length >= _pageSize;
           _isLoading = false;
         });
+      } else if (mounted) {
+        setState(() => _isLoading = false);
       }
     } catch (e) {
       debugPrint(e.toString());
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _loadMore() async {
+    if (_isFetchingMore || !_hasMore || _isLoading) return;
+    setState(() => _isFetchingMore = true);
+
+    try {
+      final params = <String, String>{
+        'page': '$_page',
+        'limit': '$_pageSize',
+      };
+      if (_filterType.isNotEmpty) params['type'] = _filterType;
+      if (_filterStatus.isNotEmpty) params['status'] = _filterStatus;
+
+      final query = params.entries.map((e) => '${e.key}=${e.value}').join('&');
+      final res = await _api.getRequest('/wallet/transactions?$query');
+
+      if (res.statusCode == 200 && mounted) {
+        final List data = jsonDecode(res.body);
+        setState(() {
+          _transactions = [..._transactions, ...data];
+          _page++;
+          _hasMore = data.length >= _pageSize;
+          _isFetchingMore = false;
+        });
+      } else if (mounted) {
+        setState(() => _isFetchingMore = false);
+      }
+    } catch (e) {
+      debugPrint(e.toString());
+      if (mounted) setState(() => _isFetchingMore = false);
     }
   }
 
@@ -59,10 +151,11 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     return Scaffold(
       backgroundColor: _bgDark,
       body: RefreshIndicator(
-        onRefresh: _fetchTransactions,
+        onRefresh: () => _fetchPage(reset: true),
         color: _primary,
         backgroundColor: _bgCard,
         child: CustomScrollView(
+          controller: _scrollController,
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
             SliverAppBar(
@@ -73,7 +166,14 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
               title: Row(children: [
                 const Icon(Icons.receipt_long, color: _primary, size: 20),
                 const SizedBox(width: 10),
-                Text('Transaction History', style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
+                Text(
+                  'Transaction History',
+                  style: GoogleFonts.outfit(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
               ]),
               bottom: PreferredSize(
                 preferredSize: const Size.fromHeight(1),
@@ -94,9 +194,9 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
               )
             else if (_transactions.isEmpty)
               SliverFillRemaining(child: _buildEmptyState())
-            else
+            else ...[
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(24, 16, 24, 100),
+                padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
                 sliver: SliverList(
                   delegate: SliverChildBuilderDelegate(
                     (ctx, i) => _buildTxTile(_transactions[i]),
@@ -104,6 +204,37 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                   ),
                 ),
               ),
+              // Load-more indicator or end-of-list footer
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 8, 24, 100),
+                  child: _isFetchingMore
+                      ? const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(24),
+                            child: CircularProgressIndicator(
+                              color: _primary,
+                              strokeWidth: 2,
+                            ),
+                          ),
+                        )
+                      : _hasMore
+                          ? const SizedBox.shrink()
+                          : Center(
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 24),
+                                child: Text(
+                                  '— All transactions loaded —',
+                                  style: TextStyle(
+                                    color: _textDim.withOpacity(0.5),
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ),
+                            ),
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -119,12 +250,12 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
             options: const {
               '': 'All',
               'DEPOSIT': 'Deposit',
-              'WITHDRAW': 'Withdraw',
+              'EXCHANGE': 'Exchange',
             },
             value: _filterType,
             onChanged: (v) {
               setState(() => _filterType = v);
-              _fetchTransactions();
+              _fetchPage(reset: true);
             },
           ),
         ),
@@ -141,7 +272,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
             value: _filterStatus,
             onChanged: (v) {
               setState(() => _filterStatus = v);
-              _fetchTransactions();
+              _fetchPage(reset: true);
             },
           ),
         ),
@@ -503,7 +634,7 @@ class _TransactionDetailSheet extends StatelessWidget {
                 const SizedBox(height: 32),
                 if (bank != null) ...[
                   const Text(
-                    'WITHDRAWAL INSTRUCTIONS',
+                    'EXCHANGE INSTRUCTIONS',
                     style: TextStyle(
                       color: _textDim,
                       fontSize: 11,

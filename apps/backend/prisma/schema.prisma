@@ -13,7 +13,7 @@ enum Role {
 
 enum TransactionType {
   DEPOSIT
-  WITHDRAW
+  EXCHANGE
 }
 
 enum TransactionStatus {
@@ -27,23 +27,26 @@ model User {
   email         String         @unique
   role          Role           @default(USER)
   balance       Float          @default(0)
+  passcode      String?        // 6 digit passcode for authorization
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   transactions  Transaction[]
   otps          Otp[]
+  bankAccounts  BankAccount[]
 }
 
 model Transaction {
-  id            String            @id @default(uuid())
-  userId        String
-  user          User              @relation(fields: [userId], references: [id])
-  type          TransactionType
-  amount        Float
-  status        TransactionStatus @default(PENDING)
-  bankDetails   String?           // Stores E2EE encrypted JSON string
-  createdAt     DateTime          @default(now())
-  updatedAt     DateTime          @updatedAt
-  logs          TransactionLog[]
+  id             String            @id @default(uuid())
+  userId         String
+  user           User              @relation(fields: [userId], references: [id])
+  type           TransactionType
+  amount         Float
+  status         TransactionStatus @default(PENDING)
+  bankDetails    String?           // Stores E2EE encrypted JSON string
+  conversionRate Float?            // Rate used at time of transaction
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  logs           TransactionLog[]
 }
 
 model TransactionLog {
@@ -76,7 +79,50 @@ model AdminPublicKey {
 }
 
 model GlobalSettings {
-  id        String   @id @default("global_settings")
-  walletId  String?
+  id            String   @id @default("global_settings")
+  usdtToInrRate Float?
+  updatedAt     DateTime @updatedAt
+}
+
+model GlobalWallet {
+  id        String   @id @default(uuid())
+  address   String   @unique
+  network   String   @default("TRC20")
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model ConversionRateHistory {
+  id         String   @id @default(uuid())
+  rate       Float
+  adminEmail String
+  createdAt  DateTime @default(now())
+}
+
+model BankAccount {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  name        String   // Beneficiary Name
+  bankName    String
+  accountNo   String
+  ifsc        String
+  isDeleted   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  logs        BankAccountLog[]
+
+  @@index([userId])
+}
+
+model BankAccountLog {
+  id            String      @id @default(uuid())
+  bankAccountId String
+  bankAccount   BankAccount @relation(fields: [bankAccountId], references: [id])
+  action        String      // CREATE, UPDATE, DELETE
+  changes       String?     // JSON of what changed
+  createdAt     DateTime    @default(now())
+
+  @@index([bankAccountId])
 }

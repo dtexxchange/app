@@ -1,0 +1,318 @@
+import 'dart:convert';
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../services/api_service.dart';
+
+const _bgDark = Color(0xFF0A0B0D);
+const _bgCard = Color(0xFF15171C);
+const _primary = Color(0xFF00FF9D);
+const _textDim = Color(0xFF94A3B8);
+const _border = Color(0x0DFFFFFF);
+const _danger = Color(0xFFF87171);
+
+enum PasscodeFlowStep { enterOld, enterNew, confirmNew }
+
+class PasscodeScreen extends StatefulWidget {
+  const PasscodeScreen({super.key});
+
+  @override
+  State<PasscodeScreen> createState() => _PasscodeScreenState();
+}
+
+class _PasscodeScreenState extends State<PasscodeScreen> {
+  final List<String> _currentInput = [];
+  String? _oldPasscode;
+  String? _newPasscode;
+  bool _isLoading = true;
+  bool _userHasPasscode = false;
+  PasscodeFlowStep _currentStep = PasscodeFlowStep.enterNew;
+  final _api = ApiService();
+
+  @override
+  void initState() {
+    super.initState();
+    _checkUserStatus();
+  }
+
+  Future<void> _checkUserStatus() async {
+    try {
+      final res = await _api.getRequest('/users/me');
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        setState(() {
+          _userHasPasscode = data['passcode'] != null;
+          _currentStep = _userHasPasscode
+              ? PasscodeFlowStep.enterOld
+              : PasscodeFlowStep.enterNew;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint(e.toString());
+      setState(() => _isLoading = false);
+    }
+  }
+
+  void _onNumberTap(String number) {
+    if (_currentInput.length < 6) {
+      setState(() {
+        _currentInput.add(number);
+      });
+      if (_currentInput.length == 6) {
+        _handleStepCompletion();
+      }
+    }
+  }
+
+  void _onBackspace() {
+    if (_currentInput.isNotEmpty) {
+      setState(() {
+        _currentInput.removeLast();
+      });
+    }
+  }
+
+  Future<void> _handleStepCompletion() async {
+    final input = _currentInput.join();
+
+    if (_currentStep == PasscodeFlowStep.enterOld) {
+      // Verify old passcode
+      setState(() => _isLoading = true);
+      try {
+        final res = await _api.postRequest('/users/me/passcode/verify', {
+          'passcode': input,
+        });
+        final data = jsonDecode(res.body);
+        if (data['isValid'] == true) {
+          setState(() {
+            _oldPasscode = input;
+            _currentStep = PasscodeFlowStep.enterNew;
+            _currentInput.clear();
+            _isLoading = false;
+          });
+        } else {
+          _showError('Incorrect current passcode');
+        }
+      } catch (e) {
+        _showError('Network error');
+      } finally {
+        setState(() => _isLoading = false);
+      }
+    } else if (_currentStep == PasscodeFlowStep.enterNew) {
+      if (_userHasPasscode && input == _oldPasscode) {
+        _showError('New passcode cannot be same as old');
+        return;
+      }
+      setState(() {
+        _newPasscode = input;
+        _currentStep = PasscodeFlowStep.confirmNew;
+        _currentInput.clear();
+      });
+    } else if (_currentStep == PasscodeFlowStep.confirmNew) {
+      if (input == _newPasscode) {
+        _submitFinal();
+      } else {
+        _showError('Passcodes do not match');
+        setState(() {
+          _currentStep = PasscodeFlowStep.enterNew;
+          _newPasscode = null;
+        });
+      }
+    }
+  }
+
+  Future<void> _submitFinal() async {
+    setState(() => _isLoading = true);
+    try {
+      final res = await _api.patchRequest('/users/me/passcode', {
+        'passcode': _newPasscode,
+        if (_oldPasscode != null) 'oldPasscode': _oldPasscode,
+      });
+
+      if (res.statusCode == 200 || res.statusCode == 201) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Passcode saved successfully')),
+          );
+          Navigator.pop(context, true);
+        }
+      } else {
+        final error =
+            jsonDecode(res.body)['message'] ?? 'Failed to update passcode';
+        _showError(error);
+      }
+    } catch (e) {
+      _showError('Network error occurred');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  void _showError(String message) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message), backgroundColor: _danger),
+      );
+      setState(() {
+        _currentInput.clear();
+      });
+    }
+  }
+
+  String _getStepTitle() {
+    switch (_currentStep) {
+      case PasscodeFlowStep.enterOld:
+        return 'Enter Current Passcode';
+      case PasscodeFlowStep.enterNew:
+        return _userHasPasscode ? 'Enter New Passcode' : 'Set 6-Digit Passcode';
+      case PasscodeFlowStep.confirmNew:
+        return 'Confirm New Passcode';
+    }
+  }
+
+  String _getStepDescription() {
+    switch (_currentStep) {
+      case PasscodeFlowStep.enterOld:
+        return 'Verify your identity to change passcode';
+      case PasscodeFlowStep.enterNew:
+        return 'Choose a strong 6-digit pin';
+      case PasscodeFlowStep.confirmNew:
+        return 'Enter the new passcode again to confirm';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: _bgDark,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          'Security Passcode',
+          style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
+        ),
+      ),
+      body: SafeArea(
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator(color: _primary))
+            : Column(
+                children: [
+                  const SizedBox(height: 60),
+                  Text(
+                    _getStepTitle(),
+                    style: GoogleFonts.outfit(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    _getStepDescription(),
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.inter(color: _textDim, fontSize: 14),
+                  ),
+                  const SizedBox(height: 60),
+                  _buildPasscodeDots(),
+                  const Spacer(),
+                  _buildKeyboard(),
+                  const SizedBox(height: 48),
+                ],
+              ),
+      ),
+    );
+  }
+
+  Widget _buildPasscodeDots() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(6, (index) {
+        bool isFilled = index < _currentInput.length;
+        return Container(
+          margin: const EdgeInsets.symmetric(horizontal: 12),
+          width: 16,
+          height: 16,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: isFilled ? _primary : Colors.transparent,
+            border: Border.all(
+              color: isFilled ? _primary : _textDim.withOpacity(0.5),
+              width: 2,
+            ),
+          ),
+        );
+      }),
+    );
+  }
+
+  Widget _buildKeyboard() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 32),
+      child: Column(
+        children: [
+          _buildKeyboardRow(['1', '2', '3']),
+          const SizedBox(height: 24),
+          _buildKeyboardRow(['4', '5', '6']),
+          const SizedBox(height: 24),
+          _buildKeyboardRow(['7', '8', '9']),
+          const SizedBox(height: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              const SizedBox(width: 80),
+              _buildKeyboardButton('0'),
+              SizedBox(
+                width: 80,
+                height: 80,
+                child: IconButton(
+                  onPressed: _onBackspace,
+                  icon: const Icon(
+                    Icons.backspace_outlined,
+                    color: Colors.white,
+                    size: 28,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildKeyboardRow(List<String> numbers) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: numbers.map((n) => _buildKeyboardButton(n)).toList(),
+    );
+  }
+
+  Widget _buildKeyboardButton(String number) {
+    return GestureDetector(
+      onTap: () => _onNumberTap(number),
+      child: Container(
+        width: 80,
+        height: 80,
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.05),
+          shape: BoxShape.circle,
+        ),
+        child: Center(
+          child: Text(
+            number,
+            style: GoogleFonts.outfit(
+              fontSize: 32,
+              fontWeight: FontWeight.w600,
+              color: Colors.white,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

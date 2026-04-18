@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../services/api_service.dart';
 import 'user_detail_screen.dart';
+import 'wallets_screen.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:encrypt/encrypt.dart' as enc;
 import 'package:pointycastle/export.dart' as pc;
@@ -36,15 +37,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String _txStatus = '';
   String _txType = '';
   String _userSearch = '';
-  String _walletId = '';
-  final _walletIdController = TextEditingController();
+
+  double? _conversionRate;
+  List<dynamic> _rateHistory = [];
+  final _rateController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _fetchAll();
     _checkMobileKeys();
-    _fetchWalletId();
+    _fetchConversionRate();
+    _fetchRateHistory();
   }
 
   bool _hasMobileKey = false;
@@ -55,15 +59,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
     if (mounted) setState(() => _hasMobileKey = key != null);
   }
 
-  Future<void> _fetchWalletId() async {
+
+  Future<void> _fetchConversionRate() async {
     try {
-      final res = await _api.getRequest('/settings/wallet-id');
+      final res = await _api.getRequest('/settings/conversion-rate');
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         if (mounted) {
           setState(() {
-            _walletId = data['walletId'] ?? '';
-            _walletIdController.text = _walletId;
+            _conversionRate = data['usdtToInrRate'] != null 
+                ? (data['usdtToInrRate'] as num).toDouble() 
+                : null;
+            if (_conversionRate != null) {
+              _rateController.text = _conversionRate.toString();
+            }
           });
         }
       }
@@ -72,19 +81,40 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
-  Future<void> _saveWalletId() async {
+  Future<void> _fetchRateHistory() async {
     try {
-      final res = await _api.patchRequest('/settings/wallet-id', {
-        'walletId': _walletIdController.text,
-      });
+      final res = await _api.getRequest('/settings/conversion-rate/history');
       if (res.statusCode == 200) {
-        _showSnack('Wallet ID updated successfully', success: true);
-        _fetchWalletId();
-      } else {
-        _showSnack('Failed to update Wallet ID');
+        if (mounted) {
+          setState(() {
+            _rateHistory = jsonDecode(res.body);
+          });
+        }
       }
     } catch (e) {
-      _showSnack('Error updating Wallet ID');
+      debugPrint(e.toString());
+    }
+  }
+
+  Future<void> _saveConversionRate() async {
+    try {
+      final rate = double.tryParse(_rateController.text);
+      if (rate == null) {
+        _showSnack('Invalid rate value');
+        return;
+      }
+      final res = await _api.patchRequest('/settings/conversion-rate', {
+        'rate': rate,
+      });
+      if (res.statusCode == 200) {
+        _showSnack('Conversion rate updated', success: true);
+        _fetchConversionRate();
+        _fetchRateHistory();
+      } else {
+        _showSnack('Failed to update rate');
+      }
+    } catch (e) {
+      _showSnack('Error updating rate');
     }
   }
 
@@ -108,6 +138,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
           _isLoading = false;
         });
       }
+      _fetchConversionRate(); // Keep rate fresh
+      _fetchRateHistory();
     } catch (e) {
       debugPrint(e.toString());
       if (mounted) setState(() => _isLoading = false);
@@ -202,7 +234,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
       body: Column(
         children: [
           _buildTopBar(),
-          _buildTabBar(),
           Expanded(
             child: _isLoading
                 ? const Center(
@@ -216,6 +247,46 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
           ),
         ],
+      ),
+      bottomNavigationBar: Theme(
+        data: Theme.of(context).copyWith(
+          splashColor: Colors.transparent,
+          highlightColor: Colors.transparent,
+        ),
+        child: BottomNavigationBar(
+          currentIndex: _tabIndex,
+          onTap: (i) => setState(() => _tabIndex = i),
+          backgroundColor: _bgDark,
+          type: BottomNavigationBarType.fixed,
+          selectedItemColor: _primary,
+          unselectedItemColor: _textDim,
+          showSelectedLabels: true,
+          showUnselectedLabels: true,
+          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
+          unselectedLabelStyle: const TextStyle(fontSize: 10),
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.dashboard_outlined),
+              activeIcon: Icon(Icons.dashboard),
+              label: 'Overview',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.people_outline),
+              activeIcon: Icon(Icons.people),
+              label: 'Users',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.currency_exchange_outlined),
+              activeIcon: Icon(Icons.currency_exchange),
+              label: 'Exchange',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.settings_outlined),
+              activeIcon: Icon(Icons.settings),
+              label: 'Settings',
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -309,56 +380,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildTabBar() {
-    final tabs = [
-      (Icons.dashboard_outlined, Icons.dashboard, 'Overview'),
-      (Icons.people_outline, Icons.people, 'Users'),
-      (Icons.settings_outlined, Icons.settings, 'Settings'),
-    ];
-    return Container(
-      color: _bgDark,
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-      child: Row(
-        children: List.generate(tabs.length, (i) {
-          final selected = _tabIndex == i;
-          return Expanded(
-            child: GestureDetector(
-              onTap: () => setState(() => _tabIndex = i),
-              child: Container(
-                margin: EdgeInsets.only(right: i < tabs.length - 1 ? 8 : 0),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                decoration: BoxDecoration(
-                  color: selected ? _primary : Colors.white.withOpacity(0.03),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: selected ? _primary : _border),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      selected ? tabs[i].$2 : tabs[i].$1,
-                      size: 16,
-                      color: selected ? Colors.black : _textDim,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      tabs[i].$3,
-                      style: TextStyle(
-                        color: selected ? Colors.black : _textDim,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        }),
-      ),
-    );
-  }
-
   Widget _buildTabContent() {
     switch (_tabIndex) {
       case 0:
@@ -366,10 +387,136 @@ class _DashboardScreenState extends State<DashboardScreen> {
       case 1:
         return _buildUsers();
       case 2:
+        return _buildExchange();
+      case 3:
         return _buildSettings();
       default:
         return const SizedBox();
     }
+  }
+
+  // ─── EXCHANGE TAB ─────────────────────────────────────────────────────────────
+  Widget _buildExchange() {
+    return ListView(
+      padding: const EdgeInsets.all(24),
+      children: [
+        Text(
+          'EXCHANGE CONFIGURATION',
+          style: GoogleFonts.inter(
+            color: _textDim,
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 2,
+          ),
+        ),
+        const SizedBox(height: 16),
+        Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: _bgCard,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: _border),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: _blue.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: const Icon(Icons.currency_exchange, color: _blue),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Conversion Rate',
+                          style: GoogleFonts.outfit(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const Text(
+                          '1 USDT = X INR',
+                          style: TextStyle(color: _textDim, fontSize: 13),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (_conversionRate == null)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(color: _danger.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+                      child: const Text('LOCK ACTIVE', style: TextStyle(color: _danger, fontSize: 9, fontWeight: FontWeight.bold)),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              TextField(
+                controller: _rateController,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                style: const TextStyle(color: Colors.white, fontSize: 14),
+                decoration: InputDecoration(
+                  labelText: 'Current USDT/INR Rate',
+                  labelStyle: const TextStyle(color: _textDim, fontSize: 12),
+                  hintText: 'e.g. 88.5',
+                  filled: true,
+                  fillColor: _bgDark,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: _border),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _saveConversionRate,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _blue,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text('Save Rate & Unlock', style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ),
+              if (_rateHistory.isNotEmpty) ...[
+                const SizedBox(height: 24),
+                const Divider(color: _border),
+                const SizedBox(height: 16),
+                const Text('RECENT CHANGES', style: TextStyle(color: _textDim, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+                const SizedBox(height: 12),
+                ..._rateHistory.take(10).map((h) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('₹${(h['rate'] as num).toStringAsFixed(2)}', style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold)),
+                      Text(
+                        DateFormat('MMM dd, HH:mm').format(DateTime.parse(h['createdAt'])),
+                        style: const TextStyle(color: _textDim, fontSize: 11),
+                      ),
+                    ],
+                  ),
+                )),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
   }
 
   // ─── SETTINGS TAB ─────────────────────────────────────────────────────────────
@@ -414,7 +561,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Global Wallet ID',
+                          'Settlement Gateways',
                           style: GoogleFonts.outfit(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -422,7 +569,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ),
                         ),
                         const Text(
-                          'Primary Deposit Address',
+                          'Manage active deposit addresses',
                           style: TextStyle(color: _textDim, fontSize: 13),
                         ),
                       ],
@@ -430,29 +577,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 24),
-              TextField(
-                controller: _walletIdController,
-                maxLines: 1,
-                style: const TextStyle(color: Colors.white, fontSize: 14),
-                decoration: InputDecoration(
-                  labelText: 'USDT Address (Tron/Ethereum)',
-                  labelStyle: const TextStyle(color: _textDim, fontSize: 12),
-                  hintText: 'Enter address...',
-                  hintStyle: TextStyle(color: _textDim.withOpacity(0.3)),
-                  filled: true,
-                  fillColor: _bgDark,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: _border),
-                  ),
-                ),
-              ),
               const SizedBox(height: 16),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: _saveWalletId,
+                  onPressed: () {
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const WalletsScreen()));
+                  },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _primary,
                     foregroundColor: Colors.black,
@@ -461,12 +592,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Text('Update Wallet ID', style: TextStyle(fontWeight: FontWeight.bold)),
+                  child: const Text('Manage Gateways', style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
               ),
             ],
           ),
         ),
+
         const SizedBox(height: 32),
         Text(
           'SECURITY & INFRASTRUCTURE',
@@ -539,7 +671,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
               const SizedBox(height: 24),
               const Text(
-                'End-to-End Encryption ensures withdrawal details are only visible to authorized administrators. You must possess the matching Private Key for the current Public Key.',
+                'End-to-End Encryption ensures exchange details are only visible to authorized administrators. You must possess the matching Private Key for the current Public Key.',
                 style: TextStyle(color: _textDim, fontSize: 12, height: 1.5),
               ),
               const SizedBox(height: 24),
@@ -680,7 +812,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final proceed = await _showConfirmDialog(
       title: 'Infrastructure Reset',
       message:
-          'Generating new keys will invalidate active pending withdrawals. You must save the .pem content immediately after generation. This is a ONE-TIME process. Proceed?',
+          'Generating new keys will invalidate active pending exchanges. You must save the .pem content immediately after generation. This is a ONE-TIME process. Proceed?',
     );
     if (proceed != true) return;
 
@@ -791,10 +923,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
             const SizedBox(width: 12),
             Expanded(
               child: _StatCard(
-                label: 'Done',
-                value: complete.toString(),
-                icon: Icons.check_circle_outline,
-                iconColor: _primary,
+                label: 'USD Rate',
+                value: _conversionRate != null ? '₹${_conversionRate!.toStringAsFixed(1)}' : '---',
+                icon: Icons.show_chart,
+                iconColor: _blue,
               ),
             ),
           ],
@@ -828,7 +960,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 options: const {
                   '': 'All Types',
                   'DEPOSIT': 'Deposit',
-                  'WITHDRAW': 'Withdraw',
+                  'EXCHANGE': 'Exchange',
                 },
                 onChanged: (v) {
                   setState(() => _txType = v);
@@ -1011,7 +1143,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   void _showTransactionDetail(Map<String, dynamic> tx) async {
     Map<String, dynamic>? decrypted;
-    if (tx['type'] == 'WITHDRAW' && tx['bankDetails'] != null) {
+    if (tx['type'] == 'EXCHANGE' && tx['bankDetails'] != null) {
       try {
         final res = await _api.getRequest('/wallet/transactions/${tx['id']}');
         if (res.statusCode == 200) {
@@ -1781,7 +1913,7 @@ class _TransactionDetailSheetState extends State<_TransactionDetailSheet> {
   @override
   void initState() {
     super.initState();
-    if (widget.tx['type'] == 'WITHDRAW') {
+    if (widget.tx['type'] == 'EXCHANGE') {
       _loadDetails();
     }
   }
@@ -1926,6 +2058,19 @@ class _TransactionDetailSheetState extends State<_TransactionDetailSheet> {
                       ),
                       const SizedBox(height: 16),
                       _DetailRow(label: 'TYPE', value: tx['type']),
+                      if (tx['conversionRate'] != null) ...[
+                        const SizedBox(height: 16),
+                        _DetailRow(
+                          label: 'RATE',
+                          value: '₹${(tx['conversionRate'] as num).toStringAsFixed(2)}',
+                        ),
+                        const SizedBox(height: 16),
+                        _DetailRow(
+                          label: 'CREDIT (INR)',
+                          value: '₹${NumberFormat('#,##0.00').format((tx['amount'] as num) * (tx['conversionRate'] as num))}',
+                          valueColor: _blue,
+                        ),
+                      ],
                     ],
                   ),
                 ),
