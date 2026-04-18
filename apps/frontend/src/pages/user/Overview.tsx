@@ -128,8 +128,6 @@ const Overview: React.FC = () => {
         }
     };
 
-    const [pendingExchange, setPendingExchange] = useState<boolean>(false);
-
     const handleExchange = async () => {
         if (!amount || isNaN(parseFloat(amount))) return;
         if (parseFloat(amount) > balance) {

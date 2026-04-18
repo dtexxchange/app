@@ -134,31 +134,24 @@ export class WalletService {
     if (status) whereClause.status = status;
     if (type) whereClause.type = type as TransactionType;
 
-    // Pagination (only applied when both page and limit are provided)
-    const paginationArgs =
-      page && limit
-        ? { skip: (page - 1) * limit, take: limit }
-        : limit
-          ? { take: limit }
-          : {};
-
-    if (role === 'ADMIN') {
-      if (reqUserId) whereClause.userId = reqUserId;
-      return this.prisma.transaction.findMany({
-        where: whereClause,
-        orderBy: { createdAt: 'desc' },
-        include: this.includeLogsAndUser,
-        ...paginationArgs,
-      });
-    }
-
-    whereClause.userId = userId;
-    return this.prisma.transaction.findMany({
+    // Build args imperatively to avoid union-spread incompatibility with Prisma's strict overloads
+    const baseArgs: Parameters<typeof this.prisma.transaction.findMany>[0] = {
       where: whereClause,
       orderBy: { createdAt: 'desc' },
       include: this.includeLogsAndUser,
-      ...paginationArgs,
-    });
+    };
+    if (limit !== undefined) {
+      baseArgs.take = limit;
+      baseArgs.skip = page !== undefined ? (page - 1) * limit : 0;
+    }
+
+    if (role === 'ADMIN') {
+      if (reqUserId) (baseArgs.where as any).userId = reqUserId;
+      return this.prisma.transaction.findMany(baseArgs);
+    }
+
+    (baseArgs.where as any).userId = userId;
+    return this.prisma.transaction.findMany(baseArgs);
   }
 
   // ─── Get single transaction ───────────────────────────────────────────────────
