@@ -96,8 +96,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildAvatar() {
-    final initial =
-        _user?['email']?.toString().substring(0, 1).toUpperCase() ?? 'U';
+    final initial = (_user?['firstName']?.toString() ?? _user?['email']?.toString() ?? 'U').substring(0, 1).toUpperCase();
     return Column(
       children: [
         Container(
@@ -128,7 +127,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         const SizedBox(height: 16),
         Text(
-          _user?['email'] ?? '',
+          (_user?['firstName'] != null || _user?['lastName'] != null)
+              ? '${_user?['firstName'] ?? ''} ${_user?['lastName'] ?? ''}'.trim()
+              : _user?['email'] ?? '',
           style: const TextStyle(
             color: Colors.white,
             fontSize: 18,
@@ -166,6 +167,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
       child: Column(
         children: [
+          _InfoRow(
+            icon: Icons.person_outline,
+            label: (_user?['firstName'] != null || _user?['lastName'] != null) ? 'Full Name' : 'Identity',
+            value: (_user?['firstName'] != null || _user?['lastName'] != null) 
+                ? '${_user?['firstName'] ?? ''} ${_user?['lastName'] ?? ''}'.trim() 
+                : 'Not Set',
+          ),
+          Divider(height: 1, color: _border),
           _InfoRow(
             icon: Icons.mail_outline,
             label: 'Email',

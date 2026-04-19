@@ -251,6 +251,7 @@ class TransactionsScreenState extends State<TransactionsScreen> with RouteAware 
               '': 'All',
               'DEPOSIT': 'Deposit',
               'EXCHANGE': 'Exchange',
+              'REFERRAL_COMMISSION': 'Commission',
             },
             value: _filterType,
             onChanged: (v) {
@@ -300,6 +301,8 @@ class TransactionsScreenState extends State<TransactionsScreen> with RouteAware 
 
   Widget _buildTxTile(Map<String, dynamic> tx) {
     final isDeposit = tx['type'] == 'DEPOSIT';
+    final isCommission = tx['type'] == 'REFERRAL_COMMISSION';
+    final isIncome = isDeposit || isCommission;
     final status = tx['status'] as String;
 
     Color statusColor;
@@ -341,9 +344,9 @@ class TransactionsScreenState extends State<TransactionsScreen> with RouteAware 
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
-                isDeposit ? Icons.arrow_downward : Icons.arrow_upward,
+                isIncome ? Icons.arrow_downward : Icons.arrow_upward,
                 size: 20,
-                color: isDeposit ? _primary : Colors.white,
+                color: isIncome ? _primary : Colors.white,
               ),
             ),
             const SizedBox(width: 14),
@@ -372,11 +375,11 @@ class TransactionsScreenState extends State<TransactionsScreen> with RouteAware 
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  '${isDeposit ? '+' : '-'}${NumberFormat('#,##0.00').format(tx['amount'])}',
+                  '${isIncome ? '+' : '-'}${NumberFormat('#,##0.00').format(tx['amount'])}',
                   style: GoogleFonts.outfit(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
-                    color: isDeposit ? _primary : Colors.white,
+                    color: isIncome ? _primary : Colors.white,
                   ),
                 ),
                 const SizedBox(height: 3),

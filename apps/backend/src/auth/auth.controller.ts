@@ -7,7 +7,7 @@ import { Role } from '@prisma/client';
 export class AuthController {
   constructor(
     private authService: AuthService,
-    private prisma: PrismaService
+    private prisma: PrismaService,
   ) {}
 
   @Post('setup-admin')
@@ -19,14 +19,27 @@ export class AuthController {
     return this.prisma.user.create({
       data: {
         email,
-        role: Role.ADMIN
-      }
+        role: Role.ADMIN,
+        firstName: 'Admin',
+        lastName: 'User',
+        status: 'APPROVED',
+      },
     });
   }
 
   @Post('send-otp')
   async sendOtp(@Body('email') email: string) {
     return this.authService.sendOtp(email);
+  }
+
+  @Post('signup')
+  async signup(
+    @Body('email') email: string,
+    @Body('firstName') firstName: string,
+    @Body('lastName') lastName: string,
+    @Body('referralCode') referralCode?: string,
+  ) {
+    return this.authService.signup(email, firstName, lastName, referralCode);
   }
 
   @Post('verify-otp')

@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import React, { useCallback, useEffect, useState } from "react";
 import api from "../../lib/api";
+import { formatAmount } from "../../lib/formatters";
 
 const Users: React.FC = () => {
     const [users, setUsers] = useState<any[]>([]);
@@ -55,6 +56,18 @@ const Users: React.FC = () => {
             setSelectedUser(data);
         } catch (e) {
             console.error(e);
+        }
+    };
+
+    const handleUpdateStatus = async (userId: string, status: string) => {
+        try {
+            await api.patch(`/users/${userId}/status`, { status });
+            if (selectedUser?.id === userId) {
+                loadUserDetails(userId);
+            }
+            fetchUsers();
+        } catch (err: any) {
+            console.error(err);
         }
     };
 
@@ -137,6 +150,7 @@ const Users: React.FC = () => {
                             <tr className="bg-white/2 border-b border-white/5 text-text-dim text-xs font-semibold tracking-widest uppercase">
                                 <th className="px-8 py-5">Verified Identity</th>
                                 <th className="px-8 py-5">Platform Role</th>
+                                <th className="px-8 py-5">Verified Status</th>
                                 <th className="px-8 py-5">Available Balance</th>
                                 <th className="px-8 py-5 text-right">
                                     Join Date
@@ -157,7 +171,12 @@ const Users: React.FC = () => {
                                             </div>
                                             <div>
                                                 <div className="font-bold text-white mb-0.5">
-                                                    {u.email}
+                                                    {u.firstName && u.lastName
+                                                        ? `${u.firstName} ${u.lastName}`
+                                                        : u.email}
+                                                </div>
+                                                <div className="text-[11px] text-text-dim">
+                                                    {u.firstName ? u.email : ""}
                                                 </div>
                                                 <div className="text-[10px] text-text-dim font-mono tracking-tighter">
                                                     UID:{" "}
@@ -176,8 +195,23 @@ const Users: React.FC = () => {
                                         </span>
                                     </td>
                                     <td className="px-8 py-6">
+                                        <span
+                                            className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest border ${
+                                                u.status === "APPROVED"
+                                                    ? "border-primary/40 text-primary bg-primary/5"
+                                                    : u.status ===
+                                                        "PENDING_APPROVAL"
+                                                      ? "border-accent-blue/40 text-accent-blue bg-accent-blue/5"
+                                                      : "border-red-500/40 text-red-500 bg-red-500/5"
+                                            }`}
+                                        >
+                                            {u.status?.replace("_", " ") ||
+                                                "APPROVED"}
+                                        </span>
+                                    </td>
+                                    <td className="px-8 py-6">
                                         <div className="text-base font-outfit font-bold text-white">
-                                            {u.balance.toLocaleString()}{" "}
+                                            {formatAmount(u.balance)}{" "}
                                             <span className="text-[10px] text-primary/60 font-bold tracking-widest ml-1">
                                                 USDT
                                             </span>
@@ -238,7 +272,7 @@ const Users: React.FC = () => {
                                         <input
                                             type="email"
                                             className="input-field pl-12"
-                                            placeholder="identity@network.app"
+                                            placeholder="user@example.com"
                                             value={newUser.email}
                                             onChange={(e) =>
                                                 setNewUser({
@@ -322,12 +356,18 @@ const Users: React.FC = () => {
                                         <div>
                                             <div className="flex items-center gap-3 mb-2">
                                                 <h2 className="text-3xl font-outfit font-bold text-white">
-                                                    {selectedUser.email}
+                                                    {selectedUser.firstName &&
+                                                    selectedUser.lastName
+                                                        ? `${selectedUser.firstName} ${selectedUser.lastName}`
+                                                        : selectedUser.email}
                                                 </h2>
                                                 <span className="px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest bg-primary text-bg-dark">
                                                     {selectedUser.role}
                                                 </span>
                                             </div>
+                                            <p className="text-sm text-text-dim mb-3 font-medium">
+                                                {selectedUser.email}
+                                            </p>
                                             <p className="text-text-dim font-medium flex items-center gap-2 mb-4">
                                                 <Activity
                                                     size={14}
@@ -362,7 +402,9 @@ const Users: React.FC = () => {
                                                 On-Chain Asset Balance
                                             </p>
                                             <div className="text-4xl font-outfit font-bold text-white">
-                                                {selectedUser.balance.toLocaleString()}
+                                                {formatAmount(
+                                                    selectedUser.balance,
+                                                )}
                                                 <span className="text-sm font-normal text-text-dim ml-2 uppercase">
                                                     USDT
                                                 </span>
@@ -372,9 +414,59 @@ const Users: React.FC = () => {
                                             <p className="text-[10px] font-bold text-text-dim uppercase tracking-[0.2em] mb-3">
                                                 Registration Status
                                             </p>
-                                            <div className="flex items-center gap-2 text-primary font-bold">
-                                                <ShieldCheck size={20} />{" "}
-                                                Verified Identity
+                                            <div className="flex flex-col gap-4">
+                                                <div
+                                                    className={`flex items-center gap-2 font-bold ${
+                                                        selectedUser.status ===
+                                                        "APPROVED"
+                                                            ? "text-primary"
+                                                            : selectedUser.status ===
+                                                                "PENDING_APPROVAL"
+                                                              ? "text-accent-blue"
+                                                              : "text-red-500"
+                                                    }`}
+                                                >
+                                                    {selectedUser.status ===
+                                                    "APPROVED" ? (
+                                                        <ShieldCheck
+                                                            size={20}
+                                                        />
+                                                    ) : (
+                                                        <Activity size={20} />
+                                                    )}
+                                                    {selectedUser.status?.replace(
+                                                        "_",
+                                                        " ",
+                                                    ) || "APPROVED"}
+                                                </div>
+
+                                                {selectedUser.status ===
+                                                    "PENDING_APPROVAL" && (
+                                                    <div className="flex gap-2">
+                                                        <button
+                                                            onClick={() =>
+                                                                handleUpdateStatus(
+                                                                    selectedUser.id,
+                                                                    "APPROVED",
+                                                                )
+                                                            }
+                                                            className="flex-1 py-2 bg-primary text-bg-dark text-[10px] font-black uppercase tracking-widest rounded-lg shadow-lg shadow-primary/10"
+                                                        >
+                                                            Approve
+                                                        </button>
+                                                        <button
+                                                            onClick={() =>
+                                                                handleUpdateStatus(
+                                                                    selectedUser.id,
+                                                                    "REJECTED",
+                                                                )
+                                                            }
+                                                            className="flex-1 py-2 bg-red-500/10 text-red-500 border border-red-500/20 text-[10px] font-black uppercase tracking-widest rounded-lg"
+                                                        >
+                                                            Reject
+                                                        </button>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
@@ -425,7 +517,9 @@ const Users: React.FC = () => {
                                                                     </span>
                                                                 </td>
                                                                 <td className="px-6 py-4 font-bold text-white">
-                                                                    {tx.amount.toLocaleString()}{" "}
+                                                                    {formatAmount(
+                                                                        tx.amount,
+                                                                    )}{" "}
                                                                     <span className="text-[9px] text-text-dim">
                                                                         USDT
                                                                     </span>

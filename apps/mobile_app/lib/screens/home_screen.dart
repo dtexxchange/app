@@ -1,13 +1,15 @@
+import 'dart:async';
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:qr_flutter/qr_flutter.dart';
+
+import '../main.dart' show routeObserver;
 import '../services/api_service.dart';
 import '../services/crypto_service.dart';
-import 'package:qr_flutter/qr_flutter.dart';
-import 'dart:async';
-import 'package:flutter/services.dart';
-import '../main.dart' show routeObserver;
 
 // ─── Design Tokens ───────────────────────────────────────────────────────────
 const _bgDark = Color(0xFF0A0B0D);
@@ -257,7 +259,7 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
   // QR Logic
   List<dynamic> _wallets = [];
   Timer? _timer;
-  int _timeLeft = 300; // 5 minutes in seconds
+  int _timeLeft = 1800; // 30 minutes in seconds
   String _qrSeed = "";
   double? _conversionRate;
 
@@ -291,15 +293,14 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
 
   void _startTimer() {
     _timer?.cancel();
-    _timeLeft = 300;
+    // Default to 30 mins if not set yet, but it will be updated by _fetchWallets
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (mounted) {
         setState(() {
           if (_timeLeft > 0) {
             _timeLeft--;
           } else {
-            _generateQrData();
-            _timeLeft = 300;
+            _fetchWallets(); // Refresh when timer hits 0 to get next assignment
           }
         });
       }
@@ -313,6 +314,18 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
     });
   }
 
+  String _formatTime(int totalSeconds) {
+    int minutes = totalSeconds ~/ 60;
+    int seconds = totalSeconds % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+  }
+
+  Color _timerColor() {
+    if (_timeLeft < 60) return Colors.redAccent;
+    if (_timeLeft < 300) return Colors.orangeAccent;
+    return _primary;
+  }
+
   Future<void> _fetchWallets() async {
     try {
       final res = await _api.getRequest('/settings/wallets');
@@ -320,6 +333,12 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
         final data = jsonDecode(res.body);
         setState(() {
           _wallets = data;
+          if (_wallets.isNotEmpty && _wallets[0]['expiresAt'] != null) {
+            final expiresAt = DateTime.parse(_wallets[0]['expiresAt']);
+            final now = DateTime.now();
+            _timeLeft = expiresAt.difference(now).inSeconds;
+            if (_timeLeft < 0) _timeLeft = 0;
+          }
           _generateQrData();
         });
       }
@@ -396,104 +415,147 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
               ),
               child: Row(
                 children: [
-                   const Icon(Icons.info_outline, color: _primary, size: 18),
-                   const SizedBox(width: 12),
-                   Expanded(
-                     child: Text(
-                       _conversionRate != null
-                           ? 'Current Rate: 1 USDT = ₹${_conversionRate!.toStringAsFixed(2)}'
-                           : 'Rate not yet configured by admin.',
-                       style: const TextStyle(
-                         color: Colors.white,
-                         fontSize: 13,
-                         fontWeight: FontWeight.bold,
-                       ),
-                     ),
-                   ),
+                  const Icon(Icons.info_outline, color: _primary, size: 18),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      _conversionRate != null
+                          ? 'Current Rate: 1 USDT = ₹${_conversionRate!.toStringAsFixed(2)}'
+                          : 'Rate not yet configured by admin.',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
 
             if (_wallets.isEmpty)
-                Container(
-                    padding: const EdgeInsets.all(24),
-                    child: const Text('No deposit gateways available currently', textAlign: TextAlign.center, style: TextStyle(color: _textDim)),
+              Container(
+                padding: const EdgeInsets.all(24),
+                child: const Text(
+                  'No deposit gateways available currently',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: _textDim),
                 ),
+              ),
 
             ..._wallets.map((wallet) {
-                return Container(
-                    margin: const EdgeInsets.only(bottom: 16),
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      color: _bgDark,
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(color: _border),
-                    ),
-                    child: Column(
+              return Container(
+                margin: const EdgeInsets.only(bottom: 16),
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: _bgDark,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: _border),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              '${wallet['network']} GATEWAY',
-                              style: GoogleFonts.inter(
-                                color: _textDim,
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 1,
-                              ),
-                            ),
-                            GestureDetector(
-                              onTap: () {
-                                Clipboard.setData(ClipboardData(text: wallet['address']));
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Address copied to clipboard'),
-                                  ),
-                                );
-                              },
-                              child: Row(
-                                children: [
-                                  const Icon(Icons.copy, color: _primary, size: 12),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    'COPY',
-                                    style: GoogleFonts.inter(
-                                      color: _primary,
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 20),
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: QrImageView(
-                            data: '${wallet['address']}$_qrSeed',
-                            version: QrVersions.auto,
-                            size: 140.0,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
                         Text(
-                          wallet['address'],
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.outfit(
-                            color: Colors.white,
-                            fontSize: 13,
+                          (wallet['name'] != null &&
+                                  wallet['name'].toString().isNotEmpty)
+                              ? wallet['name'].toString().toUpperCase()
+                              : '${wallet['network']} GATEWAY',
+                          style: GoogleFonts.inter(
+                            color: _primary,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.2,
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () {
+                            Clipboard.setData(
+                              ClipboardData(text: wallet['address']),
+                            );
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Address copied to clipboard'),
+                              ),
+                            );
+                          },
+                          child: Row(
+                            children: [
+                              const Icon(Icons.copy, color: _primary, size: 12),
+                              const SizedBox(width: 4),
+                              Text(
+                                'COPY',
+                                style: GoogleFonts.inter(
+                                  color: _primary,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
                     ),
-                );
+                    const SizedBox(height: 20),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: QrImageView(
+                        data: '${wallet['address']}$_qrSeed',
+                        version: QrVersions.auto,
+                        size: 140.0,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    const SizedBox(height: 16),
+                    Text(
+                      wallet['address'],
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.outfit(
+                        color: Colors.white,
+                        fontSize: 13,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: _timerColor().withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: _timerColor().withOpacity(0.2),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.timer_outlined,
+                            color: _timerColor(),
+                            size: 14,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            'REFRESHING IN: ${_formatTime(_timeLeft)}',
+                            style: GoogleFonts.inter(
+                              color: _timerColor(),
+                              fontSize: 10,
+                              letterSpacing: 1,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              );
             }).toList(),
           ],
         ),
@@ -503,14 +565,12 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
 
   // Removed _showExchangeSheet - Use dedicated /exchange screen
 
-
-
   // ─── Build ──────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final isSmall = size.width < 360;
-    
+
     return Scaffold(
       backgroundColor: _bgDark,
       body: _isLoading
@@ -524,7 +584,12 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
                 slivers: [
                   _buildAppBar(context),
                   SliverPadding(
-                    padding: EdgeInsets.fromLTRB(isSmall ? 16 : 24, 8, isSmall ? 16 : 24, 100),
+                    padding: EdgeInsets.fromLTRB(
+                      isSmall ? 16 : 24,
+                      8,
+                      isSmall ? 16 : 24,
+                      100,
+                    ),
                     sliver: SliverList(
                       delegate: SliverChildListDelegate([
                         if (!_hasPasscode) _buildPasscodeWarning(context),
@@ -601,8 +666,6 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
     );
   }
 
-
-
   Widget _buildPasscodeWarning(BuildContext context) {
     final isSmall = MediaQuery.of(context).size.width < 360;
     return Container(
@@ -631,17 +694,24 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
                 ),
                 Text(
                   'Please add a passcode for secure exchanges.',
-                  style: GoogleFonts.inter(
-                    color: _textDim,
-                    fontSize: 13,
-                  ),
+                  style: GoogleFonts.inter(color: _textDim, fontSize: 13),
                 ),
               ],
             ),
           ),
           TextButton(
-            onPressed: () => Navigator.pushNamed(context, '/passcode').then((_) => _fetchData()),
-            child: const Text('SET NOW', style: TextStyle(color: _primary, fontWeight: FontWeight.bold, fontSize: 13)),
+            onPressed: () => Navigator.pushNamed(
+              context,
+              '/passcode',
+            ).then((_) => _fetchData()),
+            child: const Text(
+              'SET NOW',
+              style: TextStyle(
+                color: _primary,
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+              ),
+            ),
           ),
         ],
       ),
@@ -692,8 +762,7 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
           GestureDetector(
             onTap: () async {
               await _api.logout();
-              if (mounted)
-                Navigator.pushReplacementNamed(context, '/login');
+              if (mounted) Navigator.pushReplacementNamed(context, '/login');
             },
             child: Container(
               width: isSmall ? 32 : 36,
@@ -703,7 +772,11 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: _danger.withOpacity(0.2)),
               ),
-              child: Icon(Icons.logout, color: _danger, size: isSmall ? 16 : 18),
+              child: Icon(
+                Icons.logout,
+                color: _danger,
+                size: isSmall ? 16 : 18,
+              ),
             ),
           ),
         ],
@@ -837,7 +910,11 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
           children: [
             Row(
               children: [
-                Icon(Icons.receipt_long, color: _primary, size: isSmall ? 18 : 22),
+                Icon(
+                  Icons.receipt_long,
+                  color: _primary,
+                  size: isSmall ? 18 : 22,
+                ),
                 const SizedBox(width: 10),
                 Text(
                   'Recent Activity',
@@ -990,7 +1067,10 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
                   const SizedBox(height: 3),
                   Text(
                     'TX-${tx['id']?.toString().substring(0, 8).toUpperCase() ?? 'UNKNOWN'}',
-                    style: TextStyle(color: _textDim, fontSize: isSmall ? 10 : 11),
+                    style: TextStyle(
+                      color: _textDim,
+                      fontSize: isSmall ? 10 : 11,
+                    ),
                   ),
                 ],
               ),
@@ -1398,10 +1478,9 @@ class _DetailRow extends StatelessWidget {
   }
 }
 
-  // Removed passcode entry sheet - Use dedicated /exchange-passcode screen
+// Removed passcode entry sheet - Use dedicated /exchange-passcode screen
 
 extension StringExtension on String {
   String capitalize() =>
       isEmpty ? this : '${this[0].toUpperCase()}${substring(1).toLowerCase()}';
 }
-

@@ -19,7 +19,9 @@ import { QRCodeSVG } from "qrcode.react";
 import React, { useCallback, useEffect, useState } from "react";
 import api from "../../lib/api";
 import { ENABLE_E2EE, encryptData } from "../../lib/crypto";
+import { useAuth } from "../../context/AuthContext";
 import PasscodeVerifyModal from "../../components/PasscodeVerifyModal";
+import { formatAmount } from "../../lib/formatters";
 
 interface Transaction {
     id: string;
@@ -42,8 +44,9 @@ const Overview: React.FC = () => {
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [conversionRate, setConversionRate] = useState<number | null>(null);
     const [wallets, setWallets] = useState<
-        { id: string; address: string; network: string }[]
+        { id: string; address: string; network: string; expiresAt?: string }[]
     >([]);
+    const [timeLeft, setTimeLeft] = useState(1800);
     const [savedAccounts, setSavedAccounts] = useState<SavedAccount[]>([]);
 
     // UI States
@@ -83,6 +86,13 @@ const Overview: React.FC = () => {
 
             const { data: wIdData } = await api.get("/settings/wallets");
             setWallets(wIdData);
+            if (wIdData.length > 0 && wIdData[0].expiresAt) {
+                const expiresAt = new Date(wIdData[0].expiresAt);
+                const diff = Math.floor(
+                    (expiresAt.getTime() - Date.now()) / 1000,
+                );
+                setTimeLeft(diff > 0 ? diff : 0);
+            }
 
             const { data: txs } = await api.get("/wallet/transactions?limit=5");
             setTransactions(txs);
@@ -97,6 +107,28 @@ const Overview: React.FC = () => {
     useEffect(() => {
         fetchData();
     }, [fetchData]);
+
+    useEffect(() => {
+        if (!isDepositOpen) return;
+
+        const timer = setInterval(() => {
+            setTimeLeft((prev) => {
+                if (prev <= 1) {
+                    fetchData();
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, [isDepositOpen, fetchData]);
+
+    const formatTime = (seconds: number) => {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+    };
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -122,7 +154,7 @@ const Overview: React.FC = () => {
     const handleInrChange = (val: string) => {
         setInrAmount(val);
         if (conversionRate && val && !isNaN(parseFloat(val))) {
-            setAmount((parseFloat(val) / conversionRate).toFixed(6));
+            setAmount((parseFloat(val) / conversionRate).toFixed(2));
         } else {
             setAmount("");
         }
@@ -233,8 +265,19 @@ const Overview: React.FC = () => {
         }
     };
 
+    const { user } = useAuth();
     return (
         <div className="space-y-10">
+            <header>
+                <h1 className="text-4xl font-outfit font-bold text-white mb-2">
+                    {user?.firstName
+                        ? `Welcome back, ${user.firstName}`
+                        : "Welcome back"}
+                </h1>
+                <p className="text-text-dim font-medium">
+                    Monitor your assets and manage your liquidity.
+                </p>
+            </header>
             {!hasPasscode && (
                 <div className="glass p-6 border-red-500/20 bg-red-500/5 flex items-center justify-between">
                     <div className="flex items-center gap-4">
@@ -282,7 +325,7 @@ const Overview: React.FC = () => {
                                     </p>
                                     <div className="flex items-baseline gap-4">
                                         <h2 className="text-7xl font-outfit font-bold text-white tracking-tighter">
-                                            {balance.toLocaleString()}
+                                            {formatAmount(balance)}
                                         </h2>
                                         <span className="text-accent-blue text-2xl font-black">
                                             USDT
@@ -364,7 +407,7 @@ const Overview: React.FC = () => {
                                         className="flex justify-between items-center py-3 border-b border-white/5 last:border-0"
                                     >
                                         <div className="text-sm font-bold text-white">
-                                            {tx.amount} USDT
+                                            {formatAmount(tx.amount)} USDT
                                         </div>
                                         <div className="text-[10px] font-bold text-primary uppercase">
                                             Validating
@@ -429,9 +472,11 @@ const Overview: React.FC = () => {
                                     <td className="px-10 py-5">
                                         <div className="flex items-center gap-4">
                                             <div
-                                                className={`p-2 rounded-lg ${tx.type === "DEPOSIT" ? "text-primary bg-primary/5" : "text-white bg-white/5"}`}
+                                                className={`p-2 rounded-lg ${tx.type === "DEPOSIT" || tx.type === "REFERRAL_COMMISSION" ? "text-primary bg-primary/5" : "text-white bg-white/5"}`}
                                             >
-                                                {tx.type === "DEPOSIT" ? (
+                                                {tx.type === "DEPOSIT" ||
+                                                tx.type ===
+                                                    "REFERRAL_COMMISSION" ? (
                                                     <ArrowDownLeft size={16} />
                                                 ) : (
                                                     <ArrowUpRight size={16} />
@@ -443,7 +488,7 @@ const Overview: React.FC = () => {
                                         </div>
                                     </td>
                                     <td className="px-10 py-5 font-bold text-white">
-                                        {tx.amount.toLocaleString()} USDT
+                                        {formatAmount(tx.amount)} USDT
                                     </td>
                                     <td className="px-10 py-5">
                                         <span
@@ -529,6 +574,18 @@ const Overview: React.FC = () => {
                                                 <Copy size={16} />
                                             </button>
                                         </div>
+                                        <div className="mt-6 flex flex-col items-center gap-2">
+                                            <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary/5 border border-primary/10">
+                                                <Clock
+                                                    size={14}
+                                                    className="text-primary"
+                                                />
+                                                <span className="text-[10px] font-black text-primary uppercase tracking-widest">
+                                                    Refreshing in:{" "}
+                                                    {formatTime(timeLeft)}
+                                                </span>
+                                            </div>
+                                        </div>
                                     </div>
                                 ))}
                                 {wallets.length === 0 && (
@@ -574,7 +631,7 @@ const Overview: React.FC = () => {
                                     </p>
                                     <div className="flex items-baseline gap-2">
                                         <span className="text-3xl font-outfit font-bold text-white">
-                                            {balance.toLocaleString()}
+                                            {formatAmount(balance)}
                                         </span>
                                         <span className="text-sm font-bold text-primary">
                                             USDT
@@ -590,12 +647,9 @@ const Overview: React.FC = () => {
                                         <span className="text-xl font-outfit font-bold text-white">
                                             ₹
                                             {conversionRate
-                                                ? (
-                                                      balance * conversionRate
-                                                  ).toLocaleString(undefined, {
-                                                      minimumFractionDigits: 2,
-                                                      maximumFractionDigits: 2,
-                                                  })
+                                                ? formatAmount(
+                                                      balance * conversionRate,
+                                                  )
                                                 : "0.00"}
                                         </span>
                                         <span className="text-xs font-bold text-white/40">

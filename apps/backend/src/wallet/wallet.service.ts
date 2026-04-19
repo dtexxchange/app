@@ -12,7 +12,7 @@ export class WalletService {
   constructor(private prisma: PrismaService) {}
 
   private includeLogsAndUser = {
-    user: { select: { email: true } },
+    user: { select: { email: true, firstName: true, lastName: true } },
     logs: { orderBy: { createdAt: 'asc' as const } },
   };
 
@@ -31,7 +31,8 @@ export class WalletService {
 
   // ─── Admin Deposit ────────────────────────────────────────────────────────────
   async adminDeposit(userId: string, amount: number, adminEmail: string) {
-    if (amount <= 0) throw new BadRequestException('Invalid amount');
+    const roundedAmount = Math.round(amount * 100) / 100;
+    if (roundedAmount <= 0) throw new BadRequestException('Invalid amount');
 
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundException('User not found');
@@ -39,14 +40,14 @@ export class WalletService {
     return this.prisma.$transaction(async (tx) => {
       await tx.user.update({
         where: { id: userId },
-        data: { balance: { increment: amount } },
+        data: { balance: { increment: roundedAmount } },
       });
 
       const transaction = await tx.transaction.create({
         data: {
           userId,
           type: TransactionType.DEPOSIT,
-          amount,
+          amount: roundedAmount,
           status: TransactionStatus.COMPLETED,
         },
       });
@@ -69,7 +70,8 @@ export class WalletService {
     userEmail: string,
     passcode: string,
   ) {
-    if (amount <= 0) throw new BadRequestException('Invalid amount');
+    const roundedAmount = Math.round(amount * 100) / 100;
+    if (roundedAmount <= 0) throw new BadRequestException('Invalid amount');
 
     const settings = await this.prisma.globalSettings.findUnique({
       where: { id: 'global_settings' },
@@ -97,13 +99,13 @@ export class WalletService {
     return this.prisma.$transaction(async (tx) => {
       await tx.user.update({
         where: { id: userId },
-        data: { balance: { decrement: amount } },
+        data: { balance: { decrement: roundedAmount } },
       });
       const transaction = await tx.transaction.create({
         data: {
           userId,
           type: TransactionType.EXCHANGE,
-          amount,
+          amount: roundedAmount,
           status: TransactionStatus.PENDING,
           bankDetails: encryptedBankDetails,
           conversionRate: settings.usdtToInrRate,
@@ -182,19 +184,55 @@ export class WalletService {
     }
 
     return this.prisma.$transaction(async (tx) => {
+      const roundedAmount = Math.round(transaction.amount * 100) / 100;
       if (status === TransactionStatus.COMPLETED) {
         if (transaction.type === TransactionType.DEPOSIT) {
           await tx.user.update({
             where: { id: transaction.userId },
-            data: { balance: { increment: transaction.amount } },
+            data: { balance: { increment: roundedAmount } },
           });
         }
-        // Exchange balance was already deducted on request
+
+        // --- Referral Commission Logic ---
+        if (transaction.type === TransactionType.EXCHANGE) {
+          const user = await tx.user.findUnique({
+            where: { id: transaction.userId },
+            select: { referredById: true, email: true },
+          });
+
+          if (user?.referredById) {
+            const commission = Math.round(roundedAmount * 0.003 * 100) / 100;
+            if (commission > 0) {
+              await tx.user.update({
+                where: { id: user.referredById },
+                data: { balance: { increment: commission } },
+              });
+
+              const commTx = await tx.transaction.create({
+                data: {
+                  userId: user.referredById,
+                  type: TransactionType.REFERRAL_COMMISSION,
+                  amount: commission,
+                  status: TransactionStatus.COMPLETED,
+                },
+              });
+
+              await this.writeLog(
+                tx,
+                commTx.id,
+                TransactionStatus.COMPLETED,
+                'SYSTEM',
+                `Referral commission from ${user.email} exchange`,
+              );
+            }
+          }
+        }
+        // ---------------------------------
       } else if (status === TransactionStatus.REJECTED) {
         if (transaction.type === TransactionType.EXCHANGE) {
           await tx.user.update({
             where: { id: transaction.userId },
-            data: { balance: { increment: transaction.amount } },
+            data: { balance: { increment: roundedAmount } },
           });
         }
       }

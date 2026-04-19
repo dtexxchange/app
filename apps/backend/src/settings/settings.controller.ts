@@ -1,4 +1,14 @@
-import { Controller, Get, Body, Patch, Post, Delete, Param, UseGuards, Req } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Body,
+  Patch,
+  Post,
+  Delete,
+  Param,
+  UseGuards,
+  Req,
+} from '@nestjs/common';
 import { SettingsService } from './settings.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -11,8 +21,9 @@ export class SettingsController {
 
   @Get('wallets')
   @UseGuards(JwtAuthGuard)
-  async getActiveWallets() {
-    return this.settingsService.getActiveWallets();
+  async getActiveWallets(@Req() req: any) {
+    const wallet = await this.settingsService.getAssignedWallet(req.user.userId);
+    return wallet ? [wallet] : [];
   }
 
   @Get('admin/wallets')
@@ -22,17 +33,37 @@ export class SettingsController {
     return this.settingsService.getAllWallets();
   }
 
+  @Get('admin/assignments')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  async getActiveAssignments() {
+    return this.settingsService.getActiveAssignments();
+  }
+
   @Post('admin/wallets')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
-  async createWallet(@Body('address') address: string, @Body('network') network: string) {
-    return this.settingsService.createWallet(address, network || 'TRC20');
+  async createWallet(
+    @Body('address') address: string,
+    @Body('network') network: string,
+    @Body('name') name?: string,
+  ) {
+    return this.settingsService.createWallet(address, network || 'TRC20', name);
   }
 
   @Patch('admin/wallets/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
-  async updateWallet(@Param('id') id: string, @Body() data: { address?: string; network?: string; isActive?: boolean }) {
+  async updateWallet(
+    @Param('id') id: string,
+    @Body()
+    data: {
+      address?: string;
+      network?: string;
+      isActive?: boolean;
+      name?: string;
+    },
+  ) {
     return this.settingsService.updateWallet(id, data);
   }
 

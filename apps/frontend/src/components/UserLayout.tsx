@@ -5,6 +5,7 @@ import {
     Landmark,
     LayoutDashboard,
     LogOut,
+    Share2,
     User,
 } from "lucide-react";
 import React from "react";
@@ -29,6 +30,11 @@ const UserLayout: React.FC = () => {
             path: "/bank-accounts",
             icon: <Landmark size={20} />,
             label: "Saved Accounts",
+        },
+        {
+            path: "/referrals",
+            icon: <Share2 size={20} />,
+            label: "Referral Network",
         },
         {
             path: "/profile",
@@ -83,14 +89,16 @@ const UserLayout: React.FC = () => {
                 <div className="p-8 border-t border-white/5 bg-white/2">
                     <div className="flex items-center gap-3 mb-6 px-2">
                         <div className="w-10 h-10 rounded-xl bg-accent-blue/10 flex items-center justify-center text-accent-blue font-bold text-sm">
-                            {user?.email[0].toUpperCase()}
+                            {(user?.firstName?.[0] || user?.email?.[0] || "U").toUpperCase()}
                         </div>
                         <div className="flex-1 min-w-0">
                             <p className="text-sm font-bold text-white truncate">
-                                {user?.email}
+                                {user?.firstName && user?.lastName 
+                                    ? `${user.firstName} ${user.lastName}` 
+                                    : user?.email}
                             </p>
                             <p className="text-[10px] text-text-dim font-bold uppercase tracking-tighter">
-                                Verified Member
+                                {user?.firstName ? user.email : "Verified Member"}
                             </p>
                         </div>
                     </div>

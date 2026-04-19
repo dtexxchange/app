@@ -3,7 +3,7 @@ import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
-import { Role } from '@prisma/client';
+import { Role, UserStatus } from '@prisma/client';
 
 @Controller('users')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -13,6 +13,11 @@ export class UsersController {
   @Get('me')
   async getMe(@Request() req) {
     return this.usersService.getMe(req.user.userId);
+  }
+
+  @Get('me/referrals')
+  async getReferrals(@Request() req) {
+    return this.usersService.getReferrals(req.user.userId);
   }
 
   @Patch('me/passcode')
@@ -46,5 +51,11 @@ export class UsersController {
   @Roles(Role.ADMIN)
   async findOne(@Param('id') id: string) {
     return this.usersService.findOne(id);
+  }
+
+  @Patch(':id/status')
+  @Roles(Role.ADMIN)
+  async updateStatus(@Param('id') id: string, @Body('status') status: UserStatus) {
+    return this.usersService.updateStatus(id, status);
   }
 }

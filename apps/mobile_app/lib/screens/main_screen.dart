@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'home_screen.dart';
 import 'transactions_screen.dart';
+import 'referral_screen.dart';
 import 'profile_screen.dart';
 
 const _bgDark = Color(0xFF0A0B0D);
@@ -32,6 +33,7 @@ class _MainScreenState extends State<MainScreen> {
         onViewHistory: () => _onTabSelected(1),
       ),
       TransactionsScreen(key: _txKey),
+      const ReferralScreen(),
       const ProfileScreen(),
     ];
   }
@@ -77,6 +79,11 @@ class _MainScreenState extends State<MainScreen> {
               icon: Icons.receipt_long_outlined,
               activeIcon: Icons.receipt_long,
               label: 'History',
+            ),
+            _navDest(
+              icon: Icons.share_outlined,
+              activeIcon: Icons.share,
+              label: 'Referrals',
             ),
             _navDest(
               icon: Icons.person_outline,

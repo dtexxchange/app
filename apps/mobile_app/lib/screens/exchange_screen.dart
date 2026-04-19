@@ -85,7 +85,7 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
       return;
     }
     final inr = double.tryParse(val) ?? 0;
-    _amountCtrl.text = (inr / _conversionRate!).toStringAsFixed(6);
+    _amountCtrl.text = (inr / _conversionRate!).toStringAsFixed(2);
     setState(() {});
   }
 

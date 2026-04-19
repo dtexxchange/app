@@ -7,6 +7,7 @@ import {
     ShieldAlert,
 } from "lucide-react";
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import api from "../lib/api";
 
@@ -15,7 +16,10 @@ const Login: React.FC = () => {
     const [otp, setOtp] = useState("");
     const [step, setStep] = useState<"email" | "otp">("email");
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<{ title: string; message: string } | null>(null);
+    const [error, setError] = useState<{
+        title: string;
+        message: string;
+    } | null>(null);
     const { login } = useAuth();
 
     const handleSendOtp = async (e: React.FormEvent) => {
@@ -25,9 +29,11 @@ const Login: React.FC = () => {
             await api.post("/auth/send-otp", { email });
             setStep("otp");
         } catch (err: any) {
-            setError({ 
-                title: "Login Denied", 
-                message: err.response?.data?.message || "Access Denied: You must be pre-registered by an Admin before accessing the platform." 
+            setError({
+                title: "Login Denied",
+                message:
+                    err.response?.data?.message ||
+                    "Access Denied: You must be pre-registered by an Admin before accessing the platform.",
             });
         }
         setLoading(false);
@@ -40,7 +46,12 @@ const Login: React.FC = () => {
             await login(email, otp);
             window.location.href = "/";
         } catch (err: any) {
-            setError({ title: "Auth Failure", message: "The authorization code provided is invalid or has expired." });
+            setError({
+                title: "Auth Failure",
+                message:
+                    err.response?.data?.message ||
+                    "The authorization code provided is invalid or has expired.",
+            });
             setLoading(false);
         }
     };
@@ -114,6 +125,17 @@ const Login: React.FC = () => {
                                     </>
                                 )}
                             </button>
+                            <div className="text-center pt-2">
+                                <Link
+                                    to="/signup"
+                                    className="text-sm text-text-dim hover:text-white transition-colors"
+                                >
+                                    Don't have an account?{" "}
+                                    <span className="text-primary font-bold">
+                                        Signup here
+                                    </span>
+                                </Link>
+                            </div>
                         </motion.form>
                     ) : (
                         <motion.form
@@ -159,6 +181,17 @@ const Login: React.FC = () => {
                                 >
                                     Use a different email
                                 </button>
+                                <div className="text-center pt-4">
+                                    <Link
+                                        to="/signup"
+                                        className="text-sm text-text-dim hover:text-white transition-colors"
+                                    >
+                                        Don't have an account?{" "}
+                                        <span className="text-primary font-bold">
+                                            Signup here
+                                        </span>
+                                    </Link>
+                                </div>
                             </div>
                         </motion.form>
                     )}
@@ -187,8 +220,12 @@ const Login: React.FC = () => {
                                 <div className="w-16 h-16 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center mb-6">
                                     <ShieldAlert size={32} />
                                 </div>
-                                <h2 className="text-2xl font-outfit font-bold mb-2">{error.title}</h2>
-                                <p className="text-text-dim text-sm mb-8 leading-relaxed">{error.message}</p>
+                                <h2 className="text-2xl font-outfit font-bold mb-2">
+                                    {error.title}
+                                </h2>
+                                <p className="text-text-dim text-sm mb-8 leading-relaxed">
+                                    {error.message}
+                                </p>
                                 <button
                                     onClick={() => setError(null)}
                                     className="w-full py-3 bg-red-500 text-white rounded-xl font-bold hover:bg-red-600 transition-colors"

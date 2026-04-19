@@ -20,25 +20,47 @@ class ApiService {
         : 'http://10.0.2.2:3000'; // Special IP for Android Emulator to reach host
   }
 
-  final _storage = const FlutterSecureStorage();
+  final _storage = const FlutterSecureStorage(
+    aOptions: AndroidOptions(encryptedSharedPreferences: true),
+  );
 
   Future<void> saveToken(String token) async {
-    await _storage.write(key: 'token', value: token);
+    try {
+      await _storage.write(key: 'token', value: token);
+    } catch (e) {
+      debugPrint('Error saving token: $e');
+      await _storage.deleteAll();
+      await _storage.write(key: 'token', value: token);
+    }
   }
 
   Future<String?> getToken() async {
-    return await _storage.read(key: 'token');
+    try {
+      return await _storage.read(key: 'token');
+    } catch (e) {
+      debugPrint('Error reading token: $e');
+      await _storage.deleteAll();
+      return null;
+    }
   }
 
   Future<void> logout() async {
-    await _storage.delete(key: 'token');
+    try {
+      await _storage.delete(key: 'token');
+    } catch (e) {
+      await _storage.deleteAll();
+    }
   }
 
   Future<void> _handleResponse(http.Response response) async {
     if (response.statusCode == 401 ||
-        (response.statusCode == 404 && response.request?.url.path.endsWith('/users/me') == true)) {
+        (response.statusCode == 404 &&
+            response.request?.url.path.endsWith('/users/me') == true)) {
       await logout();
-      navigatorKey.currentState?.pushNamedAndRemoveUntil('/login', (route) => false);
+      navigatorKey.currentState?.pushNamedAndRemoveUntil(
+        '/login',
+        (route) => false,
+      );
     }
   }
 

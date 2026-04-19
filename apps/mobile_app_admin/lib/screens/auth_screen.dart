@@ -38,7 +38,8 @@ class _AuthScreenState extends State<AuthScreen> {
         _showError(body['message'] ?? 'Error sending OTP');
       }
     } catch (e) {
-      _showError('Connection error');
+      debugPrint('Admin connection error: $e');
+      _showError('Connection error: $e');
     }
     setState(() => _isLoading = false);
   }
@@ -71,7 +72,8 @@ class _AuthScreenState extends State<AuthScreen> {
         _showError('Invalid OTP');
       }
     } catch (e) {
-      _showError('Verification error');
+      debugPrint('Admin verification error: $e');
+      _showError('Verification error: $e');
     }
     setState(() => _isLoading = false);
   }

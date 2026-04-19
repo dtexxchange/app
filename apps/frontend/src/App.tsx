@@ -16,8 +16,10 @@ import UserOverview from "./pages/user/Overview";
 import History from "./pages/user/History";
 import BankAccounts from "./pages/user/BankAccounts";
 import Profile from "./pages/user/Profile";
+import Referrals from "./pages/user/Referrals";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
+import Signup from "./pages/Signup";
 import Wallets from "./pages/admin/Wallets";
 
 const ProtectedRoute: React.FC<{
@@ -44,6 +46,7 @@ const App: React.FC = () => {
             <AuthProvider>
                 <Routes>
                     <Route path="/login" element={<Login />} />
+                    <Route path="/signup" element={<Signup />} />
 
                     <Route
                         path="/"
@@ -86,6 +89,7 @@ const App: React.FC = () => {
                             path="/bank-accounts"
                             element={<BankAccounts />}
                         />
+                        <Route path="/referrals" element={<Referrals />} />
                         <Route path="/profile" element={<Profile />} />
                     </Route>
 

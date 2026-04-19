@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import api from "../../lib/api";
+import { formatAmount } from "../../lib/formatters";
 
 const ExchangeRate: React.FC = () => {
     const [rate, setRate] = useState<string>("");
@@ -194,7 +195,7 @@ const ExchangeRate: React.FC = () => {
                                         </div>
                                         <div>
                                             <div className="text-xl font-outfit font-bold text-white">
-                                                ₹{h.rate.toFixed(2)}
+                                                ₹{formatAmount(h.rate)}
                                             </div>
                                             <div className="text-[10px] text-text-dim mt-1 font-bold uppercase tracking-tighter">
                                                 by {h.adminEmail}

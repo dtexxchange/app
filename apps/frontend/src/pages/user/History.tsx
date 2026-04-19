@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import React, { useCallback, useEffect, useState } from "react";
 import api from "../../lib/api";
+import { formatAmount } from "../../lib/formatters";
 
 const History: React.FC = () => {
     const [transactions, setTransactions] = useState<any[]>([]);
@@ -133,7 +134,7 @@ const History: React.FC = () => {
                                     </td>
                                     <td className="px-10 py-6">
                                         <div className="text-lg font-outfit font-bold text-white">
-                                            {tx.amount.toLocaleString()}
+                                            {formatAmount(tx.amount)}
                                             <span className="text-xs text-text-dim ml-1.5 font-medium">
                                                 USDT
                                             </span>
@@ -218,7 +219,7 @@ const History: React.FC = () => {
                                             Immutable Ledger Record
                                         </p>
                                         <h2 className="text-4xl font-outfit font-bold text-white">
-                                            {selectedTx.amount.toLocaleString()}{" "}
+                                            {formatAmount(selectedTx.amount)}{" "}
                                             <span className="text-text-dim font-normal">
                                                 USDT
                                             </span>
@@ -266,10 +267,10 @@ const History: React.FC = () => {
                                                     </p>
                                                     <p className="text-2xl font-outfit font-bold text-primary">
                                                         ₹
-                                                        {(
+                                                        {formatAmount(
                                                             selectedTx.amount *
                                                             selectedTx.conversionRate
-                                                        ).toLocaleString()}
+                                                        )}
                                                     </p>
                                                 </div>
                                             </div>

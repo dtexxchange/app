@@ -17,6 +17,7 @@ import {
 import React, { useCallback, useEffect, useState } from "react";
 import api from "../../lib/api";
 import { ENABLE_E2EE, decryptData, importPrivateKey } from "../../lib/crypto";
+import { formatAmount } from "../../lib/formatters";
 
 const Overview: React.FC = () => {
     const [users, setUsers] = useState<any[]>([]);
@@ -41,11 +42,12 @@ const Overview: React.FC = () => {
             );
             let filtered = data;
             if (txFilter.search) {
-                filtered = data.filter((t: any) =>
-                    t.user?.email
-                        .toLowerCase()
-                        .includes(txFilter.search.toLowerCase()),
-                );
+                const searchLower = txFilter.search.toLowerCase();
+                filtered = data.filter((t: any) => {
+                    const emailMatch = t.user?.email?.toLowerCase().includes(searchLower);
+                    const nameMatch = `${t.user?.firstName || ''} ${t.user?.lastName || ''}`.toLowerCase().includes(searchLower);
+                    return emailMatch || nameMatch;
+                });
             }
             setTransactions(filtered);
         } catch (e) {
@@ -198,7 +200,7 @@ const Overview: React.FC = () => {
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-text-dim w-4 h-4" />
                             <input
                                 type="text"
-                                placeholder="Search by user email..."
+                                placeholder="Search by user name or email..."
                                 className="w-full bg-white/5 border border-white/10 rounded-xl pl-11 pr-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 focus:outline-none focus:border-primary text-white transition-all"
                                 value={txFilter.search}
                                 onChange={(e) =>
@@ -248,7 +250,9 @@ const Overview: React.FC = () => {
                                 >
                                     <td className="px-8 py-6">
                                         <div className="font-bold text-white text-base mb-1">
-                                            {tx.user?.email}
+                                            {tx.user?.firstName || tx.user?.lastName 
+                                                ? `${tx.user.firstName || ''} ${tx.user.lastName || ''}`.trim() 
+                                                : tx.user?.email}
                                         </div>
                                         <div className="text-[10px] text-text-dim font-mono tracking-tighter">
                                             ID: {tx.id.toUpperCase()}
@@ -274,7 +278,7 @@ const Overview: React.FC = () => {
                                     </td>
                                     <td className="px-8 py-6">
                                         <div className="text-lg font-outfit font-bold text-white">
-                                            {tx.amount.toLocaleString()}
+                                            {formatAmount(tx.amount)}
                                             <span className="text-xs text-primary ml-1.5 font-bold tracking-widest">
                                                 USDT
                                             </span>
@@ -364,7 +368,7 @@ const Overview: React.FC = () => {
                                                 Transaction Manifest
                                             </p>
                                             <h2 className="text-4xl font-outfit font-bold text-white tracking-tight">
-                                                {selectedTx.amount.toLocaleString()}{" "}
+                                                {formatAmount(selectedTx.amount)}{" "}
                                                 <span className="text-text-dim font-normal">
                                                     USDT
                                                 </span>

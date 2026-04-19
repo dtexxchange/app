@@ -11,9 +11,16 @@ enum Role {
   USER
 }
 
+enum UserStatus {
+  PENDING_APPROVAL
+  APPROVED
+  REJECTED
+}
+
 enum TransactionType {
   DEPOSIT
   EXCHANGE
+  REFERRAL_COMMISSION
 }
 
 enum TransactionStatus {
@@ -25,14 +32,22 @@ enum TransactionStatus {
 model User {
   id            String         @id @default(uuid())
   email         String         @unique
+  firstName     String?
+  lastName      String?
   role          Role           @default(USER)
+  status        UserStatus     @default(PENDING_APPROVAL)
   balance       Float          @default(0)
   passcode      String?        // 6 digit passcode for authorization
+  referralCode  String?        @unique
+  referredBy    User?          @relation("UserReferrals", fields: [referredById], references: [id])
+  referredById  String?
+  referrals     User[]         @relation("UserReferrals")
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   transactions  Transaction[]
   otps          Otp[]
   bankAccounts  BankAccount[]
+  walletAssignment WalletAssignment?
 }
 
 model Transaction {
@@ -86,11 +101,13 @@ model GlobalSettings {
 
 model GlobalWallet {
   id        String   @id @default(uuid())
+  name      String?
   address   String   @unique
   network   String   @default("TRC20")
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  assignments WalletAssignment[]
 }
 
 model ConversionRateHistory {
@@ -125,4 +142,16 @@ model BankAccountLog {
   createdAt     DateTime    @default(now())
 
   @@index([bankAccountId])
+}
+
+model WalletAssignment {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id])
+  walletId  String
+  wallet    GlobalWallet @relation(fields: [walletId], references: [id])
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }

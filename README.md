@@ -34,7 +34,8 @@ A high-performance, secure banking simulation platform allowing users to manage 
 cd apps/backend
 npm install
 # Update .env with your DATABASE_URL and RESEND_API_KEY
-npx prisma db push
+npx prisma generate
+npx prisma db push # Sync schema to database
 npm run start:dev
 ```
 

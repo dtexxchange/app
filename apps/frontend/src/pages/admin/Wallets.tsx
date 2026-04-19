@@ -4,6 +4,7 @@ import { Wallet, Plus, Trash2, Power, Copy, Check } from "lucide-react";
 
 interface GlobalWallet {
     id: string;
+    name?: string;
     address: string;
     network: string;
     isActive: boolean;
@@ -12,6 +13,7 @@ interface GlobalWallet {
 const Wallets: React.FC = () => {
     const [wallets, setWallets] = useState<GlobalWallet[]>([]);
     const [address, setAddress] = useState("");
+    const [name, setName] = useState("");
     const [network, setNetwork] = useState("TRC20");
     const [isLoading, setIsLoading] = useState(false);
     const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -33,8 +35,9 @@ const Wallets: React.FC = () => {
         if (!address) return;
         setIsLoading(true);
         try {
-            await api.post("/settings/admin/wallets", { address, network });
+            await api.post("/settings/admin/wallets", { address, network, name });
             setAddress("");
+            setName("");
             fetchWallets();
         } catch (e) {
             console.error(e);
@@ -85,8 +88,15 @@ const Wallets: React.FC = () => {
                 <div className="flex gap-4 items-center flex-wrap">
                     <input
                         type="text"
+                        placeholder="Wallet Label (e.g. Binance Main)"
+                        className="flex-1 min-w-[200px] bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm font-bold text-white focus:outline-none focus:border-accent-blue transition-all"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                    />
+                    <input
+                        type="text"
                         placeholder="Wallet Address"
-                        className="flex-1 min-w-[250px] bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm font-bold text-white focus:outline-none focus:border-accent-blue transition-all"
+                        className="flex-[2] min-w-[300px] bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm font-bold text-white focus:outline-none focus:border-accent-blue transition-all"
                         value={address}
                         onChange={(e) => setAddress(e.target.value)}
                     />
@@ -137,7 +147,10 @@ const Wallets: React.FC = () => {
                                                 <span className="text-[10px] bg-red-500/20 text-red-500 px-2 py-1 rounded font-bold uppercase tracking-widest">Disabled</span>
                                             )}
                                         </div>
-                                        <p className="text-white font-mono text-sm sm:text-base mt-2 break-all">{wallet.address}</p>
+                                        {wallet.name && (
+                                            <p className="text-primary text-xs font-bold uppercase tracking-widest mt-2">{wallet.name}</p>
+                                        )}
+                                        <p className="text-white font-mono text-sm sm:text-base mt-1 break-all">{wallet.address}</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-3 w-full md:w-auto justify-end">
