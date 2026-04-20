@@ -2,10 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:qr_flutter/qr_flutter.dart';
 
 import '../main.dart' show routeObserver;
 import '../services/api_service.dart';
@@ -264,105 +262,7 @@ class GhostButton extends StatelessWidget {
   }
 }
 
-class LiveTimerWidget extends StatefulWidget {
-  final DateTime expiresAt;
-  final VoidCallback onExpired;
-  const LiveTimerWidget({
-    super.key,
-    required this.expiresAt,
-    required this.onExpired,
-  });
-
-  @override
-  State<LiveTimerWidget> createState() => _LiveTimerWidgetState();
-}
-
-class _LiveTimerWidgetState extends State<LiveTimerWidget> {
-  Timer? _timer;
-  late int _timeLeft;
-
-  @override
-  void initState() {
-    super.initState();
-    _calculateTimeLeft();
-    _startTimer();
-  }
-
-  @override
-  void didUpdateWidget(LiveTimerWidget oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.expiresAt != widget.expiresAt) {
-      _calculateTimeLeft();
-    }
-  }
-
-  void _calculateTimeLeft() {
-    final now = DateTime.now();
-    _timeLeft = widget.expiresAt.difference(now).inSeconds;
-    if (_timeLeft < 0) _timeLeft = 0;
-  }
-
-  void _startTimer() {
-    _timer?.cancel();
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (mounted) {
-        setState(() {
-          _calculateTimeLeft();
-          if (_timeLeft <= 0) {
-            _timer?.cancel();
-            widget.onExpired();
-          }
-        });
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
-  }
-
-  String _formatTime(int totalSeconds) {
-    int minutes = totalSeconds ~/ 60;
-    int seconds = totalSeconds % 60;
-    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
-  }
-
-  Color _timerColor() {
-    if (_timeLeft < 60) return Colors.redAccent;
-    if (_timeLeft < 300) return Colors.orangeAccent;
-    return const Color(0xFF00FF9D);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final color = _timerColor();
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withOpacity(0.2)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.timer_outlined, color: color, size: 14),
-          const SizedBox(width: 6),
-          Text(
-            'REFRESHING IN: ${_formatTime(_timeLeft)}',
-            style: GoogleFonts.inter(
-              color: color,
-              fontSize: 10,
-              letterSpacing: 1,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
+// ─── Shared Sheet Components ─────────────────────────────────────────────────
 
 class HomeScreen extends StatefulWidget {
   final VoidCallback? onViewHistory;
@@ -380,9 +280,6 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
   bool _hasPasscode = true;
   final _api = ApiService();
 
-  // QR Logic
-  List<dynamic> _wallets = [];
-  String _qrSeed = "";
   double? _conversionRate;
 
   @override
@@ -409,44 +306,6 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
     super.dispose();
   }
 
-  void _generateQrData() {
-    // Add a timestamp to regenerate the QR code visually even if ID is same
-    setState(() {
-      _qrSeed = '?t=${DateTime.now().millisecondsSinceEpoch}';
-    });
-  }
-
-  Future<void> _fetchWallets() async {
-    try {
-      final res = await _api.getRequest('/settings/wallets');
-      if (res.statusCode == 200) {
-        final data = jsonDecode(res.body);
-        setState(() {
-          _wallets = data;
-          _generateQrData();
-        });
-      }
-    } catch (e) {
-      debugPrint(e.toString());
-    }
-  }
-
-  Future<void> _fetchConversionRate() async {
-    try {
-      final res = await _api.getRequest('/settings/conversion-rate');
-      if (res.statusCode == 200) {
-        final data = jsonDecode(res.body);
-        setState(() {
-          _conversionRate = data['usdtToInrRate'] != null
-              ? (data['usdtToInrRate'] as num).toDouble()
-              : null;
-        });
-      }
-    } catch (e) {
-      debugPrint(e.toString());
-    }
-  }
-
   /// Public so MainScreen can trigger a refresh via GlobalKey.
   Future<void> fetchData() => _fetchData();
 
@@ -454,8 +313,16 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
     try {
       // Parallel fetch for speed
       await Future.wait([
-        _fetchWallets(),
-        _fetchConversionRate(),
+        _api.getRequest('/settings/conversion-rate').then((rateRes) {
+          if (rateRes.statusCode == 200) {
+            final data = jsonDecode(rateRes.body);
+            setState(() {
+              _conversionRate = data['usdtToInrRate'] != null
+                  ? (data['usdtToInrRate'] as num).toDouble()
+                  : null;
+            });
+          }
+        }),
         _api.getRequest('/users/me').then((userRes) {
           if (userRes.statusCode == 200) {
             final data = jsonDecode(userRes.body);
@@ -474,7 +341,7 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
           }
         }),
       ]);
-      
+
       setState(() => _isLoading = false);
     } catch (e) {
       debugPrint(e.toString());
@@ -482,167 +349,7 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
     }
   }
 
-  // ─── Deposit Sheet ──────────────────────────────────────────────────────────
-  void _showDepositSheet() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => CustomBottomSheet(
-        title: 'Add Money',
-        icon: Icons.arrow_downward,
-        iconColor: _primary,
-        child: StatefulBuilder(
-          builder: (context, setSheetState) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Rate Information
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  margin: const EdgeInsets.only(bottom: 20),
-                  decoration: BoxDecoration(
-                    color: _primary.withOpacity(0.05),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: _primary.withOpacity(0.1)),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.info_outline, color: _primary, size: 18),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          _conversionRate != null
-                              ? 'Current Rate: 1 USDT = ₹${_conversionRate!.toStringAsFixed(2)}'
-                              : 'Rate not yet configured by admin.',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                if (_wallets.isEmpty)
-                  Container(
-                    padding: const EdgeInsets.all(24),
-                    child: const Text(
-                      'No deposit gateways available currently',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: _textDim),
-                    ),
-                  ),
-
-                ..._wallets.map((wallet) {
-                  final expiresAt = wallet['expiresAt'] != null
-                      ? DateTime.parse(wallet['expiresAt'])
-                      : DateTime.now().add(const Duration(minutes: 30));
-
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 16),
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      color: _bgDark,
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(color: _border),
-                    ),
-                    child: Column(
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              (wallet['name'] != null &&
-                                      wallet['name'].toString().isNotEmpty)
-                                  ? wallet['name'].toString().toUpperCase()
-                                  : '${wallet['network']} GATEWAY',
-                              style: GoogleFonts.inter(
-                                color: _primary,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 1.2,
-                              ),
-                            ),
-                            GestureDetector(
-                              onTap: () {
-                                Clipboard.setData(
-                                  ClipboardData(text: wallet['address']),
-                                );
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      'Address copied to clipboard',
-                                    ),
-                                  ),
-                                );
-                              },
-                              child: Row(
-                                children: [
-                                  const Icon(
-                                    Icons.copy,
-                                    color: _primary,
-                                    size: 12,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    'COPY',
-                                    style: GoogleFonts.inter(
-                                      color: _primary,
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 20),
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: QrImageView(
-                            data: '${wallet['address']}$_qrSeed',
-                            version: QrVersions.auto,
-                            size: 140.0,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          wallet['address'],
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.outfit(
-                            color: Colors.white,
-                            fontSize: 13,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        LiveTimerWidget(
-                          expiresAt: expiresAt,
-                          onExpired: () async {
-                            await _fetchWallets();
-                            if (mounted) {
-                              setSheetState(() {}); // Refresh sheet content
-                            }
-                          },
-                        ),
-                      ],
-                    ),
-                  );
-                }),
-              ],
-            );
-          },
-        ),
-      ),
-    );
-  }
+  // ─── Build ──────────────────────────────────────────────────────────────────
 
   // Removed _showExchangeSheet - Use dedicated /exchange screen
 
@@ -965,7 +672,7 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
                     child: PrimaryButton(
                       label: 'Add Money',
                       icon: Icons.add_circle_outline,
-                      onPressed: _showDepositSheet,
+                      onPressed: () => Navigator.pushNamed(context, '/deposit'),
                     ),
                   ),
                   SizedBox(width: constraints.maxWidth * 0.04),

@@ -8,6 +8,7 @@ import 'screens/passcode_screen.dart';
 import 'screens/exchange_screen.dart';
 import 'screens/exchange_passcode_screen.dart';
 import 'screens/success_screen.dart';
+import 'screens/deposit_screen.dart';
 import 'services/api_service.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -48,6 +49,7 @@ class MainApp extends StatelessWidget {
         '/exchange': (context) => const ExchangeScreen(),
         '/exchange-passcode': (context) => const ExchangePasscodeScreen(),
         '/success': (context) => const SuccessScreen(),
+        '/deposit': (context) => const DepositScreen(),
       },
     );
   }
