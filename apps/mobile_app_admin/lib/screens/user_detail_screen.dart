@@ -8,14 +8,6 @@ import 'package:intl/intl.dart';
 import '../services/api_service.dart';
 import '../widgets/transaction_detail_sheet.dart';
 
-const _bgDark = Color(0xFF0A0B0D);
-const _bgCard = Color(0xFF15171C);
-const _primary = Color(0xFF00FF9D);
-const _blue = Color(0xFF3B82F6);
-const _textDim = Color(0xFF94A3B8);
-const _border = Color(0x0DFFFFFF);
-const _danger = Color(0xFFF87171);
-
 class LiveTimerWidget extends StatefulWidget {
   final DateTime expiresAt;
   const LiveTimerWidget({super.key, required this.expiresAt});
@@ -25,6 +17,10 @@ class LiveTimerWidget extends StatefulWidget {
 }
 
 class _LiveTimerWidgetState extends State<LiveTimerWidget> {
+  // ─── Design Tokens (Dynamic) ──────────────────────────────────────────────────
+  Color get _primary => Theme.of(context).primaryColor;
+  Color get _danger => const Color(0xFFF87171);
+
   Timer? _timer;
   late int _timeLeft;
 
@@ -103,6 +99,14 @@ class UserDetailScreen extends StatefulWidget {
 }
 
 class _UserDetailScreenState extends State<UserDetailScreen> {
+  // ─── Design Tokens (Dynamic) ──────────────────────────────────────────────────
+  Color get _bgDark => Theme.of(context).scaffoldBackgroundColor;
+  Color get _bgCard => Theme.of(context).cardColor;
+  Color get _primary => Theme.of(context).primaryColor;
+  Color get _textDim => Theme.of(context).colorScheme.onSurfaceVariant;
+  Color get _border => Theme.of(context).dividerColor;
+  static const Color _blue = Color(0xFF3B82F6);
+  static const Color _danger = Color(0xFFF87171);
   Map<String, dynamic>? _user;
   bool _isLoading = true;
   final _api = ApiService();
@@ -149,11 +153,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
               elevation: 0,
               titleSpacing: 0,
               leading: IconButton(
-                icon: const Icon(
-                  Icons.arrow_back_ios_new,
-                  color: Colors.white,
-                  size: 18,
-                ),
+                icon: const Icon(Icons.arrow_back_ios_new, size: 18),
                 onPressed: () => Navigator.pop(context),
               ),
               title: Text(
@@ -167,7 +167,6 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                 style: GoogleFonts.outfit(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
                 ),
                 overflow: TextOverflow.ellipsis,
               ),
@@ -177,7 +176,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
               ),
             ),
             if (_isLoading)
-              const SliverFillRemaining(
+              SliverFillRemaining(
                 child: Center(
                   child: CircularProgressIndicator(color: _primary),
                 ),
@@ -193,7 +192,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                       color: Colors.white.withOpacity(0.1),
                     ),
                     const SizedBox(height: 16),
-                    const Text(
+                    Text(
                       'Failed to load user',
                       style: TextStyle(color: _textDim),
                     ),
@@ -290,7 +289,6 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                             .trim()
                       : user['email'],
                   style: TextStyle(
-                    color: Colors.white,
                     fontSize: 16 * widthScale,
                     fontWeight: FontWeight.w600,
                   ),
@@ -336,7 +334,6 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                 child: Text(
                   NumberFormat('#,##0.00').format(user['balance'] ?? 0),
                   style: GoogleFonts.outfit(
-                    color: Colors.white,
                     fontSize: 22 * widthScale,
                     fontWeight: FontWeight.bold,
                   ),
@@ -392,7 +389,9 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
             icon: Icons.badge_outlined,
             label: 'Role',
             value: user['role'],
-            valueColor: user['role'] == 'ADMIN' ? _primary : Colors.white,
+            valueColor: user['role'] == 'ADMIN'
+                ? _primary
+                : Theme.of(context).colorScheme.onSurface,
             widthScale: widthScale,
           ),
           Divider(height: 1, color: _border),
@@ -505,7 +504,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton.icon(
-        icon: const Icon(Icons.add, size: 18),
+        icon: Icon(Icons.add, size: 18),
         onPressed: _showManualDepositModal,
         style: ElevatedButton.styleFrom(
           backgroundColor: _primary.withOpacity(0.1),
@@ -517,7 +516,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
             side: BorderSide(color: _primary.withOpacity(0.3)),
           ),
         ),
-        label: const Text(
+        label: Text(
           'Manual USDT Deposit',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
@@ -547,20 +546,19 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
           children: [
             Row(
               children: [
-                const Icon(Icons.account_balance_wallet, color: _primary),
+                Icon(Icons.account_balance_wallet, color: _primary),
                 const SizedBox(width: 12),
                 Text(
                   'Credit Account',
                   style: GoogleFonts.outfit(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'Manually credit USDT balance for this user. This creates a COMPLETED deposit logging.',
               style: TextStyle(color: _textDim, fontSize: 12),
             ),
@@ -570,23 +568,19 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
               keyboardType: const TextInputType.numberWithOptions(
                 decimal: true,
               ),
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               decoration: InputDecoration(
                 labelText: 'Amount (USDT)',
-                labelStyle: const TextStyle(color: _textDim, fontSize: 14),
+                labelStyle: TextStyle(color: _textDim, fontSize: 14),
                 filled: true,
                 fillColor: _bgDark,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: _border),
+                  borderSide: BorderSide(color: _border),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: _primary),
+                  borderSide: BorderSide(color: _primary),
                 ),
               ),
             ),
@@ -602,16 +596,14 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                   });
                   if (res.statusCode == 200 || res.statusCode == 201) {
                     Navigator.pop(ctx);
-                    if (mounted)
+                    if (mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'Account Credited',
-                            style: TextStyle(color: Colors.white),
-                          ),
+                        SnackBar(
+                          content: const Text('Account Credited'),
                           backgroundColor: _primary,
                         ),
                       );
+                    }
                     _fetchUser();
                   }
                 } catch (e) {
@@ -653,28 +645,29 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
               style: GoogleFonts.outfit(
                 fontSize: 20 * widthScale,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
               ),
             ),
           ],
         ),
         SizedBox(height: 16 * widthScale),
         if (txs.isEmpty)
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 40),
-            child: Column(
-              children: [
-                Icon(
-                  Icons.show_chart,
-                  size: 44,
-                  color: Colors.white.withOpacity(0.07),
-                ),
-                const SizedBox(height: 14),
-                const Text(
-                  'No transactions yet',
-                  style: TextStyle(color: _textDim, fontSize: 14),
-                ),
-              ],
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 48),
+              child: Column(
+                children: [
+                  Icon(
+                    Icons.show_chart,
+                    size: 48,
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No transactions found',
+                    style: TextStyle(color: _textDim, fontSize: 13),
+                  ),
+                ],
+              ),
             ),
           )
         else
@@ -718,13 +711,13 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
               decoration: BoxDecoration(
                 color: isDeposit
                     ? _primary.withOpacity(0.10)
-                    : Colors.white.withOpacity(0.05),
+                    : _blue.withOpacity(0.10),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
                 isDeposit ? Icons.arrow_downward : Icons.arrow_upward,
                 size: 18,
-                color: isDeposit ? _primary : Colors.white,
+                color: isDeposit ? _primary : _blue,
               ),
             ),
             const SizedBox(width: 14),
@@ -736,7 +729,6 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                     tx['type'].toString()[0] +
                         tx['type'].toString().substring(1).toLowerCase(),
                     style: const TextStyle(
-                      color: Colors.white,
                       fontWeight: FontWeight.w600,
                       fontSize: 15,
                     ),
@@ -746,7 +738,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                     DateFormat(
                       'MMM dd, yyyy • hh:mm a',
                     ).format(DateTime.parse(tx['createdAt'])),
-                    style: const TextStyle(color: _textDim, fontSize: 11),
+                    style: TextStyle(color: _textDim, fontSize: 11),
                   ),
                 ],
               ),
@@ -757,7 +749,9 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                 Text(
                   '${isDeposit ? '+' : '-'}${NumberFormat('#,##0.00').format(tx['amount'])} USDT',
                   style: GoogleFonts.outfit(
-                    color: isDeposit ? _primary : Colors.white,
+                    color: isDeposit
+                        ? _primary
+                        : Theme.of(context).colorScheme.onSurface,
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
                   ),
@@ -820,16 +814,18 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
       });
       if (res.statusCode == 200 || res.statusCode == 201) {
         _fetchUser();
-        if (mounted)
+        if (mounted) {
           ScaffoldMessenger.of(
             context,
           ).showSnackBar(SnackBar(content: Text('Status updated to $status')));
+        }
       }
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Failed to update status')),
         );
+      }
     }
   }
 
@@ -853,7 +849,6 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
               style: GoogleFonts.outfit(
                 fontSize: 20 * widthScale,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
               ),
             ),
           ],
@@ -889,7 +884,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
+                    Text(
                       'EXPIRES IN',
                       style: TextStyle(
                         color: _textDim,
@@ -927,6 +922,8 @@ class _InfoRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final _textDim = Theme.of(context).colorScheme.onSurfaceVariant;
+
     return Padding(
       padding: EdgeInsets.symmetric(
         horizontal: 20 * widthScale,
@@ -947,7 +944,7 @@ class _InfoRow extends StatelessWidget {
               value,
               textAlign: TextAlign.end,
               style: TextStyle(
-                color: valueColor ?? Colors.white,
+                color: valueColor ?? Theme.of(context).colorScheme.onSurface,
                 fontSize: 13 * widthScale,
                 fontWeight: FontWeight.w600,
               ),
@@ -967,6 +964,7 @@ class _RoleBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final _primary = Theme.of(context).primaryColor;
     final isAdmin = role == 'ADMIN';
     return Container(
       padding: EdgeInsets.symmetric(
@@ -974,16 +972,22 @@ class _RoleBadge extends StatelessWidget {
         vertical: 3 * widthScale,
       ),
       decoration: BoxDecoration(
-        color: (isAdmin ? _primary : Colors.white).withOpacity(0.08),
+        color: (isAdmin
+                ? _primary
+                : Theme.of(context).colorScheme.onSurface)
+            .withOpacity(0.08),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: (isAdmin ? _primary : Colors.white).withOpacity(0.20),
+          color: (isAdmin
+                  ? _primary
+                  : Theme.of(context).colorScheme.onSurface)
+              .withOpacity(0.20),
         ),
       ),
       child: Text(
         role,
         style: TextStyle(
-          color: isAdmin ? _primary : Colors.white,
+          color: isAdmin ? _primary : Theme.of(context).colorScheme.onSurface,
           fontSize: 10 * widthScale,
           fontWeight: FontWeight.bold,
           letterSpacing: 1,
@@ -1007,13 +1011,14 @@ class _DetailRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final _textDim = Theme.of(context).colorScheme.onSurfaceVariant;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
           label,
           style: TextStyle(
-            color: const Color(0xFF94A3B8), // _textDim
+            color: _textDim,
             fontSize: 10 * widthScale,
             fontWeight: FontWeight.bold,
             letterSpacing: 0.5,
@@ -1025,7 +1030,7 @@ class _DetailRow extends StatelessWidget {
             value,
             textAlign: TextAlign.end,
             style: TextStyle(
-              color: valueColor ?? Colors.white,
+              color: valueColor ?? Theme.of(context).colorScheme.onSurface,
               fontSize: 13 * widthScale,
               fontWeight: FontWeight.bold,
             ),

@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+
 import 'screens/auth_screen.dart';
 import 'screens/dashboard_screen.dart';
 import 'services/api_service.dart';
+import 'services/theme_service.dart';
+import 'theme/app_theme.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+final ThemeService themeService = ThemeService();
 
 void main() {
   runApp(const AdminApp());
@@ -15,25 +18,23 @@ class AdminApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      navigatorKey: navigatorKey,
-      title: 'USDT Admin',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(0xFF0A0B0D),
-        primaryColor: const Color(0xFF00FF9D),
-        textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme),
-        colorScheme: const ColorScheme.dark(
-          primary: Color(0xFF00FF9D),
-          secondary: Color(0xFF3B82F6),
-        ),
-      ),
-      initialRoute: '/',
-      routes: {
-        '/': (context) => const InitialRouteHandler(),
-        '/login': (context) => const AuthScreen(),
-        '/dashboard': (context) => const DashboardScreen(),
+    return ListenableBuilder(
+      listenable: themeService,
+      builder: (context, _) {
+        return MaterialApp(
+          navigatorKey: navigatorKey,
+          title: 'USDT Admin',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.lightTheme(),
+          darkTheme: AppTheme.darkTheme(),
+          themeMode: themeService.themeMode,
+          initialRoute: '/',
+          routes: {
+            '/': (context) => const InitialRouteHandler(),
+            '/login': (context) => const AuthScreen(),
+            '/dashboard': (context) => const DashboardScreen(),
+          },
+        );
       },
     );
   }

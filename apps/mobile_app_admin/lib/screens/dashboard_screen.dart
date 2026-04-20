@@ -5,20 +5,12 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
+import '../main.dart' show themeService;
 import '../services/api_service.dart';
 import '../widgets/transaction_detail_sheet.dart';
 import 'assignments_screen.dart';
 import 'user_detail_screen.dart';
 import 'wallets_screen.dart';
-
-// ─── Design Tokens ────────────────────────────────────────────────────────────
-const _bgDark = Color(0xFF0A0B0D);
-const _bgCard = Color(0xFF15171C);
-const _primary = Color(0xFF00FF9D);
-const _blue = Color(0xFF3B82F6);
-const _textDim = Color(0xFF94A3B8);
-const _border = Color(0x0DFFFFFF);
-const _danger = Color(0xFFF87171);
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -28,6 +20,15 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
+  // ─── Design Tokens (Dynamic) ──────────────────────────────────────────────────
+  Color get _bgDark => Theme.of(context).scaffoldBackgroundColor;
+  Color get _bgCard => Theme.of(context).cardColor;
+  Color get _primary => Theme.of(context).primaryColor;
+  Color get _textDim => Theme.of(context).colorScheme.onSurfaceVariant;
+  Color get _border => Theme.of(context).dividerColor;
+  static const Color _blue = Color(0xFF3B82F6);
+  static const Color _danger = Color(0xFFF87171);
+
   final _api = ApiService();
   int _tabIndex = 0;
 
@@ -182,19 +183,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(
           title,
-          style: GoogleFonts.outfit(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
+          style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
         ),
-        content: Text(
-          message,
-          style: const TextStyle(color: _textDim, fontSize: 14),
-        ),
+        content: Text(message, style: TextStyle(color: _textDim, fontSize: 14)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel', style: TextStyle(color: _textDim)),
+            child: Text('Cancel', style: TextStyle(color: _textDim)),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
@@ -240,9 +235,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           _buildTopBar(widthScale),
           Expanded(
             child: _isLoading
-                ? const Center(
-                    child: CircularProgressIndicator(color: _primary),
-                  )
+                ? Center(child: CircularProgressIndicator(color: _primary))
                 : RefreshIndicator(
                     onRefresh: _fetchAll,
                     color: _primary,
@@ -335,13 +328,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   style: GoogleFonts.outfit(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
                   ),
                   children: [
                     const TextSpan(text: 'USDT'),
                     TextSpan(
                       text: '.EX',
-                      style: TextStyle(color: Colors.white.withOpacity(0.4)),
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+                      ),
                     ),
                   ],
                 ),
@@ -453,10 +447,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           style: GoogleFonts.outfit(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white,
                           ),
                         ),
-                        const Text(
+                        Text(
                           '1 USDT = X INR',
                           style: TextStyle(color: _textDim, fontSize: 13),
                         ),
@@ -490,10 +483,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
                 ),
-                style: const TextStyle(color: Colors.white, fontSize: 14),
+                style: const TextStyle(fontSize: 14),
                 decoration: InputDecoration(
                   labelText: 'Current USDT/INR Rate',
-                  labelStyle: const TextStyle(color: _textDim, fontSize: 12),
+                  labelStyle: TextStyle(color: _textDim, fontSize: 12),
                   hintText: 'e.g. 88.5',
                   filled: true,
                   fillColor: _bgDark,
@@ -524,9 +517,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
               if (_rateHistory.isNotEmpty) ...[
                 const SizedBox(height: 24),
-                const Divider(color: _border),
+                Divider(color: _border),
                 const SizedBox(height: 16),
-                const Text(
+                Text(
                   'RECENT CHANGES',
                   style: TextStyle(
                     color: _textDim,
@@ -547,7 +540,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             Text(
                               '₹${(h['rate'] as num).toStringAsFixed(2)}',
                               style: const TextStyle(
-                                color: Colors.white,
                                 fontSize: 13,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -556,10 +548,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               DateFormat(
                                 'MMM dd, hh:mm a',
                               ).format(DateTime.parse(h['createdAt'])),
-                              style: const TextStyle(
-                                color: _textDim,
-                                fontSize: 11,
-                              ),
+                              style: TextStyle(color: _textDim, fontSize: 11),
                             ),
                           ],
                         ),
@@ -607,7 +596,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       color: _primary.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(14),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.account_balance_wallet_outlined,
                       color: _primary,
                     ),
@@ -622,10 +611,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           style: GoogleFonts.outfit(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white,
                           ),
                         ),
-                        const Text(
+                        Text(
                           'Manage active deposit addresses',
                           style: TextStyle(color: _textDim, fontSize: 13),
                         ),
@@ -693,10 +681,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           style: GoogleFonts.outfit(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white,
                           ),
                         ),
-                        const Text(
+                        Text(
                           'See who currently has a wallet assigned',
                           style: TextStyle(color: _textDim, fontSize: 13),
                         ),
@@ -735,11 +722,72 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ),
 
+        const SizedBox(height: 16),
+        Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Theme.of(context).dividerColor),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).primaryColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Icon(
+                      Icons.palette_outlined,
+                      color: Theme.of(context).primaryColor,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Appearance',
+                          style: GoogleFonts.outfit(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                        ),
+                        Text(
+                          'Toggle between Light and Dark mode',
+                          style: TextStyle(
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Switch(
+                    value: Theme.of(context).brightness == Brightness.dark,
+                    activeColor: Theme.of(context).primaryColor,
+                    onChanged: (v) => themeService.toggleTheme(),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+
         const SizedBox(height: 32),
         Text(
           'SECURITY & INFRASTRUCTURE',
           style: GoogleFonts.inter(
-            color: _textDim,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
             fontSize: 10,
             fontWeight: FontWeight.bold,
             letterSpacing: 2,
@@ -791,14 +839,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           style: GoogleFonts.outfit(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white,
                           ),
                         ),
                         Text(
                           _hasMobileKey
                               ? 'E2EE Decryption Enabled'
                               : 'Private Key Missing',
-                          style: const TextStyle(color: _textDim, fontSize: 13),
+                          style: TextStyle(color: _textDim, fontSize: 13),
                         ),
                       ],
                     ),
@@ -806,7 +853,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ],
               ),
               const SizedBox(height: 24),
-              const Text(
+              Text(
                 'End-to-End Encryption ensures exchange details are only visible to authorized administrators. You must possess the matching Private Key for the current Public Key.',
                 style: TextStyle(color: _textDim, fontSize: 12, height: 1.5),
               ),
@@ -882,11 +929,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
               style: GoogleFonts.outfit(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
               ),
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'Paste the content of your .pem file below to enable decryption on this device.',
               style: TextStyle(color: _textDim, fontSize: 13),
             ),
@@ -894,11 +940,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             TextField(
               controller: ctrl,
               maxLines: 8,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 12,
-                fontFamily: 'monospace',
-              ),
+              style: const TextStyle(fontSize: 12, fontFamily: 'monospace'),
               decoration: InputDecoration(
                 hintText: '-----BEGIN PRIVATE KEY-----\n...',
                 hintStyle: TextStyle(color: _textDim.withOpacity(0.3)),
@@ -984,12 +1026,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text(
           'Master Key Ready',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
+            Text(
               'Your Private Key is valid. Copy this content and save it as admin_private_key.pem securely. You will NOT see this again.',
               style: TextStyle(color: _textDim, fontSize: 13),
             ),
@@ -1002,7 +1044,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
               child: SelectableText(
                 pem,
-                style: const TextStyle(
+                style: TextStyle(
                   color: _primary,
                   fontSize: 10,
                   fontFamily: 'monospace',
@@ -1157,7 +1199,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
               style: GoogleFonts.outfit(
                 fontSize: 20 * widthScale,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
               ),
             ),
           ],
@@ -1232,7 +1273,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   .trim()
                             : tx['user']?['email'] ?? 'Unknown',
                         style: TextStyle(
-                          color: Colors.white,
                           fontWeight: FontWeight.w600,
                           fontSize: 14 * widthScale,
                         ),
@@ -1254,7 +1294,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     Text(
                       '${NumberFormat('#,##0.00').format(tx['amount'] as num)} USDT',
                       style: GoogleFonts.outfit(
-                        color: isDeposit ? _primary : Colors.white,
+                        color: isDeposit
+                            ? _primary
+                            : Theme.of(context).colorScheme.onSurface,
                         fontWeight: FontWeight.bold,
                         fontSize: 14 * widthScale,
                       ),
@@ -1358,7 +1400,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 style: GoogleFonts.outfit(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
                 ),
               ),
             ),
@@ -1407,11 +1448,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
             setState(() => _userSearch = v);
             _fetchAll();
           },
-          style: const TextStyle(color: Colors.white, fontSize: 14),
+          style: const TextStyle(fontSize: 14),
           decoration: InputDecoration(
             hintText: 'Search users by name or email...',
-            hintStyle: const TextStyle(color: _textDim, fontSize: 14),
-            prefixIcon: const Icon(Icons.search, color: _textDim, size: 20),
+            hintStyle: TextStyle(color: _textDim, fontSize: 14),
+            prefixIcon: Icon(Icons.search, color: _textDim, size: 20),
             filled: true,
             fillColor: Colors.white.withOpacity(0.03),
             enabledBorder: OutlineInputBorder(
@@ -1420,7 +1461,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: _primary),
+              borderSide: BorderSide(color: _primary),
             ),
             contentPadding: const EdgeInsets.symmetric(vertical: 14),
           ),
@@ -1489,7 +1530,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               .trim()
                         : u['email'],
                     style: TextStyle(
-                      color: Colors.white,
                       fontWeight: FontWeight.w600,
                       fontSize: 14 * widthScale,
                     ),
@@ -1507,14 +1547,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           vertical: 2 * widthScale,
                         ),
                         decoration: BoxDecoration(
-                          color: (isAdmin ? _primary : Colors.white)
+                          color: (isAdmin
+                                  ? _primary
+                                  : Theme.of(context).colorScheme.onSurface)
                               .withOpacity(0.08),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
                           u['role'],
                           style: TextStyle(
-                            color: isAdmin ? _primary : Colors.white,
+                            color: isAdmin
+                                ? _primary
+                                : Theme.of(context).colorScheme.onSurface,
                             fontSize: 9 * widthScale,
                             fontWeight: FontWeight.bold,
                             letterSpacing: 0.5,
@@ -1576,7 +1620,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     style: GoogleFonts.outfit(
                       fontWeight: FontWeight.bold,
                       fontSize: 15 * widthScale,
-                      color: Colors.white,
                     ),
                   ),
                 ),
@@ -1635,11 +1678,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 style: GoogleFonts.outfit(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
                 ),
               ),
               const SizedBox(height: 6),
-              const Text(
+              Text(
                 'Add a new email to the access whitelist.',
                 style: TextStyle(color: _textDim, fontSize: 14),
               ),
@@ -1647,11 +1689,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
               TextField(
                 controller: emailCtrl,
                 keyboardType: TextInputType.emailAddress,
-                style: const TextStyle(color: Colors.white, fontSize: 14),
+                style: const TextStyle(fontSize: 14),
                 decoration: InputDecoration(
                   hintText: 'user@example.com',
-                  hintStyle: const TextStyle(color: _textDim),
-                  prefixIcon: const Icon(
+                  hintStyle: TextStyle(color: _textDim),
+                  prefixIcon: Icon(
                     Icons.mail_outline,
                     color: _textDim,
                     size: 20,
@@ -1666,7 +1708,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: _primary),
+                    borderSide: BorderSide(color: _primary),
                   ),
                 ),
               ),
@@ -1762,10 +1804,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           const SizedBox(height: 16),
           Text(
             label,
-            style: const TextStyle(
-              color: _textDim,
-              fontWeight: FontWeight.w500,
-            ),
+            style: TextStyle(color: _textDim, fontWeight: FontWeight.w500),
           ),
         ],
       ),
@@ -1791,6 +1830,10 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final _bgCard = Theme.of(context).cardColor;
+    final _border = Theme.of(context).dividerColor;
+    final _textDim = Theme.of(context).colorScheme.onSurfaceVariant;
+
     return Container(
       padding: EdgeInsets.all(16 * widthScale),
       decoration: BoxDecoration(
@@ -1819,7 +1862,6 @@ class _StatCard extends StatelessWidget {
               style: GoogleFonts.outfit(
                 fontSize: 22 * widthScale,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
               ),
             ),
           ),
@@ -1902,6 +1944,11 @@ class _DropFilter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final _bgCard = Theme.of(context).cardColor;
+    final _primary = Theme.of(context).primaryColor;
+    final _textDim = Theme.of(context).colorScheme.onSurfaceVariant;
+    final _border = Theme.of(context).dividerColor;
+
     return GestureDetector(
       onTap: () async {
         final chosen = await showModalBottomSheet<String>(
@@ -1915,28 +1962,30 @@ class _DropFilter extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(2),
+                  Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
-                ),
                 const SizedBox(height: 8),
                 ...options.entries.map(
                   (e) => ListTile(
                     title: Text(
                       e.value,
                       style: TextStyle(
-                        color: value == e.key ? _primary : Colors.white,
+                        color: value == e.key
+                            ? _primary
+                            : Theme.of(context).colorScheme.onSurface,
                         fontWeight: value == e.key
                             ? FontWeight.bold
                             : FontWeight.normal,
                       ),
                     ),
                     trailing: value == e.key
-                        ? const Icon(Icons.check, color: _primary, size: 18)
+                        ? Icon(Icons.check, color: _primary, size: 18)
                         : null,
                     onTap: () => Navigator.pop(ctx, e.key),
                   ),
@@ -1988,11 +2037,15 @@ class _RoleChip extends StatelessWidget {
     required this.label,
     required this.selected,
     required this.onTap,
-    this.color = _textDim,
+    this.color = const Color(0x00000001),
   });
 
   @override
   Widget build(BuildContext context) {
+    final _textDim = Theme.of(context).colorScheme.onSurfaceVariant;
+    final _border = Theme.of(context).dividerColor;
+    final color = this.color == const Color(0x00000001) ? _textDim : this.color;
+
     return Expanded(
       child: GestureDetector(
         onTap: onTap,
@@ -2001,7 +2054,7 @@ class _RoleChip extends StatelessWidget {
           decoration: BoxDecoration(
             color: selected
                 ? color.withOpacity(0.15)
-                : Colors.white.withOpacity(0.03),
+                : Theme.of(context).colorScheme.onSurface.withOpacity(0.03),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: selected ? color.withOpacity(0.40) : _border,

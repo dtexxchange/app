@@ -12,6 +12,14 @@ class ReferralScreen extends StatefulWidget {
 }
 
 class _ReferralScreenState extends State<ReferralScreen> {
+  // ─── Design Tokens (Dynamic) ──────────────────────────────────────────────────
+  Color get _bgDark => Theme.of(context).scaffoldBackgroundColor;
+  Color get _bgCard => Theme.of(context).cardColor;
+  Color get _primary => Theme.of(context).primaryColor;
+  Color get _textDim => Theme.of(context).colorScheme.onSurfaceVariant;
+  Color get _border => Theme.of(context).dividerColor;
+  static const Color _blue = Color(0xFF3B82F6);
+
   final _api = ApiService();
   bool _isLoading = true;
   String? _referralCode;
@@ -29,7 +37,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
       // Get user info for their referral code
       final userRes = await _api.getRequest('/users/me');
       final userData = jsonDecode(userRes.body);
-      
+
       // Get referrals list
       final referRes = await _api.getRequest('/users/me/referrals');
       final referData = jsonDecode(referRes.body);
@@ -49,10 +57,10 @@ class _ReferralScreenState extends State<ReferralScreen> {
     if (_referralCode == null) return;
     Clipboard.setData(ClipboardData(text: _referralCode!));
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Referral code copied to clipboard'),
+      SnackBar(
+        content: const Text('Referral code copied to clipboard'),
         behavior: SnackBarBehavior.floating,
-        backgroundColor: Color(0xFF00FF9D),
+        backgroundColor: _primary,
       ),
     );
   }
@@ -62,10 +70,10 @@ class _ReferralScreenState extends State<ReferralScreen> {
     final link = '${ApiService.webUrl}/signup?ref=$_referralCode';
     Clipboard.setData(ClipboardData(text: link));
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Referral link copied to clipboard'),
+      SnackBar(
+        content: const Text('Referral link copied to clipboard'),
         behavior: SnackBarBehavior.floating,
-        backgroundColor: Color(0xFF00FF9D),
+        backgroundColor: _primary,
       ),
     );
   }
@@ -75,48 +83,64 @@ class _ReferralScreenState extends State<ReferralScreen> {
     final size = MediaQuery.of(context).size;
     final widthScale = (size.width / 375.0).clamp(0.85, 1.2);
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0B0D),
+      backgroundColor: _bgDark,
       appBar: AppBar(
-        title: Text('Referral Network', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 18 * widthScale)),
+        title: Text(
+          'Referral Network',
+          style: GoogleFonts.outfit(
+            fontWeight: FontWeight.bold,
+            fontSize: 18 * widthScale,
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
+        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
+        leading: IconButton(
+          icon: Icon(
+            Icons.arrow_back,
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
-      body: _isLoading 
-        ? const Center(child: CircularProgressIndicator(color: Color(0xFF00FF9D)))
-        : RefreshIndicator(
-            onRefresh: _fetchData,
-            color: const Color(0xFF00FF9D),
-            child: SingleChildScrollView(
-              padding: EdgeInsets.all(24 * widthScale),
-              physics: const AlwaysScrollableScrollPhysics(),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildReferralCard(widthScale),
-                  SizedBox(height: 32 * widthScale),
-                  Text(
-                    'Friends who joined (${_referrals.length})',
-                    style: GoogleFonts.outfit(
-                      fontSize: 20 * widthScale,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  _referrals.isEmpty 
-                    ? _buildEmptyState()
-                    : ListView.separated(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: _referrals.length,
-                        separatorBuilder: (context, index) => const SizedBox(height: 12),
-                        itemBuilder: (context, index) => _buildReferralItem(_referrals[index]),
+      body: _isLoading
+          ? Center(child: CircularProgressIndicator(color: _primary))
+          : RefreshIndicator(
+              onRefresh: _fetchData,
+              color: _primary,
+              child: SingleChildScrollView(
+                padding: EdgeInsets.all(24 * widthScale),
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildReferralCard(widthScale),
+                    SizedBox(height: 32 * widthScale),
+                    Text(
+                      'Friends who joined (${_referrals.length})',
+                      style: GoogleFonts.outfit(
+                        fontSize: 20 * widthScale,
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
-                ],
+                    ),
+                    const SizedBox(height: 16),
+                    _referrals.isEmpty
+                        ? _buildEmptyState()
+                        : ListView.separated(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: _referrals.length,
+                            separatorBuilder: (context, index) =>
+                                const SizedBox(height: 12),
+                            itemBuilder: (context, index) =>
+                                _buildReferralItem(_referrals[index]),
+                          ),
+                  ],
+                ),
               ),
             ),
-          ),
     );
   }
 
@@ -125,37 +149,41 @@ class _ReferralScreenState extends State<ReferralScreen> {
       padding: EdgeInsets.all(32 * widthScale),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            const Color(0xFF00FF9D).withOpacity(0.15),
-            const Color(0xFF3B82F6).withOpacity(0.05),
-          ],
+          colors: [_primary.withOpacity(0.15), _blue.withOpacity(0.05)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: Colors.white.withOpacity(0.05)),
+        border: Border.all(color: _border),
       ),
       child: Column(
         children: [
-          Icon(Icons.stars, color: const Color(0xFF00FF9D), size: 48 * widthScale),
+          Icon(Icons.stars, color: _primary, size: 48 * widthScale),
           SizedBox(height: 24 * widthScale),
           Text(
             'Share the wealth',
-            style: GoogleFonts.outfit(fontSize: 24 * widthScale, fontWeight: FontWeight.bold, color: Colors.white),
+            style: GoogleFonts.outfit(
+              fontSize: 24 * widthScale,
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             'Invite friends and track your network as it grows.',
             textAlign: TextAlign.center,
-            style: TextStyle(color: const Color(0xFF94A3B8), fontSize: 13 * widthScale),
+            style: TextStyle(color: _textDim, fontSize: 13 * widthScale),
           ),
           const SizedBox(height: 32),
           Container(
-            padding: EdgeInsets.symmetric(horizontal: 20 * widthScale, vertical: 12 * widthScale),
+            padding: EdgeInsets.symmetric(
+              horizontal: 20 * widthScale,
+              vertical: 12 * widthScale,
+            ),
             decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.3),
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.05),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFF00FF9D).withOpacity(0.3)),
+              border: Border.all(color: _primary.withOpacity(0.3)),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -169,7 +197,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
                       style: GoogleFonts.outfit(
                         fontSize: 28 * widthScale,
                         fontWeight: FontWeight.bold,
-                        color: const Color(0xFF00FF9D),
+                        color: _primary,
                         letterSpacing: 4,
                       ),
                     ),
@@ -177,7 +205,11 @@ class _ReferralScreenState extends State<ReferralScreen> {
                 ),
                 IconButton(
                   onPressed: _copyToClipboard,
-                  icon: Icon(Icons.copy, color: const Color(0xFF00FF9D), size: 20 * widthScale),
+                  icon: Icon(
+                    Icons.copy,
+                    color: _primary,
+                    size: 20 * widthScale,
+                  ),
                 ),
               ],
             ),
@@ -186,9 +218,9 @@ class _ReferralScreenState extends State<ReferralScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.05),
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.02),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.white.withOpacity(0.1)),
+              border: Border.all(color: _border),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -196,7 +228,6 @@ class _ReferralScreenState extends State<ReferralScreen> {
                 const Text(
                   'QUICK SHARE LINK',
                   style: TextStyle(
-                    color: Color(0xFF94A3B8),
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 1.2,
@@ -208,10 +239,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
                     Expanded(
                       child: Text(
                         '${ApiService.webUrl}/signup?ref=${_referralCode ?? '------'}',
-                        style: GoogleFonts.firaCode(
-                          color: Colors.white70,
-                          fontSize: 11,
-                        ),
+                        style: GoogleFonts.firaCode(fontSize: 11),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -222,10 +250,16 @@ class _ReferralScreenState extends State<ReferralScreen> {
                       child: Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.1),
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withOpacity(0.05),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Icon(Icons.copy, size: 14, color: Colors.white),
+                        child: Icon(
+                          Icons.copy,
+                          size: 14,
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
                       ),
                     ),
                   ],
@@ -243,11 +277,18 @@ class _ReferralScreenState extends State<ReferralScreen> {
       padding: const EdgeInsets.all(40),
       child: Column(
         children: [
-          Icon(Icons.people_outline, color: Colors.white.withOpacity(0.1), size: 64),
+          Icon(
+            Icons.people_outline,
+            color: Colors.white.withOpacity(0.1),
+            size: 64,
+          ),
           const SizedBox(height: 16),
           Text(
             'No referrals yet',
-            style: TextStyle(color: Colors.white.withOpacity(0.3), fontSize: 16),
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.3),
+              fontSize: 16,
+            ),
           ),
         ],
       ),
@@ -256,13 +297,13 @@ class _ReferralScreenState extends State<ReferralScreen> {
 
   Widget _buildReferralItem(dynamic user) {
     bool isApproved = user['status'] == 'APPROVED';
-    
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF15171C),
+        color: _bgCard,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withOpacity(0.03)),
+        border: Border.all(color: _border),
       ),
       child: Row(
         children: [
@@ -270,10 +311,10 @@ class _ReferralScreenState extends State<ReferralScreen> {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: const Color(0xFF3B82F6).withOpacity(0.1),
+              color: _blue.withOpacity(0.1),
               borderRadius: BorderRadius.circular(14),
             ),
-            child: const Icon(Icons.person, color: Color(0xFF3B82F6), size: 20),
+            child: const Icon(Icons.person, color: _blue, size: 20),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -282,13 +323,20 @@ class _ReferralScreenState extends State<ReferralScreen> {
               children: [
                 Text(
                   (user['firstName'] != null || user['lastName'] != null)
-                      ? '${user['firstName'] ?? ''} ${user['lastName'] ?? ''}'.trim()
+                      ? '${user['firstName'] ?? ''} ${user['lastName'] ?? ''}'
+                            .trim()
                       : user['email'],
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                  ),
                 ),
                 Text(
                   'Joined ${_formatDate(user['createdAt'])}',
-                  style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
+                  style: const TextStyle(
+                    color: Color(0xFF94A3B8),
+                    fontSize: 11,
+                  ),
                 ),
               ],
             ),
@@ -296,14 +344,20 @@ class _ReferralScreenState extends State<ReferralScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: isApproved ? const Color(0xFF00FF9D).withOpacity(0.05) : Colors.orange.withOpacity(0.05),
+              color: isApproved
+                  ? _primary.withOpacity(0.05)
+                  : Colors.orange.withOpacity(0.05),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: isApproved ? const Color(0xFF00FF9D).withOpacity(0.2) : Colors.orange.withOpacity(0.2)),
+              border: Border.all(
+                color: isApproved
+                    ? _primary.withOpacity(0.2)
+                    : Colors.orange.withOpacity(0.2),
+              ),
             ),
             child: Text(
               isApproved ? 'APPROVED' : 'PENDING',
               style: TextStyle(
-                color: isApproved ? const Color(0xFF00FF9D) : Colors.orange,
+                color: isApproved ? _primary : Colors.orange,
                 fontSize: 10,
                 fontWeight: FontWeight.bold,
               ),

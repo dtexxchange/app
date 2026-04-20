@@ -9,15 +9,6 @@ import '../main.dart' show routeObserver;
 import '../services/api_service.dart';
 import '../widgets/transaction_detail_sheet.dart';
 
-// ─── Design Tokens ───────────────────────────────────────────────────────────
-const _bgDark = Color(0xFF0A0B0D);
-const _bgCard = Color(0xFF15171C);
-const _primary = Color(0xFF00FF9D);
-const _blue = Color(0xFF3B82F6);
-const _textDim = Color(0xFF94A3B8);
-const _border = Color(0x0DFFFFFF); // 5% white
-const _danger = Color(0xFFF87171);
-
 // ─── Shared Sheet Components ─────────────────────────────────────────────────
 class CustomBottomSheet extends StatelessWidget {
   final String title;
@@ -41,9 +32,9 @@ class CustomBottomSheet extends StatelessWidget {
         left: 24,
         right: 24,
       ),
-      decoration: const BoxDecoration(
-        color: Color(0xFF15171C),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
       ),
       child: SingleChildScrollView(
         child: Column(
@@ -55,7 +46,7 @@ class CustomBottomSheet extends StatelessWidget {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.15),
+                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -70,7 +61,6 @@ class CustomBottomSheet extends StatelessWidget {
                   style: GoogleFonts.outfit(
                     fontSize: 22,
                     fontWeight: FontWeight.w700,
-                    color: Colors.white,
                   ),
                 ),
               ],
@@ -94,27 +84,25 @@ class AmountField extends StatelessWidget {
       controller: controller,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       textAlign: TextAlign.center,
-      style: GoogleFonts.outfit(
-        color: Colors.white,
-        fontSize: 32,
-        fontWeight: FontWeight.w700,
-      ),
+      style: GoogleFonts.outfit(fontSize: 32, fontWeight: FontWeight.w700),
       decoration: InputDecoration(
         hintText: '0.00',
         hintStyle: GoogleFonts.outfit(
-          color: Colors.white.withOpacity(0.2),
+          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.2),
           fontSize: 32,
           fontWeight: FontWeight.w700,
         ),
         filled: true,
-        fillColor: Colors.white.withOpacity(0.03),
+        fillColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.03),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.white.withOpacity(0.10)),
+          borderSide: BorderSide(
+            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.10),
+          ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFF00FF9D)),
+          borderSide: BorderSide(color: Theme.of(context).primaryColor),
         ),
       ),
     );
@@ -136,19 +124,21 @@ class SheetField extends StatelessWidget {
     return TextField(
       controller: controller,
       keyboardType: keyboardType,
-      style: const TextStyle(color: Colors.white, fontSize: 14),
+      style: const TextStyle(fontSize: 14),
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 14),
         filled: true,
-        fillColor: Colors.white.withOpacity(0.03),
+        fillColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.03),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.white.withOpacity(0.10)),
+          borderSide: BorderSide(
+            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.10),
+          ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFF00FF9D)),
+          borderSide: BorderSide(color: Theme.of(context).primaryColor),
         ),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
@@ -179,8 +169,8 @@ class PrimaryButton extends StatelessWidget {
       child: ElevatedButton(
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF00FF9D),
-          foregroundColor: Colors.black,
+          backgroundColor: Theme.of(context).primaryColor,
+          foregroundColor: Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -229,8 +219,8 @@ class GhostButton extends StatelessWidget {
       child: OutlinedButton(
         onPressed: onPressed,
         style: OutlinedButton.styleFrom(
-          foregroundColor: Colors.white,
-          side: BorderSide(color: Colors.white.withOpacity(0.15)),
+          foregroundColor: Theme.of(context).colorScheme.onSurface,
+          side: BorderSide(color: Theme.of(context).dividerColor),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
@@ -274,6 +264,15 @@ class HomeScreen extends StatefulWidget {
 
 // Exposed so MainScreen can call refresh via GlobalKey.
 class HomeScreenState extends State<HomeScreen> with RouteAware {
+  // ─── Design Tokens (Dynamic) ──────────────────────────────────────────────────
+  Color get _bgDark => Theme.of(context).scaffoldBackgroundColor;
+  Color get _bgCard => Theme.of(context).cardColor;
+  Color get _primary => Theme.of(context).primaryColor;
+  Color get _textDim => Theme.of(context).colorScheme.onSurfaceVariant;
+  Color get _border => Theme.of(context).dividerColor;
+  static const Color _blue = Color(0xFF3B82F6);
+  static const Color _danger = Color(0xFFF87171);
+
   double _balance = 0;
   List<dynamic> _transactions = [];
   bool _isLoading = true;
@@ -363,7 +362,7 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
     return Scaffold(
       backgroundColor: _bgDark,
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: _primary))
+          ? Center(child: CircularProgressIndicator(color: _primary))
           : RefreshIndicator(
               onRefresh: _fetchData,
               color: _primary,
@@ -439,7 +438,6 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
                       ? '₹${_conversionRate!.toStringAsFixed(2)}'
                       : 'Not Set',
                   style: GoogleFonts.outfit(
-                    color: Colors.white,
                     fontSize: 24 * widthScale,
                     fontWeight: FontWeight.w700,
                   ),
@@ -447,9 +445,9 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
               ],
             ),
           ),
-          const Icon(
+          Icon(
             Icons.arrow_forward_ios,
-            color: Color(0x1AFFFFFF),
+            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
             size: 14,
           ),
         ],
@@ -469,7 +467,7 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
       ),
       child: Row(
         children: [
-          const Icon(Icons.warning_amber_rounded, color: _danger, size: 24),
+          Icon(Icons.warning_amber_rounded, color: _danger, size: 24),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
@@ -478,7 +476,6 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
                 Text(
                   'Passcode Required',
                   style: GoogleFonts.outfit(
-                    color: Colors.white,
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
                   ),
@@ -495,7 +492,7 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
               context,
               '/passcode',
             ).then((_) => _fetchData()),
-            child: const Text(
+            child: Text(
               'SET NOW',
               style: TextStyle(
                 color: _primary,
@@ -538,13 +535,14 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
               style: GoogleFonts.outfit(
                 fontSize: isSmall ? 18 : 22,
                 fontWeight: FontWeight.w700,
-                color: Colors.white,
               ),
               children: [
                 const TextSpan(text: 'USDT'),
                 TextSpan(
                   text: '.EX',
-                  style: TextStyle(color: Colors.white.withOpacity(0.4)),
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+                  ),
                 ),
               ],
             ),
@@ -635,7 +633,6 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
                 Text(
                   NumberFormat('#,##0.00').format(_balance),
                   style: GoogleFonts.outfit(
-                    color: Colors.white,
                     fontSize: isSmall ? 32 * widthScale : 42 * widthScale,
                     fontWeight: FontWeight.w700,
                   ),
@@ -720,7 +717,6 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
                   style: GoogleFonts.outfit(
                     fontSize: isSmall ? 18 : 22,
                     fontWeight: FontWeight.w700,
-                    color: Colors.white,
                   ),
                 ),
               ],
@@ -770,7 +766,7 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  const Icon(Icons.arrow_forward, color: _primary, size: 16),
+                  Icon(Icons.arrow_forward, color: _primary, size: 16),
                 ],
               ),
             ),
@@ -788,7 +784,7 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
           Icon(
             Icons.show_chart,
             size: 48,
-            color: Colors.white.withOpacity(0.1),
+            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
           ),
           const SizedBox(height: 16),
           Text(
@@ -841,13 +837,13 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
               decoration: BoxDecoration(
                 color: isDeposit
                     ? _primary.withOpacity(0.10)
-                    : Colors.white.withOpacity(0.05),
+                    : _blue.withOpacity(0.10),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
                 isDeposit ? Icons.arrow_downward : Icons.arrow_upward,
                 size: isSmall ? 18 : 20,
-                color: isDeposit ? _primary : Colors.white,
+                color: isDeposit ? _primary : _blue,
               ),
             ),
             SizedBox(width: isSmall ? 10 : 14),
@@ -859,7 +855,7 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
                     tx['type'].toString().toLowerCase().capitalize(),
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
-                      color: Colors.white,
+
                       fontSize: isSmall ? 14 : 15,
                     ),
                   ),
@@ -882,7 +878,9 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
                   style: GoogleFonts.outfit(
                     fontWeight: FontWeight.w700,
                     fontSize: isSmall ? 14 : 15,
-                    color: isDeposit ? _primary : Colors.white,
+                    color: isDeposit
+                        ? _primary
+                        : Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
                 const SizedBox(height: 6),

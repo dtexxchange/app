@@ -4,19 +4,19 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../services/crypto_service.dart';
 
-// ─── Design Tokens (Standardized across user app) ───────────────────────────
-const _bgDark = Color(0xFF0A0B0D);
-const _bgCard = Color(0xFF15171C);
-const _primary = Color(0xFF00FF9D);
-const _blue = Color(0xFF3B82F6);
-const _textDim = Color(0xFF94A3B8);
-const _border = Color(0x0DFFFFFF);
-const _danger = Color(0xFFF87171);
-
 class TransactionDetailSheet extends StatelessWidget {
   final Map<String, dynamic> tx;
 
   const TransactionDetailSheet({super.key, required this.tx});
+
+  // ─── Design Tokens (Dynamic) ──────────────────────────────────────────────────
+  Color _bgDark(BuildContext context) => Theme.of(context).scaffoldBackgroundColor;
+  Color _bgCard(BuildContext context) => Theme.of(context).cardColor;
+  Color _primary(BuildContext context) => Theme.of(context).primaryColor;
+  Color _blue(BuildContext context) => const Color(0xFF3B82F6);
+  Color _textDim(BuildContext context) => Theme.of(context).colorScheme.onSurfaceVariant;
+  Color _border(BuildContext context) => Theme.of(context).dividerColor;
+  Color _danger(BuildContext context) => const Color(0xFFF87171);
 
   @override
   Widget build(BuildContext context) {
@@ -31,11 +31,11 @@ class TransactionDetailSheet extends StatelessWidget {
 
     Color statusColor;
     if (status == 'COMPLETED') {
-      statusColor = _primary;
+      statusColor = _primary(context);
     } else if (status == 'PENDING') {
-      statusColor = _blue;
+      statusColor = _blue(context);
     } else {
-      statusColor = _danger;
+      statusColor = _danger(context);
     }
 
     return Container(
@@ -52,7 +52,7 @@ class TransactionDetailSheet extends StatelessWidget {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.1),
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -75,13 +75,13 @@ class TransactionDetailSheet extends StatelessWidget {
                           style: GoogleFonts.outfit(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           'TX-${tx['id']?.toString().substring(0, 12).toUpperCase() ?? 'UNKNOWN'}',
-                          style: const TextStyle(color: _textDim, fontSize: 12),
+                          style: TextStyle(color: _textDim(context), fontSize: 12),
                         ),
                       ],
                     ),
@@ -112,8 +112,8 @@ class TransactionDetailSheet extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: _bgDark,
-                    border: Border.all(color: _border),
+                    color: _bgDark(context),
+                    border: Border.all(color: _border(context)),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Column(
@@ -124,7 +124,7 @@ class TransactionDetailSheet extends StatelessWidget {
                         label: 'AMOUNT',
                         value:
                             '${NumberFormat('#,##0.00').format(tx['amount'] as num)} USDT',
-                        valueColor: isDeposit ? _primary : Colors.white,
+                        valueColor: isDeposit ? _primary(context) : Theme.of(context).colorScheme.onSurface,
                       ),
                       if (tx['conversionRate'] != null) ...[
                         const SizedBox(height: 16),
@@ -138,7 +138,7 @@ class TransactionDetailSheet extends StatelessWidget {
                           label: 'CREDIT ESTIMATE',
                           value:
                               '₹${NumberFormat('#,##0.00').format((tx['amount'] as num) * (tx['conversionRate'] as num))}',
-                          valueColor: _blue,
+                          valueColor: _blue(context),
                         ),
                       ],
                     ],
@@ -149,10 +149,10 @@ class TransactionDetailSheet extends StatelessWidget {
 
                 // Bank Details (Exchange Instructions)
                 if (bank != null) ...[
-                  const Text(
+                  Text(
                     'EXCHANGE INSTRUCTIONS',
                     style: TextStyle(
-                      color: _textDim,
+                      color: _textDim(context),
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 1.5,
@@ -162,9 +162,9 @@ class TransactionDetailSheet extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: _bgDark,
+                      color: _bgDark(context),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: _primary.withOpacity(0.1)),
+                      border: Border.all(color: _primary(context).withOpacity(0.1)),
                     ),
                     child: Column(
                       children: [
@@ -195,27 +195,28 @@ class TransactionDetailSheet extends StatelessWidget {
                 ],
 
                 // Activity Logs
-                const Text(
-                  'ACTIVITY LOGS',
-                  style: TextStyle(
-                    color: _textDim,
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.5,
+                  Text(
+                    'ACTIVITY LOGS',
+                    style: TextStyle(
+                      color: _textDim(context),
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.5,
+                    ),
                   ),
-                ),
                 const SizedBox(height: 16),
                 if (logs.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.only(bottom: 24),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 24),
                     child: Text(
                       'No activity history found',
-                      style: TextStyle(color: _textDim, fontSize: 13),
+                      style: TextStyle(color: _textDim(context), fontSize: 13),
                     ),
                   )
                 else
                   ...logs.map(
                     (log) => _buildLogItem(
+                      context,
                       tx,
                       log,
                       logs.indexOf(log) == logs.length - 1,
@@ -236,7 +237,7 @@ class TransactionDetailSheet extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(color: _textDim, fontSize: 12)),
+          Text(label, style: TextStyle(color: _textDim(context), fontSize: 12)),
           const SizedBox(width: 8),
           Expanded(
             child: Row(
@@ -245,8 +246,8 @@ class TransactionDetailSheet extends StatelessWidget {
                 Flexible(
                   child: Text(
                     value,
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface,
                       fontWeight: FontWeight.bold,
                       fontSize: 12,
                     ),
@@ -263,7 +264,7 @@ class TransactionDetailSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildLogItem(Map<String, dynamic> tx, Map<String, dynamic> log, bool isLast) {
+  Widget _buildLogItem(BuildContext context, Map<String, dynamic> tx, Map<String, dynamic> log, bool isLast) {
     String actorStr = log['actor'] ?? 'Unknown';
     String note = log['note'] ?? 'Status updated';
 
@@ -286,13 +287,13 @@ class TransactionDetailSheet extends StatelessWidget {
                 height: 12,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: _primary.withOpacity(0.3),
-                  border: Border.all(color: _primary, width: 2),
+                  color: _primary(context).withOpacity(0.3),
+                  border: Border.all(color: _primary(context), width: 2),
                 ),
               ),
               if (!isLast)
                 Expanded(
-                  child: Container(width: 2, color: _primary.withOpacity(0.1)),
+                  child: Container(width: 2, color: _primary(context).withOpacity(0.3)),
                 ),
             ],
           ),
@@ -308,8 +309,8 @@ class TransactionDetailSheet extends StatelessWidget {
                     children: [
                       Text(
                         log['status'],
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurface,
                           fontWeight: FontWeight.bold,
                           fontSize: 13,
                         ),
@@ -318,20 +319,20 @@ class TransactionDetailSheet extends StatelessWidget {
                         DateFormat(
                           'hh:mm a',
                         ).format(DateTime.parse(log['createdAt'])),
-                        style: const TextStyle(color: _textDim, fontSize: 11),
+                        style: TextStyle(color: _textDim(context), fontSize: 11),
                       ),
                     ],
                   ),
                   const SizedBox(height: 4),
                   Text(
                     note,
-                    style: const TextStyle(color: _textDim, fontSize: 13),
+                    style: TextStyle(color: _textDim(context), fontSize: 13),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     'by $actorStr',
                     style: TextStyle(
-                      color: _primary.withOpacity(0.5),
+                      color: _primary(context).withOpacity(0.5),
                       fontSize: 11,
                     ),
                   ),
@@ -358,8 +359,8 @@ class _DetailRow extends StatelessWidget {
       children: [
         Text(
           label,
-          style: const TextStyle(
-            color: _textDim,
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
             fontSize: 11,
             fontWeight: FontWeight.bold,
             letterSpacing: 0.5,
@@ -368,7 +369,7 @@ class _DetailRow extends StatelessWidget {
         Text(
           value,
           style: TextStyle(
-            color: valueColor ?? Colors.white,
+            color: valueColor ?? Theme.of(context).colorScheme.onSurface,
             fontSize: 13,
             fontWeight: FontWeight.bold,
           ),
@@ -407,7 +408,7 @@ class _CopyButtonState extends State<_CopyButton> {
         behavior: SnackBarBehavior.floating,
         width: 140,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        backgroundColor: _primary,
+        backgroundColor: Theme.of(context).primaryColor,
       ),
     );
 
@@ -426,13 +427,13 @@ class _CopyButtonState extends State<_CopyButton> {
         padding: const EdgeInsets.all(6),
         decoration: BoxDecoration(
           color:
-              _copied ? _primary.withOpacity(0.15) : Colors.transparent,
+              _copied ? Theme.of(context).primaryColor.withOpacity(0.15) : Colors.transparent,
           borderRadius: BorderRadius.circular(6),
         ),
         child: Icon(
           _copied ? Icons.check_rounded : Icons.copy_rounded,
           size: 14,
-          color: _copied ? _primary : Colors.white.withOpacity(0.25),
+          color: _copied ? Theme.of(context).primaryColor : Theme.of(context).colorScheme.onSurface.withOpacity(0.25),
         ),
       ),
     );

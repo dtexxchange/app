@@ -6,14 +6,6 @@ import 'package:qr_flutter/qr_flutter.dart';
 import '../services/api_service.dart';
 import '../widgets/live_timer.dart';
 
-// ─── Design Tokens ───────────────────────────────────────────────────────────
-const _bgDark = Color(0xFF0A0B0D);
-const _bgCard = Color(0xFF15171C);
-const _primary = Color(0xFF00FF9D);
-const _blue = Color(0xFF3B82F6);
-const _textDim = Color(0xFF94A3B8);
-const _border = Color(0x0DFFFFFF);
-
 class DepositScreen extends StatefulWidget {
   const DepositScreen({super.key});
 
@@ -22,6 +14,14 @@ class DepositScreen extends StatefulWidget {
 }
 
 class _DepositScreenState extends State<DepositScreen> {
+  // ─── Design Tokens (Dynamic) ──────────────────────────────────────────────────
+  Color get _bgDark => Theme.of(context).scaffoldBackgroundColor;
+  Color get _bgCard => Theme.of(context).cardColor;
+  Color get _primary => Theme.of(context).primaryColor;
+  Color get _textDim => Theme.of(context).colorScheme.onSurfaceVariant;
+  Color get _border => Theme.of(context).dividerColor;
+  Color get _onSurface => Theme.of(context).colorScheme.onSurface;
+
   final _api = ApiService();
   List<dynamic> _wallets = [];
   bool _isLoading = true;
@@ -55,8 +55,8 @@ class _DepositScreenState extends State<DepositScreen> {
 
       if (results[1].statusCode == 200) {
         final rateData = jsonDecode(results[1].body);
-        _conversionRate = rateData['usdtToInrRate'] != null 
-            ? (rateData['usdtToInrRate'] as num).toDouble() 
+        _conversionRate = rateData['usdtToInrRate'] != null
+            ? (rateData['usdtToInrRate'] as num).toDouble()
             : null;
       }
     } catch (e) {
@@ -83,7 +83,7 @@ class _DepositScreenState extends State<DepositScreen> {
         ),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: _primary))
+          ? Center(child: CircularProgressIndicator(color: _primary))
           : SingleChildScrollView(
               padding: const EdgeInsets.all(24),
               child: Column(
@@ -105,7 +105,11 @@ class _DepositScreenState extends State<DepositScreen> {
                             color: _primary.withOpacity(0.1),
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.show_chart, color: _primary, size: 20),
+                          child: Icon(
+                            Icons.show_chart,
+                            color: _primary,
+                            size: 20,
+                          ),
                         ),
                         const SizedBox(width: 16),
                         Expanded(
@@ -127,7 +131,6 @@ class _DepositScreenState extends State<DepositScreen> {
                                     ? '1 USDT = ₹${_conversionRate!.toStringAsFixed(2)}'
                                     : 'Fetching rate...',
                                 style: GoogleFonts.outfit(
-                                  color: Colors.white,
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -144,9 +147,9 @@ class _DepositScreenState extends State<DepositScreen> {
                     _buildEmptyState()
                   else
                     ..._wallets.map((w) => _buildWalletCard(w)),
-                  
+
                   const SizedBox(height: 40),
-                  
+
                   // Instructions
                   Container(
                     padding: const EdgeInsets.all(20),
@@ -161,15 +164,23 @@ class _DepositScreenState extends State<DepositScreen> {
                         const Text(
                           'How to Add Money?',
                           style: TextStyle(
-                            color: Colors.white,
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
                           ),
                         ),
                         const SizedBox(height: 16),
-                        _buildStep('1', 'Scan the QR code or copy the wallet address.'),
-                        _buildStep('2', 'Transfer USDT (TRC20) from your wallet.'),
-                        _buildStep('3', 'Your balance will be updated automatically once confirmed.'),
+                        _buildStep(
+                          '1',
+                          'Scan the QR code or copy the wallet address.',
+                        ),
+                        _buildStep(
+                          '2',
+                          'Transfer USDT (TRC20) from your wallet.',
+                        ),
+                        _buildStep(
+                          '3',
+                          'Your balance will be updated automatically once confirmed.',
+                        ),
                       ],
                     ),
                   ),
@@ -195,7 +206,11 @@ class _DepositScreenState extends State<DepositScreen> {
             child: Center(
               child: Text(
                 num,
-                style: const TextStyle(color: _primary, fontSize: 10, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  color: _primary,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ),
@@ -203,7 +218,7 @@ class _DepositScreenState extends State<DepositScreen> {
           Expanded(
             child: Text(
               text,
-              style: const TextStyle(color: _textDim, fontSize: 13, height: 1.4),
+              style: TextStyle(color: _textDim, fontSize: 13, height: 1.4),
             ),
           ),
         ],
@@ -216,12 +231,15 @@ class _DepositScreenState extends State<DepositScreen> {
       padding: const EdgeInsets.all(40),
       child: Column(
         children: [
-          Icon(Icons.account_balance_wallet_outlined, size: 48, color: Colors.white.withOpacity(0.1)),
-          const SizedBox(height: 16),
-          const Text(
-            'No gateways available',
-            style: TextStyle(color: _textDim),
+          Icon(
+            Icons.account_balance_wallet_outlined,
+            size: 48,
+            color: Theme.of(
+              context,
+            ).colorScheme.onSurfaceVariant.withOpacity(0.1),
           ),
+          const SizedBox(height: 16),
+          Text('No gateways available', style: TextStyle(color: _textDim)),
         ],
       ),
     );
@@ -269,32 +287,30 @@ class _DepositScreenState extends State<DepositScreen> {
           const SizedBox(height: 24),
           Container(
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-            ),
+            decoration: BoxDecoration(borderRadius: BorderRadius.circular(16)),
             child: QrImageView(
               data: '${wallet['address']}$_qrSeed',
               version: QrVersions.auto,
               size: 200.0,
               gapless: false,
+              eyeStyle: QrEyeStyle(
+                eyeShape: QrEyeShape.square,
+                color: _onSurface,
+              ),
+              dataModuleStyle: QrDataModuleStyle(
+                dataModuleShape: QrDataModuleShape.square,
+                color: _onSurface,
+              ),
             ),
           ),
           const SizedBox(height: 24),
           Text(
             wallet['address'],
             textAlign: TextAlign.center,
-            style: GoogleFonts.outfit(
-              color: Colors.white,
-              fontSize: 14,
-              letterSpacing: 0.5,
-            ),
+            style: GoogleFonts.outfit(fontSize: 14, letterSpacing: 0.5),
           ),
           const SizedBox(height: 24),
-          LiveTimerWidget(
-            expiresAt: expiresAt,
-            onExpired: () => _fetchData(),
-          ),
+          LiveTimerWidget(expiresAt: expiresAt, onExpired: () => _fetchData()),
         ],
       ),
     );
@@ -325,23 +341,25 @@ class _CopyButtonState extends State<_CopyButton> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final primary = theme.primaryColor;
     return GestureDetector(
       onTap: _handleCopy,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: _primary.withOpacity(0.1),
+          color: primary.withOpacity(0.1),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: _primary.withOpacity(0.2)),
+          border: Border.all(color: primary.withOpacity(0.2)),
         ),
         child: Row(
           children: [
-            Icon(_copied ? Icons.check : Icons.copy, color: _primary, size: 12),
+            Icon(_copied ? Icons.check : Icons.copy, color: primary, size: 12),
             const SizedBox(width: 6),
             Text(
               _copied ? 'COPIED' : 'COPY',
               style: GoogleFonts.inter(
-                color: _primary,
+                color: primary,
                 fontSize: 10,
                 fontWeight: FontWeight.bold,
               ),

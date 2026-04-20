@@ -27,15 +27,23 @@ class _AuthScreenState extends State<AuthScreen> {
       });
       if (res.statusCode == 201 || res.statusCode == 200) {
         if (_otpSent && mounted) {
-           ScaffoldMessenger.of(context).showSnackBar(
-             SnackBar(
-               content: const Text('OTP sent successfully', style: TextStyle(fontWeight: FontWeight.w600, color: Colors.black)),
-               backgroundColor: const Color(0xFF00FF9D),
-               behavior: SnackBarBehavior.floating,
-               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-               margin: const EdgeInsets.all(16),
-             ),
-           );
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text(
+                'OTP sent successfully',
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black,
+                ),
+              ),
+              backgroundColor: const Color(0xFF00FF9D),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              margin: const EdgeInsets.all(16),
+            ),
+          );
         }
         setState(() => _otpSent = true);
       } else {
@@ -98,8 +106,10 @@ class _AuthScreenState extends State<AuthScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final primary = theme.primaryColor;
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0B0D),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: Stack(
         children: [
           // Ambient glow blobs
@@ -111,7 +121,7 @@ class _AuthScreenState extends State<AuthScreen> {
               height: 280,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFF00FF9D).withOpacity(0.12),
+                color: primary.withOpacity(0.12),
               ),
               child: const SizedBox.expand(),
             ),
@@ -124,7 +134,7 @@ class _AuthScreenState extends State<AuthScreen> {
               height: 260,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFF3B82F6).withOpacity(0.12),
+                color: primary.withOpacity(0.12),
               ),
             ),
           ),
@@ -137,9 +147,9 @@ class _AuthScreenState extends State<AuthScreen> {
                 child: Container(
                   padding: const EdgeInsets.all(32),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF15171C),
+                    color: theme.cardColor,
                     borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: Colors.white.withOpacity(0.05)),
+                    border: Border.all(color: theme.dividerColor),
                   ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -149,21 +159,19 @@ class _AuthScreenState extends State<AuthScreen> {
                         width: 80,
                         height: 80,
                         decoration: BoxDecoration(
-                          color: const Color(0xFF00FF9D).withOpacity(0.10),
+                          color: primary.withOpacity(0.10),
                           borderRadius: BorderRadius.circular(24),
-                          border: Border.all(
-                            color: const Color(0xFF00FF9D).withOpacity(0.20),
-                          ),
+                          border: Border.all(color: primary.withOpacity(0.20)),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFF00FF9D).withOpacity(0.15),
+                              color: primary.withOpacity(0.15),
                               blurRadius: 30,
                             ),
                           ],
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.diamond_outlined,
-                          color: Color(0xFF00FF9D),
+                          color: primary,
                           size: 36,
                         ),
                       ),
@@ -175,7 +183,7 @@ class _AuthScreenState extends State<AuthScreen> {
                         style: GoogleFonts.outfit(
                           fontSize: 28,
                           fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                          color: theme.colorScheme.onSurface,
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -184,8 +192,8 @@ class _AuthScreenState extends State<AuthScreen> {
                             ? 'Check your inbox for the authorization code'
                             : 'Enter your whitelisted email address',
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: Color(0xFF94A3B8),
+                        style: TextStyle(
+                          color: theme.colorScheme.onSurfaceVariant,
                           fontSize: 14,
                         ),
                       ),
@@ -265,25 +273,29 @@ class _AuthScreenState extends State<AuthScreen> {
       children: [
         TextField(
           controller: _emailController,
-          style: const TextStyle(color: Colors.white),
+          style: const TextStyle(),
           keyboardType: TextInputType.emailAddress,
           decoration: InputDecoration(
             hintText: 'name@example.com',
-            hintStyle: const TextStyle(color: Color(0xFF94A3B8)),
-            prefixIcon: const Icon(
+            hintStyle: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+            prefixIcon: Icon(
               Icons.mail_outline,
-              color: Color(0xFF94A3B8),
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
               size: 20,
             ),
             filled: true,
-            fillColor: Colors.white.withOpacity(0.03),
+            fillColor: Theme.of(
+              context,
+            ).colorScheme.onSurface.withOpacity(0.03),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.white.withOpacity(0.10)),
+              borderSide: BorderSide(color: Theme.of(context).dividerColor),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFF00FF9D)),
+              borderSide: BorderSide(color: Theme.of(context).primaryColor),
             ),
           ),
         ),
@@ -304,13 +316,16 @@ class _AuthScreenState extends State<AuthScreen> {
           },
           child: RichText(
             text: TextSpan(
-              style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 14),
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                fontSize: 14,
+              ),
               children: [
                 const TextSpan(text: "Don't have an account? "),
                 TextSpan(
                   text: 'Signup here',
-                  style: const TextStyle(
-                    color: Color(0xFF00FF9D),
+                  style: TextStyle(
+                    color: Theme.of(context).primaryColor,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -330,7 +345,6 @@ class _AuthScreenState extends State<AuthScreen> {
         TextField(
           controller: _otpController,
           style: GoogleFonts.outfit(
-            color: Colors.white,
             fontSize: 28,
             fontWeight: FontWeight.bold,
             letterSpacing: 12,
@@ -341,25 +355,27 @@ class _AuthScreenState extends State<AuthScreen> {
           decoration: InputDecoration(
             hintText: '000000',
             hintStyle: TextStyle(
-              color: Colors.white.withOpacity(0.2),
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.2),
               letterSpacing: 12,
               fontSize: 28,
             ),
             counterText: '',
-            prefixIcon: const Icon(
+            prefixIcon: Icon(
               Icons.key_outlined,
-              color: Color(0xFF94A3B8),
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
               size: 20,
             ),
             filled: true,
-            fillColor: Colors.white.withOpacity(0.03),
+            fillColor: Theme.of(
+              context,
+            ).colorScheme.onSurface.withOpacity(0.03),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.white.withOpacity(0.10)),
+              borderSide: BorderSide(color: Theme.of(context).dividerColor),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFF00FF9D)),
+              borderSide: BorderSide(color: Theme.of(context).primaryColor),
             ),
           ),
         ),
@@ -372,9 +388,12 @@ class _AuthScreenState extends State<AuthScreen> {
         const SizedBox(height: 12),
         TextButton(
           onPressed: _isLoading ? null : _sendOtp,
-          child: const Text(
+          child: Text(
             'Resend Code',
-            style: TextStyle(color: Color(0xFF00FF9D), fontSize: 14),
+            style: TextStyle(
+              color: Theme.of(context).primaryColor,
+              fontSize: 14,
+            ),
           ),
         ),
         TextButton(
@@ -404,15 +423,16 @@ class _PrimaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return SizedBox(
       height: 56,
       child: ElevatedButton(
         onPressed: onPressed,
         style:
             ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF00FF9D),
+              backgroundColor: theme.primaryColor,
               foregroundColor: Colors.black,
-              disabledBackgroundColor: const Color(0xFF00FF9D).withOpacity(0.4),
+              disabledBackgroundColor: theme.primaryColor.withOpacity(0.4),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),

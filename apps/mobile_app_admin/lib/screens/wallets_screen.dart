@@ -6,14 +6,6 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../services/api_service.dart';
 
-// Tokens
-const _bgDark = Color(0xFF0A0B0D);
-const _bgCard = Color(0xFF15171C);
-const _primary = Color(0xFF00FF9D);
-const _textDim = Color(0xFF94A3B8);
-const _border = Color(0x0DFFFFFF);
-const _blue = Color(0xFF3B82F6);
-
 class WalletsScreen extends StatefulWidget {
   const WalletsScreen({super.key});
 
@@ -22,6 +14,14 @@ class WalletsScreen extends StatefulWidget {
 }
 
 class _WalletsScreenState extends State<WalletsScreen> {
+  // ─── Design Tokens (Dynamic) ──────────────────────────────────────────────────
+  Color get _bgDark => Theme.of(context).scaffoldBackgroundColor;
+  Color get _bgCard => Theme.of(context).cardColor;
+  Color get _primary => Theme.of(context).primaryColor;
+  Color get _textDim => Theme.of(context).colorScheme.onSurfaceVariant;
+  Color get _border => Theme.of(context).dividerColor;
+  static const Color _blue = Color(0xFF3B82F6);
+
   final _api = ApiService();
   List<dynamic> _wallets = [];
   bool _isLoading = true;
@@ -81,11 +81,11 @@ class _WalletsScreenState extends State<WalletsScreen> {
         title: Text(
           'Delete Gateway',
           style: GoogleFonts.outfit(
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.onSurface,
             fontWeight: FontWeight.bold,
           ),
         ),
-        content: const Text(
+        content: Text(
           'Are you sure you want to remove this settlement address?',
           style: TextStyle(color: _textDim),
         ),
@@ -163,11 +163,11 @@ class _WalletsScreenState extends State<WalletsScreen> {
                 style: GoogleFonts.outfit(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
               const SizedBox(height: 8),
-              const Text(
+              Text(
                 'Configure a new treasury address for user deposits.',
                 textAlign: TextAlign.center,
                 style: TextStyle(color: _textDim, fontSize: 13),
@@ -176,54 +176,50 @@ class _WalletsScreenState extends State<WalletsScreen> {
 
               TextField(
                 controller: nameCtrl,
-                style: const TextStyle(color: Colors.white, fontSize: 14),
+                style: const TextStyle(fontSize: 14),
                 decoration: InputDecoration(
                   labelText: 'Label / Name (Private)',
-                  labelStyle: const TextStyle(color: _textDim, fontSize: 13),
+                  labelStyle: TextStyle(color: _textDim, fontSize: 13),
                   hintText: 'e.g. Finance Hub 1',
                   hintStyle: TextStyle(color: Colors.white.withOpacity(0.1)),
                   filled: true,
                   fillColor: _bgDark,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
-                    borderSide: const BorderSide(color: _border),
+                    borderSide: BorderSide(color: _border),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
-                    borderSide: const BorderSide(color: _border),
+                    borderSide: BorderSide(color: _border),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
-                    borderSide: const BorderSide(color: _primary),
+                    borderSide: BorderSide(color: _primary),
                   ),
                 ),
               ),
               const SizedBox(height: 16),
               TextField(
                 controller: addressCtrl,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                  fontFamily: 'monospace',
-                ),
+                style: const TextStyle(fontSize: 14, fontFamily: 'monospace'),
                 decoration: InputDecoration(
                   labelText: 'USDT Wallet Address',
-                  labelStyle: const TextStyle(color: _textDim, fontSize: 13),
+                  labelStyle: TextStyle(color: _textDim, fontSize: 13),
                   hintText: 'TX...',
                   hintStyle: TextStyle(color: Colors.white.withOpacity(0.1)),
                   filled: true,
                   fillColor: _bgDark,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
-                    borderSide: const BorderSide(color: _border),
+                    borderSide: BorderSide(color: _border),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
-                    borderSide: const BorderSide(color: _border),
+                    borderSide: BorderSide(color: _border),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
-                    borderSide: const BorderSide(color: _primary),
+                    borderSide: BorderSide(color: _primary),
                   ),
                 ),
               ),
@@ -232,26 +228,25 @@ class _WalletsScreenState extends State<WalletsScreen> {
                 value: network,
                 dropdownColor: _bgCard,
                 style: const TextStyle(
-                  color: Colors.white,
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
                 ),
                 decoration: InputDecoration(
                   labelText: 'Blockchain Network',
-                  labelStyle: const TextStyle(color: _textDim, fontSize: 13),
+                  labelStyle: TextStyle(color: _textDim, fontSize: 13),
                   filled: true,
                   fillColor: _bgDark,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
-                    borderSide: const BorderSide(color: _border),
+                    borderSide: BorderSide(color: _border),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
-                    borderSide: const BorderSide(color: _border),
+                    borderSide: BorderSide(color: _border),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
-                    borderSide: const BorderSide(color: _primary),
+                    borderSide: BorderSide(color: _primary),
                   ),
                 ),
                 items: ['TRC20', 'ERC20', 'BEP20', 'POLYGON'].map((n) {
@@ -305,73 +300,89 @@ class _WalletsScreenState extends State<WalletsScreen> {
         backgroundColor: _bgCard,
         child: CustomScrollView(
           slivers: [
-          SliverAppBar(
-            pinned: true,
-            expandedHeight: 120,
-            backgroundColor: _bgDark,
-            elevation: 0,
-            flexibleSpace: FlexibleSpaceBar(
-              title: Text(
-                'Treasury nodes',
-                style: GoogleFonts.outfit(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                  fontSize: 18,
-                ),
-              ),
-              background: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [_primary.withOpacity(0.05), _bgDark],
+            SliverAppBar(
+              pinned: true,
+              expandedHeight: 120,
+              backgroundColor: _bgDark,
+              elevation: 0,
+              flexibleSpace: FlexibleSpaceBar(
+                title: Text(
+                  'Treasury nodes',
+                  style: GoogleFonts.outfit(
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.onSurface,
+                    fontSize: 20,
                   ),
                 ),
+                background: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [_primary.withOpacity(0.05), _bgDark],
+                    ),
+                  ),
+                ),
+                titlePadding: EdgeInsets.only(
+                  left: 56 * widthScale,
+                  bottom: 16,
+                ),
               ),
-              titlePadding: EdgeInsets.only(left: 56 * widthScale, bottom: 16),
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new, size: 18),
+                onPressed: () => Navigator.pop(context),
+              ),
+              iconTheme: IconThemeData(
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
             ),
-            iconTheme: const IconThemeData(color: Colors.white),
-          ),
-          SliverPadding(
-            padding: EdgeInsets.fromLTRB(24 * widthScale, 8, 24 * widthScale, 100),
-            sliver: _isLoading
-                ? const SliverToBoxAdapter(
-                    child: Center(
-                      child: Padding(
-                        padding: EdgeInsets.only(top: 100),
-                        child: CircularProgressIndicator(color: _primary),
+            SliverPadding(
+              padding: EdgeInsets.fromLTRB(
+                24 * widthScale,
+                8,
+                24 * widthScale,
+                100,
+              ),
+              sliver: _isLoading
+                  ? SliverToBoxAdapter(
+                      child: Center(
+                        child: Padding(
+                          padding: EdgeInsets.only(top: 100),
+                          child: CircularProgressIndicator(color: _primary),
+                        ),
                       ),
-                    ),
-                  )
-                : _wallets.isEmpty
-                ? SliverToBoxAdapter(
-                    child: Center(
-                      child: Column(
-                        children: [
-                          const SizedBox(height: 100),
-                          Icon(
-                            Icons.account_balance_wallet_outlined,
-                            size: 64,
-                            color: Colors.white.withOpacity(0.05),
-                          ),
-                          const SizedBox(height: 16),
-                          const Text(
-                            'No treasury nodes configured',
-                            style: TextStyle(color: _textDim, fontSize: 14),
-                          ),
-                        ],
+                    )
+                  : _wallets.isEmpty
+                  ? SliverToBoxAdapter(
+                      child: Center(
+                        child: Column(
+                          children: [
+                            const SizedBox(height: 100),
+                            Icon(
+                              Icons.account_balance_wallet_outlined,
+                              size: 64,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurface.withOpacity(0.05),
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'No treasury nodes configured',
+                              style: TextStyle(color: _textDim, fontSize: 14),
+                            ),
+                          ],
+                        ),
                       ),
+                    )
+                  : SliverList(
+                      delegate: SliverChildBuilderDelegate((ctx, i) {
+                        final w = _wallets[i];
+                        final isActive = w['isActive'] as bool;
+                        return _buildWalletCard(w, isActive, widthScale);
+                      }, childCount: _wallets.length),
                     ),
-                  )
-                : SliverList(
-                    delegate: SliverChildBuilderDelegate((ctx, i) {
-                      final w = _wallets[i];
-                      final isActive = w['isActive'] as bool;
-                      return _buildWalletCard(w, isActive, widthScale);
-                    }, childCount: _wallets.length),
-                  ),
-          ),
-        ],
+            ),
+          ],
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -428,16 +439,21 @@ class _WalletsScreenState extends State<WalletsScreen> {
                                 vertical: 4 * widthScale,
                               ),
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.05),
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurface
+                                    .withOpacity(0.05),
                                 borderRadius: BorderRadius.circular(8),
                                 border: Border.all(
-                                  color: Colors.white.withOpacity(0.1),
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurface
+                                      .withOpacity(0.1),
                                 ),
                               ),
                               child: Text(
                                 w['network'] ?? 'TRC20',
                                 style: GoogleFonts.inter(
-                                  color: Colors.white,
                                   fontSize: 10 * widthScale,
                                   fontWeight: FontWeight.bold,
                                   letterSpacing: 0.5,
@@ -525,7 +541,7 @@ class _WalletsScreenState extends State<WalletsScreen> {
                         child: Text(
                           w['address'],
                           style: GoogleFonts.firaCode(
-                            color: Colors.white,
+                            color: Theme.of(context).colorScheme.onSurface,
                             fontSize: 14 * widthScale,
                             fontWeight: FontWeight.w500,
                           ),
@@ -554,7 +570,10 @@ class _WalletsScreenState extends State<WalletsScreen> {
               ),
             ),
             Container(
-              padding: EdgeInsets.symmetric(horizontal: 12 * widthScale, vertical: 4),
+              padding: EdgeInsets.symmetric(
+                horizontal: 12 * widthScale,
+                vertical: 4,
+              ),
               decoration: BoxDecoration(
                 color: Colors.black.withOpacity(0.2),
                 border: Border(top: BorderSide(color: _border)),

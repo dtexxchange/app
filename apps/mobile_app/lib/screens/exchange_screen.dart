@@ -5,14 +5,6 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../services/api_service.dart';
 
-const _bgDark = Color(0xFF0A0B0D);
-const _bgCard = Color(0xFF15171C);
-const _primary = Color(0xFF00FF9D);
-const _textDim = Color(0xFF94A3B8);
-const _border = Color(0x0DFFFFFF);
-const _blue = Color(0xFF3B82F6);
-const _danger = Color(0xFFF87171);
-
 class ExchangeScreen extends StatefulWidget {
   const ExchangeScreen({super.key});
 
@@ -21,6 +13,15 @@ class ExchangeScreen extends StatefulWidget {
 }
 
 class _ExchangeScreenState extends State<ExchangeScreen> {
+  // ─── Design Tokens (Dynamic) ──────────────────────────────────────────────────
+  Color get _bgDark => Theme.of(context).scaffoldBackgroundColor;
+  Color get _bgCard => Theme.of(context).cardColor;
+  Color get _primary => Theme.of(context).primaryColor;
+  Color get _textDim => Theme.of(context).colorScheme.onSurfaceVariant;
+  Color get _border => Theme.of(context).dividerColor;
+  static const Color _blue = Color(0xFF3B82F6);
+  static const Color _danger = Color(0xFFF87171);
+
   final _amountCtrl = TextEditingController();
   final _inrCtrl = TextEditingController();
   final _nameCtrl = TextEditingController();
@@ -96,13 +97,16 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
   void _onSearch(String query) {
     setState(() {
       _filteredAccounts = _savedAccounts
-          .where((acc) =>
-              acc['name'].toString().toLowerCase().contains(query.toLowerCase()) ||
-              acc['bankName']
-                  .toString()
-                  .toLowerCase()
-                  .contains(query.toLowerCase()) ||
-              acc['accountNo'].toString().contains(query))
+          .where(
+            (acc) =>
+                acc['name'].toString().toLowerCase().contains(
+                  query.toLowerCase(),
+                ) ||
+                acc['bankName'].toString().toLowerCase().contains(
+                  query.toLowerCase(),
+                ) ||
+                acc['accountNo'].toString().contains(query),
+          )
           .toList();
     });
   }
@@ -110,7 +114,7 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
   Future<void> _proceedToPasscode() async {
     if (_amountCtrl.text.isEmpty) return;
     final amount = double.tryParse(_amountCtrl.text) ?? 0;
-    
+
     if (amount < 15) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -200,7 +204,7 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
         ),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: _primary))
+          ? Center(child: CircularProgressIndicator(color: _primary))
           : SingleChildScrollView(
               padding: EdgeInsets.all(isSmall ? 20 : 24),
               child: Column(
@@ -244,7 +248,9 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
                                 Text(
                                   'Balance Too Low',
                                   style: TextStyle(
-                                    color: Colors.white,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurface,
                                     fontWeight: FontWeight.bold,
                                     fontSize: isSmall ? 12 : 13,
                                   ),
@@ -252,7 +258,9 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
                                 Text(
                                   'You cannot exchange more than your balance.',
                                   style: TextStyle(
-                                    color: Colors.white70,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurface.withOpacity(0.7),
                                     fontSize: isSmall ? 10 : 11,
                                   ),
                                 ),
@@ -288,11 +296,14 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
                         style: TextStyle(
                           color:
                               (_amountCtrl.text.isEmpty ||
-                                  (double.tryParse(_amountCtrl.text) ?? 0) < 15 ||
+                                  (double.tryParse(_amountCtrl.text) ?? 0) <
+                                      15 ||
                                   (double.tryParse(_amountCtrl.text) ?? 0) >
                                       _balance)
-                              ? Colors.white24
-                              : _bgDark,
+                              ? Theme.of(
+                                  context,
+                                ).colorScheme.onSurface.withOpacity(0.24)
+                              : Theme.of(context).colorScheme.surface,
                           fontWeight: FontWeight.bold,
                           fontSize: (isSmall ? 14 : 16) * widthScale,
                         ),
@@ -339,7 +350,7 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
                     style: GoogleFonts.outfit(
                       fontSize: (isSmall ? 22 : 28) * widthScale,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                 ],
@@ -402,7 +413,9 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
                     Text(
                       '1 USDT = ₹${_conversionRate!.toStringAsFixed(2)}',
                       style: TextStyle(
-                        color: Colors.white70,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withOpacity(0.7),
                         fontSize: (isSmall ? 10 : 12) * widthScale,
                         fontWeight: FontWeight.bold,
                       ),
@@ -423,7 +436,7 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'EXCHANGE DETAILS',
           style: TextStyle(color: _textDim, fontSize: 10, letterSpacing: 1.5),
         ),
@@ -448,7 +461,9 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
             child: Text(
               'Minimum exchange amount is 15 USDT',
               style: TextStyle(
-                color: (double.tryParse(_amountCtrl.text) ?? 0) < 15 && _amountCtrl.text.isNotEmpty
+                color:
+                    (double.tryParse(_amountCtrl.text) ?? 0) < 15 &&
+                        _amountCtrl.text.isNotEmpty
                     ? _danger
                     : _primary,
                 fontSize: 12 * widthScale,
@@ -467,9 +482,15 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
     required Function(String) onChanged,
     bool readOnly = false,
   }) {
-    final widthScale = (MediaQuery.of(context).size.width / 375.0).clamp(0.85, 1.2);
+    final widthScale = (MediaQuery.of(context).size.width / 375.0).clamp(
+      0.85,
+      1.2,
+    );
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16 * widthScale, vertical: 12 * widthScale),
+      padding: EdgeInsets.symmetric(
+        horizontal: 16 * widthScale,
+        vertical: 12 * widthScale,
+      ),
       decoration: BoxDecoration(
         color: readOnly ? _bgCard.withOpacity(0.5) : _bgCard,
         borderRadius: BorderRadius.circular(16),
@@ -478,7 +499,10 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: TextStyle(color: _textDim, fontSize: 11 * widthScale)),
+          Text(
+            label,
+            style: TextStyle(color: _textDim, fontSize: 11 * widthScale),
+          ),
           Row(
             children: [
               Expanded(
@@ -486,9 +510,15 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
                   controller: controller,
                   onChanged: onChanged,
                   readOnly: readOnly,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   style: GoogleFonts.outfit(
-                    color: readOnly ? Colors.white70 : Colors.white,
+                    color: readOnly
+                        ? Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withOpacity(0.7)
+                        : Theme.of(context).colorScheme.onSurface,
                     fontSize: 24 * widthScale,
                     fontWeight: FontWeight.bold,
                   ),
@@ -501,7 +531,10 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
               ),
               const SizedBox(width: 8),
               Container(
-                padding: EdgeInsets.symmetric(horizontal: 12 * widthScale, vertical: 6 * widthScale),
+                padding: EdgeInsets.symmetric(
+                  horizontal: 12 * widthScale,
+                  vertical: 6 * widthScale,
+                ),
                 decoration: BoxDecoration(
                   color: _bgDark,
                   borderRadius: BorderRadius.circular(8),
@@ -531,7 +564,7 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
+            Text(
               'SETTLEMENT DESTINATION',
               style: TextStyle(
                 color: _textDim,
@@ -544,7 +577,7 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
                   setState(() => _showManualForm = !_showManualForm),
               child: Text(
                 _showManualForm ? 'Use Saved' : '+ Add New Account',
-                style: const TextStyle(
+                style: TextStyle(
                   color: _blue,
                   fontSize: 11,
                   fontWeight: FontWeight.bold,
@@ -565,11 +598,18 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
             child: TextField(
               controller: _searchCtrl,
               onChanged: _onSearch,
-              style: const TextStyle(color: Colors.white, fontSize: 14),
-              decoration: const InputDecoration(
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface,
+                fontSize: 14,
+              ),
+              decoration: InputDecoration(
                 border: InputBorder.none,
                 hintText: 'Search saved accounts...',
-                hintStyle: TextStyle(color: Colors.white24),
+                hintStyle: TextStyle(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withOpacity(0.24),
+                ),
                 icon: Icon(Icons.search, color: _textDim, size: 18),
               ),
             ),
@@ -607,17 +647,14 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
                         children: [
                           Text(
                             acc['name'],
-                            style: const TextStyle(
-                              color: Colors.white,
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.onSurface,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                           Text(
                             '${acc['bankName']} • ${acc['accountNo']}',
-                            style: const TextStyle(
-                              color: _textDim,
-                              fontSize: 12,
-                            ),
+                            style: TextStyle(color: _textDim, fontSize: 12),
                           ),
                         ],
                       ),
@@ -626,7 +663,7 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
                 ),
               ),
             );
-          }).toList()
+          })
         else
           Column(
             children: [
@@ -646,7 +683,7 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
                         setState(() => _saveNewAccount = v ?? true),
                     activeColor: _primary,
                   ),
-                  const Text(
+                  Text(
                     'Save for future use',
                     style: TextStyle(color: _textDim, fontSize: 12),
                   ),
@@ -668,11 +705,16 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
       ),
       child: TextField(
         controller: ctrl,
-        style: const TextStyle(color: Colors.white, fontSize: 14),
+        style: TextStyle(
+          color: Theme.of(context).colorScheme.onSurface,
+          fontSize: 14,
+        ),
         decoration: InputDecoration(
           border: InputBorder.none,
           hintText: hint,
-          hintStyle: const TextStyle(color: Colors.white24),
+          hintStyle: TextStyle(
+            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.24),
+          ),
         ),
       ),
     );

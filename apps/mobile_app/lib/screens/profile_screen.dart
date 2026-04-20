@@ -1,14 +1,10 @@
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../services/api_service.dart';
 
-const _bgDark = Color(0xFF0A0B0D);
-const _bgCard = Color(0xFF15171C);
-const _primary = Color(0xFF00FF9D);
-const _textDim = Color(0xFF94A3B8);
-const _border = Color(0x0DFFFFFF);
-const _danger = Color(0xFFF87171);
+import '../main.dart' show themeService;
+import '../services/api_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -53,28 +49,38 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: _bgDark,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: RefreshIndicator(
         onRefresh: _fetchProfile,
-        color: _primary,
-        backgroundColor: _bgCard,
+        color: theme.primaryColor,
+        backgroundColor: theme.cardColor,
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
             SliverAppBar(
               pinned: true,
-              backgroundColor: _bgDark.withOpacity(0.9),
+              backgroundColor: theme.scaffoldBackgroundColor.withOpacity(0.9),
               elevation: 0,
               titleSpacing: 24,
-              title: Text('Profile', style: GoogleFonts.outfit(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
-              bottom: PreferredSize(preferredSize: const Size.fromHeight(1), child: Container(height: 1, color: _border)),
+              title: Text(
+                'Profile',
+                style: GoogleFonts.outfit(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.onSurface,
+                ),
+              ),
+              bottom: PreferredSize(
+                preferredSize: const Size.fromHeight(1),
+                child: Container(height: 1, color: theme.dividerColor),
+              ),
             ),
             if (_isLoading)
               const SliverFillRemaining(
-                child: Center(
-                  child: CircularProgressIndicator(color: _primary),
-                ),
+                child: Center(child: CircularProgressIndicator()),
               )
             else
               SliverPadding(
@@ -96,19 +102,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildAvatar() {
-    final initial = (_user?['firstName']?.toString() ?? _user?['email']?.toString() ?? 'U').substring(0, 1).toUpperCase();
+    final theme = Theme.of(context);
+    final primary = theme.primaryColor;
+    final initial =
+        (_user?['firstName']?.toString() ?? _user?['email']?.toString() ?? 'U')
+            .substring(0, 1)
+            .toUpperCase();
     return Column(
       children: [
         Container(
           width: 90,
           height: 90,
           decoration: BoxDecoration(
-            color: _primary.withOpacity(0.10),
+            color: primary.withOpacity(0.10),
             shape: BoxShape.circle,
-            border: Border.all(color: _primary.withOpacity(0.20), width: 2),
+            border: Border.all(color: primary.withOpacity(0.20), width: 2),
             boxShadow: [
               BoxShadow(
-                color: _primary.withOpacity(0.15),
+                color: primary.withOpacity(0.15),
                 blurRadius: 30,
                 spreadRadius: 2,
               ),
@@ -120,7 +131,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               style: GoogleFonts.outfit(
                 fontSize: 40,
                 fontWeight: FontWeight.bold,
-                color: _primary,
+                color: primary,
               ),
             ),
           ),
@@ -128,10 +139,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
         const SizedBox(height: 16),
         Text(
           (_user?['firstName'] != null || _user?['lastName'] != null)
-              ? '${_user?['firstName'] ?? ''} ${_user?['lastName'] ?? ''}'.trim()
+              ? '${_user?['firstName'] ?? ''} ${_user?['lastName'] ?? ''}'
+                    .trim()
               : _user?['email'] ?? '',
-          style: const TextStyle(
-            color: Colors.white,
+          style: TextStyle(
+            color: theme.colorScheme.onSurface,
             fontSize: 18,
             fontWeight: FontWeight.w600,
           ),
@@ -140,14 +152,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           decoration: BoxDecoration(
-            color: _primary.withOpacity(0.08),
+            color: primary.withOpacity(0.08),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: _primary.withOpacity(0.20)),
+            border: Border.all(color: primary.withOpacity(0.20)),
           ),
           child: Text(
             'USER WORKSPACE',
             style: GoogleFonts.inter(
-              color: _primary,
+              color: primary,
               fontSize: 10,
               fontWeight: FontWeight.bold,
               letterSpacing: 1.5,
@@ -159,48 +171,84 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildInfoCard() {
+    final theme = Theme.of(context);
     return Container(
       decoration: BoxDecoration(
-        color: _bgCard,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: _border),
+        border: Border.all(color: theme.dividerColor),
       ),
       child: Column(
         children: [
           _InfoRow(
             icon: Icons.person_outline,
-            label: (_user?['firstName'] != null || _user?['lastName'] != null) ? 'Full Name' : 'Identity',
-            value: (_user?['firstName'] != null || _user?['lastName'] != null) 
-                ? '${_user?['firstName'] ?? ''} ${_user?['lastName'] ?? ''}'.trim() 
+            label: (_user?['firstName'] != null || _user?['lastName'] != null)
+                ? 'Full Name'
+                : 'Identity',
+            value: (_user?['firstName'] != null || _user?['lastName'] != null)
+                ? '${_user?['firstName'] ?? ''} ${_user?['lastName'] ?? ''}'
+                      .trim()
                 : 'Not Set',
           ),
-          Divider(height: 1, color: _border),
+          Divider(height: 1, color: theme.dividerColor),
           _InfoRow(
             icon: Icons.mail_outline,
             label: 'Email',
             value: _user?['email'] ?? '–',
           ),
-          Divider(height: 1, color: _border),
+          Divider(height: 1, color: theme.dividerColor),
           _InfoRow(
             icon: Icons.account_balance_wallet_outlined,
             label: 'Account Status',
             value: 'Active',
-            valueColor: _primary,
+            valueColor: theme.primaryColor,
           ),
-          Divider(height: 1, color: _border),
+          Divider(height: 1, color: theme.dividerColor),
           _InfoRow(
             icon: Icons.verified_user_outlined,
             label: 'Security',
             value: 'OTP Auth',
-            valueColor: _primary,
+            valueColor: theme.primaryColor,
           ),
-          Divider(height: 1, color: _border),
+          Divider(height: 1, color: theme.dividerColor),
+          // Theme Toggle
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.palette_outlined,
+                  color: theme.colorScheme.onSurfaceVariant,
+                  size: 20,
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Text(
+                    'Dark Appearance',
+                    style: TextStyle(
+                      color: theme.colorScheme.onSurfaceVariant,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+                Switch(
+                  value: theme.brightness == Brightness.dark,
+                  activeColor: theme.primaryColor,
+                  onChanged: (v) => themeService.toggleTheme(),
+                ),
+              ],
+            ),
+          ),
+          Divider(height: 1, color: theme.dividerColor),
           _ActionRow(
             icon: Icons.lock_outline,
             label: 'Passcode Settings',
-            onTap: () => Navigator.pushNamed(context, '/passcode').then((_) => _fetchProfile()),
+            onTap: () => Navigator.pushNamed(
+              context,
+              '/passcode',
+            ).then((_) => _fetchProfile()),
           ),
-          Divider(height: 1, color: _border),
+          Divider(height: 1, color: theme.dividerColor),
           _ActionRow(
             icon: Icons.account_balance_outlined,
             label: 'Saved Bank Accounts',
@@ -212,6 +260,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildActionsCard() {
+    const danger = Color(0xFFF87171);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -220,19 +269,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
           height: 56,
           child: OutlinedButton.icon(
             onPressed: _logout,
-            icon: const Icon(Icons.logout, size: 18, color: _danger),
+            icon: const Icon(Icons.logout, size: 18, color: danger),
             label: const Text(
               'Sign Out',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 16,
-                color: _danger,
+                color: danger,
               ),
             ),
             style: OutlinedButton.styleFrom(
-              foregroundColor: _danger,
-              side: BorderSide(color: _danger.withOpacity(0.30)),
-              backgroundColor: _danger.withOpacity(0.06),
+              foregroundColor: danger,
+              side: BorderSide(color: danger.withOpacity(0.30)),
+              backgroundColor: danger.withOpacity(0.06),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(14),
               ),
@@ -258,22 +307,26 @@ class _InfoRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Row(
         children: [
-          Icon(icon, color: _textDim, size: 20),
+          Icon(icon, color: theme.colorScheme.onSurfaceVariant, size: 20),
           const SizedBox(width: 14),
           Expanded(
             child: Text(
               label,
-              style: const TextStyle(color: _textDim, fontSize: 14),
+              style: TextStyle(
+                color: theme.colorScheme.onSurfaceVariant,
+                fontSize: 14,
+              ),
             ),
           ),
           Text(
             value,
             style: TextStyle(
-              color: valueColor ?? Colors.white,
+              color: valueColor ?? theme.colorScheme.onSurface,
               fontSize: 14,
               fontWeight: FontWeight.w600,
             ),
@@ -296,25 +349,33 @@ class _ActionRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return InkWell(
       onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         child: Row(
           children: [
-            Icon(icon, color: Colors.white, size: 20),
+            Icon(icon, color: theme.colorScheme.onSurface, size: 20),
             const SizedBox(width: 14),
             Expanded(
               child: Text(
                 label,
-                style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500),
+                style: TextStyle(
+                  color: theme.colorScheme.onSurface,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ),
-            const Icon(Icons.chevron_right, color: _textDim, size: 20),
+            Icon(
+              Icons.chevron_right,
+              color: theme.colorScheme.onSurfaceVariant,
+              size: 20,
+            ),
           ],
         ),
       ),
     );
   }
 }
-

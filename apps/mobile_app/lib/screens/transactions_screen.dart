@@ -8,16 +8,6 @@ import '../main.dart' show routeObserver;
 import '../services/api_service.dart';
 import '../widgets/transaction_detail_sheet.dart';
 
-const _bgDark = Color(0xFF0A0B0D);
-const _bgCard = Color(0xFF15171C);
-const _primary = Color(0xFF00FF9D);
-const _blue = Color(0xFF3B82F6);
-const _textDim = Color(0xFF94A3B8);
-const _border = Color(0x0DFFFFFF);
-
-/// Number of items to fetch per page.
-const _pageSize = 15;
-
 class TransactionsScreen extends StatefulWidget {
   const TransactionsScreen({super.key});
 
@@ -28,6 +18,17 @@ class TransactionsScreen extends StatefulWidget {
 // State exposed so MainScreen can refresh via GlobalKey<TransactionsScreenState>.
 class TransactionsScreenState extends State<TransactionsScreen>
     with RouteAware {
+  // ─── Design Tokens (Dynamic) ──────────────────────────────────────────────────
+  Color get _bgDark => Theme.of(context).scaffoldBackgroundColor;
+  Color get _bgCard => Theme.of(context).cardColor;
+  Color get _primary => Theme.of(context).primaryColor;
+  Color get _textDim => Theme.of(context).colorScheme.onSurfaceVariant;
+  Color get _border => Theme.of(context).dividerColor;
+  static const Color _blue = Color(0xFF3B82F6);
+  static const Color _danger = Color(0xFFF87171);
+
+  /// Number of items to fetch per page.
+  static const _pageSize = 15;
   List _transactions = [];
   bool _isLoading = true;
   bool _isFetchingMore = false;
@@ -162,14 +163,14 @@ class TransactionsScreenState extends State<TransactionsScreen>
               titleSpacing: 24,
               title: Row(
                 children: [
-                  const Icon(Icons.receipt_long, color: _primary, size: 20),
+                  Icon(Icons.receipt_long, color: _primary, size: 20),
                   const SizedBox(width: 10),
                   Text(
                     'Transaction History',
                     style: GoogleFonts.outfit(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                 ],
@@ -186,7 +187,7 @@ class TransactionsScreenState extends State<TransactionsScreen>
               ),
             ),
             if (_isLoading)
-              const SliverFillRemaining(
+              SliverFillRemaining(
                 child: Center(
                   child: CircularProgressIndicator(color: _primary),
                 ),
@@ -208,9 +209,9 @@ class TransactionsScreenState extends State<TransactionsScreen>
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(24, 8, 24, 100),
                   child: _isFetchingMore
-                      ? const Center(
+                      ? Center(
                           child: Padding(
-                            padding: EdgeInsets.all(24),
+                            padding: const EdgeInsets.all(24),
                             child: CircularProgressIndicator(
                               color: _primary,
                               strokeWidth: 2,
@@ -284,9 +285,13 @@ class TransactionsScreenState extends State<TransactionsScreen>
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(Icons.show_chart, size: 56, color: Colors.white.withOpacity(0.08)),
+        Icon(
+          Icons.show_chart,
+          size: 56,
+          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.08),
+        ),
         const SizedBox(height: 16),
-        const Text(
+        Text(
           'No transactions found',
           style: TextStyle(
             color: _textDim,
@@ -339,13 +344,15 @@ class TransactionsScreenState extends State<TransactionsScreen>
               decoration: BoxDecoration(
                 color: isDeposit
                     ? _primary.withOpacity(0.10)
-                    : Colors.white.withOpacity(0.05),
+                    : Theme.of(context).colorScheme.onSurface.withOpacity(0.05),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
                 isIncome ? Icons.arrow_downward : Icons.arrow_upward,
                 size: 20,
-                color: isIncome ? _primary : Colors.white,
+                color: isIncome
+                    ? _primary
+                    : Theme.of(context).colorScheme.onSurface,
               ),
             ),
             const SizedBox(width: 14),
@@ -355,9 +362,9 @@ class TransactionsScreenState extends State<TransactionsScreen>
                 children: [
                   Text(
                     tx['type'].toString().toLowerCase().capitalize(),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.w600,
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.onSurface,
                       fontSize: 15,
                     ),
                   ),
@@ -366,7 +373,7 @@ class TransactionsScreenState extends State<TransactionsScreen>
                     DateFormat(
                       'MMM dd, yyyy • hh:mm a',
                     ).format(DateTime.parse(tx['createdAt'])),
-                    style: const TextStyle(color: _textDim, fontSize: 11),
+                    style: TextStyle(color: _textDim, fontSize: 11),
                   ),
                 ],
               ),
@@ -379,14 +386,13 @@ class TransactionsScreenState extends State<TransactionsScreen>
                   style: GoogleFonts.outfit(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
-                    color: isIncome ? _primary : Colors.white,
+                    color: isIncome
+                        ? _primary
+                        : Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
                 const SizedBox(height: 3),
-                const Text(
-                  'USDT',
-                  style: TextStyle(color: _textDim, fontSize: 11),
-                ),
+                Text('USDT', style: TextStyle(color: _textDim, fontSize: 11)),
                 const SizedBox(height: 6),
                 Container(
                   padding: const EdgeInsets.symmetric(
@@ -450,11 +456,17 @@ class _FilterChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final _primary = theme.primaryColor;
+    final _bgCard = theme.cardColor;
+    final _border = theme.dividerColor;
+    final _textDim = theme.colorScheme.onSurfaceVariant;
+
     return GestureDetector(
       onTap: () async {
         final chosen = await showModalBottomSheet<String>(
           context: context,
-          backgroundColor: _bgCard,
+          backgroundColor: Theme.of(context).cardColor,
           shape: const RoundedRectangleBorder(
             borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
           ),
@@ -467,7 +479,9 @@ class _FilterChip extends StatelessWidget {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.15),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -477,15 +491,17 @@ class _FilterChip extends StatelessWidget {
                     title: Text(
                       e.value,
                       style: TextStyle(
-                        color: value == e.key ? _primary : Colors.white,
+                        color: value == e.key
+                            ? _primary
+                            : theme.colorScheme.onSurface,
                         fontWeight: value == e.key
                             ? FontWeight.bold
                             : FontWeight.normal,
                       ),
                     ),
                     trailing: value == e.key
-                        ? const Icon(Icons.check, color: _primary, size: 18)
-                        : null,
+                        ? Icon(Icons.check, color: _primary, size: 18)
+                        : const SizedBox(),
                     onTap: () => Navigator.pop(ctx, e.key),
                   ),
                 ),

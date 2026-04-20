@@ -4,11 +4,6 @@ import 'package:google_fonts/google_fonts.dart';
 import '../services/api_service.dart';
 import '../services/crypto_service.dart';
 
-const _bgDark = Color(0xFF0A0B0D);
-const _primary = Color(0xFF00FF9D);
-const _textDim = Color(0xFF94A3B8);
-const _danger = Color(0xFFF87171);
-
 class ExchangePasscodeScreen extends StatefulWidget {
   const ExchangePasscodeScreen({super.key});
 
@@ -17,6 +12,12 @@ class ExchangePasscodeScreen extends StatefulWidget {
 }
 
 class _ExchangePasscodeScreenState extends State<ExchangePasscodeScreen> {
+  // ─── Design Tokens (Dynamic) ──────────────────────────────────────────────────
+  Color get _bgDark => Theme.of(context).scaffoldBackgroundColor;
+  Color get _primary => Theme.of(context).primaryColor;
+  Color get _textDim => Theme.of(context).colorScheme.onSurfaceVariant;
+  static const Color _danger = Color(0xFFF87171);
+
   final List<String> _passcode = [];
   bool _isLoading = false;
   final _api = ApiService();
@@ -125,7 +126,7 @@ class _ExchangePasscodeScreenState extends State<ExchangePasscodeScreen> {
                   style: GoogleFonts.outfit(
                     fontSize: isShort ? 20 : 24, 
                     fontWeight: FontWeight.bold, 
-                    color: Colors.white
+                    color: Theme.of(context).colorScheme.onSurface
                   )
                 ),
                 const SizedBox(height: 8),
@@ -138,8 +139,8 @@ class _ExchangePasscodeScreenState extends State<ExchangePasscodeScreen> {
                 _buildDots(),
                 SizedBox(height: isShort ? 40 : 60),
                 if (_isLoading)
-                   const Padding(
-                     padding: EdgeInsets.symmetric(vertical: 40),
+                   Padding(
+                     padding: const EdgeInsets.symmetric(vertical: 40),
                      child: CircularProgressIndicator(color: _primary),
                    )
                 else
@@ -197,7 +198,7 @@ class _ExchangePasscodeScreenState extends State<ExchangePasscodeScreen> {
                 child: Center(
                   child: IconButton(
                     onPressed: _onBackspace, 
-                    icon: const Icon(Icons.backspace_outlined, color: Colors.white)
+                    icon: Icon(Icons.backspace_outlined, color: Theme.of(context).colorScheme.onSurface)
                   ),
                 ),
               ),
@@ -220,14 +221,14 @@ class _ExchangePasscodeScreenState extends State<ExchangePasscodeScreen> {
     onTap: () => _onNumberTap(val),
     child: Container(
       width: size, height: size,
-      decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), shape: BoxShape.circle),
+      decoration: BoxDecoration(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.05), shape: BoxShape.circle),
       child: Center(
         child: Text(
           val, 
           style: GoogleFonts.outfit(
             fontSize: size * 0.35, 
             fontWeight: FontWeight.bold, 
-            color: Colors.white
+            color: Theme.of(context).colorScheme.onSurface
           )
         )
       ),

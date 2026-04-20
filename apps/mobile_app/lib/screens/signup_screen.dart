@@ -77,12 +77,12 @@ class _SignupScreenState extends State<SignupScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0B0D),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -96,7 +96,7 @@ class _SignupScreenState extends State<SignupScreen> {
               style: GoogleFonts.outfit(
                 fontSize: 32,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: 8),
@@ -142,7 +142,7 @@ class _SignupScreenState extends State<SignupScreen> {
               child: ElevatedButton(
                 onPressed: _isLoading ? null : _handleSignup,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF00FF9D),
+                  backgroundColor: Theme.of(context).primaryColor,
                   foregroundColor: Colors.black,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -178,8 +178,8 @@ class _SignupScreenState extends State<SignupScreen> {
       children: [
         Text(
           label,
-          style: const TextStyle(
-            color: Colors.white70,
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
             fontSize: 13,
             fontWeight: FontWeight.bold,
           ),
@@ -187,22 +187,22 @@ class _SignupScreenState extends State<SignupScreen> {
         const SizedBox(height: 8),
         TextField(
           controller: controller,
-          style: const TextStyle(color: Colors.white),
+          style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
           keyboardType: keyboardType,
           textCapitalization: textCapitalization,
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: const TextStyle(color: Color(0xFF475569)),
-            prefixIcon: Icon(icon, color: const Color(0xFF94A3B8), size: 20),
+            hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.5)),
+            prefixIcon: Icon(icon, color: Theme.of(context).colorScheme.onSurfaceVariant, size: 20),
             filled: true,
-            fillColor: Colors.white.withOpacity(0.03),
+            fillColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.03),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+              borderSide: BorderSide(color: Theme.of(context).dividerColor),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFF00FF9D)),
+              borderSide: BorderSide(color: Theme.of(context).primaryColor),
             ),
           ),
         ),

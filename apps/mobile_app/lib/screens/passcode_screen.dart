@@ -3,11 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../services/api_service.dart';
 
-const _bgDark = Color(0xFF0A0B0D);
-const _primary = Color(0xFF00FF9D);
-const _textDim = Color(0xFF94A3B8);
-const _danger = Color(0xFFF87171);
-
 enum PasscodeFlowStep { enterOld, enterNew, confirmNew }
 
 class PasscodeScreen extends StatefulWidget {
@@ -18,6 +13,12 @@ class PasscodeScreen extends StatefulWidget {
 }
 
 class _PasscodeScreenState extends State<PasscodeScreen> {
+  // ─── Design Tokens (Dynamic) ──────────────────────────────────────────────────
+  Color get _bgDark => Theme.of(context).scaffoldBackgroundColor;
+  Color get _primary => Theme.of(context).primaryColor;
+  Color get _textDim => Theme.of(context).colorScheme.onSurfaceVariant;
+  static const Color _danger = Color(0xFFF87171);
+
   final List<String> _currentInput = [];
   String? _oldPasscode;
   String? _newPasscode;
@@ -192,17 +193,21 @@ class _PasscodeScreenState extends State<PasscodeScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           'Security Passcode',
-          style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 18 * widthScale),
+          style: GoogleFonts.outfit(
+            fontWeight: FontWeight.bold, 
+            fontSize: 18 * widthScale,
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
         ),
       ),
       body: SafeArea(
         child: _isLoading
-            ? const Center(child: CircularProgressIndicator(color: _primary))
+            ? Center(child: CircularProgressIndicator(color: _primary))
             : SingleChildScrollView(
                 child: Padding(
                   padding: EdgeInsets.symmetric(horizontal: 24 * widthScale),
@@ -214,7 +219,7 @@ class _PasscodeScreenState extends State<PasscodeScreen> {
                         style: GoogleFonts.outfit(
                           fontSize: 24 * widthScale,
                           fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                       SizedBox(height: 12 * heightScale),
@@ -285,7 +290,7 @@ class _PasscodeScreenState extends State<PasscodeScreen> {
                   onPressed: _onBackspace,
                   icon: Icon(
                     Icons.backspace_outlined,
-                    color: Colors.white,
+                    color: Theme.of(context).colorScheme.onSurface,
                     size: 24 * widthScale,
                   ),
                 ),
@@ -312,7 +317,7 @@ class _PasscodeScreenState extends State<PasscodeScreen> {
         width: btnSize,
         height: btnSize,
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.05),
+          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.05),
           shape: BoxShape.circle,
         ),
         child: Center(
@@ -321,7 +326,7 @@ class _PasscodeScreenState extends State<PasscodeScreen> {
             style: GoogleFonts.outfit(
               fontSize: 30 * widthScale,
               fontWeight: FontWeight.w600,
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
         ),

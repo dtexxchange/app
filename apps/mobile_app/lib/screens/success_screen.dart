@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-const _bgDark = Color(0xFF0A0B0D);
-const _primary = Color(0xFF00FF9D);
-const _textDim = Color(0xFF94A3B8);
-
 class SuccessScreen extends StatefulWidget {
   const SuccessScreen({super.key});
 
@@ -14,6 +10,11 @@ class SuccessScreen extends StatefulWidget {
 
 class _SuccessScreenState extends State<SuccessScreen>
     with SingleTickerProviderStateMixin {
+  // ─── Design Tokens (Dynamic) ──────────────────────────────────────────────────
+  Color get _bgDark => Theme.of(context).scaffoldBackgroundColor;
+  Color get _primary => Theme.of(context).primaryColor;
+  Color get _textDim => Theme.of(context).colorScheme.onSurfaceVariant;
+
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
 
@@ -60,15 +61,11 @@ class _SuccessScreenState extends State<SuccessScreen>
                   child: Container(
                     width: isShort ? 80 : 100,
                     height: isShort ? 80 : 100,
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       color: _primary,
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(
-                      Icons.check,
-                      color: _bgDark,
-                      size: isShort ? 48 : 60,
-                    ),
+                    child: Icon(Icons.check, size: isShort ? 48 : 60),
                   ),
                 ),
                 SizedBox(height: isShort ? 32 : 48),
@@ -78,7 +75,7 @@ class _SuccessScreenState extends State<SuccessScreen>
                   style: GoogleFonts.outfit(
                     fontSize: isShort ? 20 : 24,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -99,17 +96,16 @@ class _SuccessScreenState extends State<SuccessScreen>
                     onPressed: () =>
                         Navigator.popUntil(context, (route) => route.isFirst),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white.withOpacity(0.05),
+                      backgroundColor: _primary.withOpacity(0.1),
+                      foregroundColor: _primary,
+                      elevation: 0,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),
                     ),
                     child: const Text(
                       'Back to Home',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),

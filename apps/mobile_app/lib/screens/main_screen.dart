@@ -4,10 +4,6 @@ import 'transactions_screen.dart';
 import 'referral_screen.dart';
 import 'profile_screen.dart';
 
-const _bgDark = Color(0xFF0A0B0D);
-const _primary = Color(0xFF00FF9D);
-const _border = Color(0x0DFFFFFF);
-
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
 
@@ -16,6 +12,11 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
+  // ─── Design Tokens (Dynamic) ──────────────────────────────────────────────────
+  Color get _bgDark => Theme.of(context).scaffoldBackgroundColor;
+  Color get _primary => Theme.of(context).primaryColor;
+  Color get _border => Theme.of(context).dividerColor;
+
   int _currentIndex = 0;
 
   final _homeKey = GlobalKey<HomeScreenState>();
@@ -101,8 +102,9 @@ class _MainScreenState extends State<MainScreen> {
     required IconData activeIcon,
     required String label,
   }) {
+    final theme = Theme.of(context);
     return NavigationDestination(
-      icon: Icon(icon, color: Colors.white.withOpacity(0.45)),
+      icon: Icon(icon, color: theme.colorScheme.onSurfaceVariant),
       selectedIcon: Icon(activeIcon, color: _primary),
       label: label,
     );

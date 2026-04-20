@@ -6,14 +6,6 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../services/api_service.dart';
 
-const _bgDark = Color(0xFF0A0B0D);
-const _bgCard = Color(0xFF15171C);
-const _primary = Color(0xFF00FF9D);
-const _blue = Color(0xFF3B82F6);
-const _textDim = Color(0xFF94A3B8);
-const _border = Color(0x0DFFFFFF);
-const _danger = Color(0xFFF87171);
-
 class LiveTimerWidget extends StatefulWidget {
   final DateTime expiresAt;
   const LiveTimerWidget({super.key, required this.expiresAt});
@@ -23,6 +15,10 @@ class LiveTimerWidget extends StatefulWidget {
 }
 
 class _LiveTimerWidgetState extends State<LiveTimerWidget> {
+  // ─── Design Tokens (Dynamic) ──────────────────────────────────────────────────
+  Color get _blue => Colors.blue; 
+  Color get _danger => Color(0xFFF87171);
+
   Timer? _timer;
   late int _timeLeft;
 
@@ -112,9 +108,14 @@ class AssignmentsScreen extends StatefulWidget {
   State<AssignmentsScreen> createState() => _AssignmentsScreenState();
 }
 
-// ... rest of the classes ...
-
 class _AssignmentsScreenState extends State<AssignmentsScreen> {
+  // ─── Design Tokens (Dynamic) ──────────────────────────────────────────────────
+  Color get _bgDark => Theme.of(context).scaffoldBackgroundColor;
+  Color get _bgCard => Theme.of(context).cardColor;
+  Color get _primary => Theme.of(context).primaryColor;
+  Color get _textDim => Theme.of(context).colorScheme.onSurfaceVariant;
+  Color get _border => Theme.of(context).dividerColor;
+
   final _api = ApiService();
   List<dynamic> _assignments = [];
   bool _isLoading = true;
@@ -155,9 +156,9 @@ class _AssignmentsScreenState extends State<AssignmentsScreen> {
             backgroundColor: _bgDark,
             elevation: 0,
             leading: IconButton(
-              icon: const Icon(
+              icon: Icon(
                 Icons.arrow_back_ios_new,
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.onSurface,
                 size: 18,
               ),
               onPressed: () => Navigator.pop(context),
@@ -167,7 +168,7 @@ class _AssignmentsScreenState extends State<AssignmentsScreen> {
                 'Live QR Views',
                 style: GoogleFonts.outfit(
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.onSurface,
                   fontSize: 18,
                 ),
               ),
@@ -186,7 +187,7 @@ class _AssignmentsScreenState extends State<AssignmentsScreen> {
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(24, 0, 24, 100),
             sliver: _isLoading
-                ? const SliverToBoxAdapter(
+                ? SliverToBoxAdapter(
                     child: Center(
                       child: Padding(
                         padding: EdgeInsets.only(top: 100),
@@ -203,10 +204,10 @@ class _AssignmentsScreenState extends State<AssignmentsScreen> {
                           Icon(
                             Icons.qr_code_scanner,
                             size: 64,
-                            color: Colors.white.withOpacity(0.05),
+                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.05),
                           ),
                           const SizedBox(height: 16),
-                          const Text(
+                          Text(
                             'No active QR views matching users',
                             style: TextStyle(color: _textDim, fontSize: 14),
                           ),
@@ -258,7 +259,7 @@ class _AssignmentsScreenState extends State<AssignmentsScreen> {
                       (user['firstName'] ?? user['email'] ?? '?')
                           .substring(0, 1)
                           .toUpperCase(),
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: _primary,
                         fontWeight: FontWeight.bold,
                       ),
@@ -274,15 +275,15 @@ class _AssignmentsScreenState extends State<AssignmentsScreen> {
                         (user['firstName'] != null || user['lastName'] != null)
                             ? '${user['firstName']} ${user['lastName']}'.trim()
                             : user['email'],
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurface,
                           fontWeight: FontWeight.bold,
                           fontSize: 15,
                         ),
                       ),
                       Text(
                         user['email'],
-                        style: const TextStyle(color: _textDim, fontSize: 11),
+                        style: TextStyle(color: _textDim, fontSize: 11),
                       ),
                     ],
                   ),
@@ -291,12 +292,12 @@ class _AssignmentsScreenState extends State<AssignmentsScreen> {
               ],
             ),
             const SizedBox(height: 20),
-            const Divider(color: _border, height: 1),
+            Divider(color: _border, height: 1),
             const SizedBox(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   'ASSIGNED WALLET',
                   style: TextStyle(
                     color: _textDim,
@@ -307,8 +308,8 @@ class _AssignmentsScreenState extends State<AssignmentsScreen> {
                 ),
                 Text(
                   wallet['name']?.toString().toUpperCase() ?? wallet['network'],
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
                   ),
@@ -319,7 +320,7 @@ class _AssignmentsScreenState extends State<AssignmentsScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   'ADDRESS',
                   style: TextStyle(
                     color: _textDim,

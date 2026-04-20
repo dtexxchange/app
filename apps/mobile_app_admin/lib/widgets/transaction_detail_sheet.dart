@@ -8,13 +8,7 @@ import 'package:encrypt/encrypt.dart' as enc;
 import 'package:pointycastle/export.dart' as pc;
 import '../services/api_service.dart';
 
-// ─── Design Tokens (Standardized) ───────────────────────────────────────────
-const _bgDark = Color(0xFF0A0B0D);
-const _primary = Color(0xFF00FF9D);
-const _blue = Color(0xFF3B82F6);
-const _textDim = Color(0xFF94A3B8);
-const _border = Color(0x0DFFFFFF);
-const _danger = Color(0xFFF87171);
+// Design tokens are now handled dynamically via Theme.of(context)
 
 class TransactionDetailSheet extends StatefulWidget {
   final Map<String, dynamic> tx;
@@ -37,6 +31,15 @@ class _TransactionDetailSheetState extends State<TransactionDetailSheet> {
   bool _isLoadingInfo = false;
   List<dynamic>? _fetchedLogs;
   Map<String, dynamic>? _fetchedUser;
+
+  // ─── Design Tokens (Dynamic) ──────────────────────────────────────────────────
+  Color get _bgDarkToken => Theme.of(context).scaffoldBackgroundColor;
+  Color get _bgCardToken => Theme.of(context).cardColor;
+  Color get _primaryToken => Theme.of(context).primaryColor;
+  Color get _blueToken => const Color(0xFF3B82F6);
+  Color get _textDimToken => Theme.of(context).colorScheme.onSurfaceVariant;
+  Color get _borderToken => Theme.of(context).dividerColor;
+  static const Color _dangerToken = Color(0xFFF87171);
 
   @override
   void initState() {
@@ -85,6 +88,13 @@ class _TransactionDetailSheetState extends State<TransactionDetailSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final _bgDark = _bgDarkToken;
+    final _primary = _primaryToken;
+    final _blue = _blueToken;
+    final _textDim = _textDimToken;
+    final _border = _borderToken;
+    final _danger = _dangerToken;
+
     final tx = widget.tx;
     final user = _fetchedUser ?? tx['user'];
     final logs = _fetchedLogs ?? tx['logs'] as List<dynamic>? ?? [];
@@ -115,7 +125,7 @@ class _TransactionDetailSheetState extends State<TransactionDetailSheet> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.1),
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -138,13 +148,12 @@ class _TransactionDetailSheetState extends State<TransactionDetailSheet> {
                           style: GoogleFonts.outfit(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white,
                           ),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           'TX-${tx['id']?.toString().substring(0, 12).toUpperCase() ?? 'UNKNOWN'}',
-                          style: const TextStyle(color: _textDim, fontSize: 12),
+                          style: TextStyle(color: _textDim, fontSize: 12),
                         ),
                       ],
                     ),
@@ -195,7 +204,7 @@ class _TransactionDetailSheetState extends State<TransactionDetailSheet> {
                         label: 'AMOUNT',
                         value:
                             '${NumberFormat('#,##0.00').format(tx['amount'] as num)} USDT',
-                        valueColor: isDeposit ? _primary : Colors.white,
+                        valueColor: isDeposit ? _primary : Theme.of(context).colorScheme.onSurface,
                       ),
                       const SizedBox(height: 16),
                       _DetailRow(label: 'TYPE', value: tx['type']),
@@ -254,7 +263,7 @@ class _TransactionDetailSheetState extends State<TransactionDetailSheet> {
                 const SizedBox(height: 32),
 
                 if (tx['type'] == 'EXCHANGE') ...[
-                  const Text(
+                  Text(
                     'BANK DETAILS (E2EE)',
                     style: TextStyle(
                       color: _textDim,
@@ -265,9 +274,9 @@ class _TransactionDetailSheetState extends State<TransactionDetailSheet> {
                   ),
                   const SizedBox(height: 12),
                   if (_isLoadingInfo)
-                    const Center(
+                    Center(
                       child: Padding(
-                        padding: EdgeInsets.all(20),
+                        padding: const EdgeInsets.all(20),
                         child: CircularProgressIndicator(
                           color: _primary,
                           strokeWidth: 2,
@@ -312,14 +321,14 @@ class _TransactionDetailSheetState extends State<TransactionDetailSheet> {
                       ),
                     )
                   else
-                    const Text(
+                    Text(
                       'Locked: Requires Admin RSA Key',
                       style: TextStyle(color: _danger, fontSize: 12),
                     ),
                   const SizedBox(height: 32),
                 ],
 
-                const Text(
+                Text(
                   'ACTIVITY TIMELINE',
                   style: TextStyle(
                     color: _textDim,
@@ -328,9 +337,9 @@ class _TransactionDetailSheetState extends State<TransactionDetailSheet> {
                     letterSpacing: 1.5,
                   ),
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 if (logs.isEmpty)
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.only(bottom: 24),
                     child: Text(
                       'No activity logs found',
@@ -358,12 +367,13 @@ class _TransactionDetailSheetState extends State<TransactionDetailSheet> {
     BuildContext context, {
     bool isLast = false,
   }) {
+    final _textDim = Theme.of(context).colorScheme.onSurfaceVariant;
     return Container(
       padding: EdgeInsets.only(bottom: isLast ? 0 : 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(color: _textDim, fontSize: 12)),
+          Text(label, style: TextStyle(color: _textDim, fontSize: 12)),
           const SizedBox(width: 8),
           Expanded(
             child: Row(
@@ -372,8 +382,7 @@ class _TransactionDetailSheetState extends State<TransactionDetailSheet> {
                 Flexible(
                   child: Text(
                     value,
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 12,
                     ),
@@ -391,6 +400,9 @@ class _TransactionDetailSheetState extends State<TransactionDetailSheet> {
   }
 
   Widget _buildLogItem(Map<String, dynamic> log, bool isLast) {
+    final _primary = _primaryToken;
+    final _textDim = _textDimToken;
+
     String actorStr = log['actor'] ?? 'Unknown';
     if (actorStr == 'SYSTEM') {
       actorStr = 'System';
@@ -454,7 +466,6 @@ class _TransactionDetailSheetState extends State<TransactionDetailSheet> {
                       Text(
                         log['status'],
                         style: const TextStyle(
-                          color: Colors.white,
                           fontWeight: FontWeight.bold,
                           fontSize: 13,
                         ),
@@ -463,14 +474,14 @@ class _TransactionDetailSheetState extends State<TransactionDetailSheet> {
                         DateFormat(
                           'MMM dd, hh:mm a',
                         ).format(DateTime.parse(log['createdAt'])),
-                        style: const TextStyle(color: _textDim, fontSize: 11),
+                        style: TextStyle(color: _textDim, fontSize: 11),
                       ),
                     ],
                   ),
                   const SizedBox(height: 4),
                   Text(
                     noteStr,
-                    style: const TextStyle(color: _textDim, fontSize: 13),
+                    style: TextStyle(color: _textDim, fontSize: 13),
                   ),
                   const SizedBox(height: 2),
                   Text(
@@ -498,12 +509,13 @@ class _DetailRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final _textDim = Theme.of(context).colorScheme.onSurfaceVariant;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             color: _textDim,
             fontSize: 11,
             fontWeight: FontWeight.bold,
@@ -513,7 +525,7 @@ class _DetailRow extends StatelessWidget {
         Text(
           value,
           style: TextStyle(
-            color: valueColor ?? Colors.white,
+            color: valueColor ?? Theme.of(context).colorScheme.onSurface,
             fontSize: 13,
             fontWeight: FontWeight.bold,
           ),
@@ -584,6 +596,7 @@ class _CopyButtonState extends State<_CopyButton> {
   bool _copied = false;
 
   void _handleCopy() {
+    final _primary = Theme.of(context).primaryColor;
     Clipboard.setData(ClipboardData(text: widget.value));
     setState(() => _copied = true);
 
@@ -613,6 +626,7 @@ class _CopyButtonState extends State<_CopyButton> {
 
   @override
   Widget build(BuildContext context) {
+    final _primary = Theme.of(context).primaryColor;
     return GestureDetector(
       onTap: _handleCopy,
       behavior: HitTestBehavior.opaque,
@@ -626,7 +640,7 @@ class _CopyButtonState extends State<_CopyButton> {
         child: Icon(
           _copied ? Icons.check_rounded : Icons.copy_rounded,
           size: 14,
-          color: _copied ? _primary : Colors.white.withOpacity(0.25),
+          color: _copied ? _primary : Theme.of(context).colorScheme.onSurface.withOpacity(0.25),
         ),
       ),
     );
