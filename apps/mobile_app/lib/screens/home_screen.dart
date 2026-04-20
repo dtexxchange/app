@@ -9,7 +9,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 
 import '../main.dart' show routeObserver;
 import '../services/api_service.dart';
-import '../services/crypto_service.dart';
+import '../widgets/transaction_detail_sheet.dart';
 
 // ─── Design Tokens ───────────────────────────────────────────────────────────
 const _bgDark = Color(0xFF0A0B0D);
@@ -71,7 +71,7 @@ class CustomBottomSheet extends StatelessWidget {
                   title,
                   style: GoogleFonts.outfit(
                     fontSize: 22,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w700,
                     color: Colors.white,
                   ),
                 ),
@@ -99,14 +99,14 @@ class AmountField extends StatelessWidget {
       style: GoogleFonts.outfit(
         color: Colors.white,
         fontSize: 32,
-        fontWeight: FontWeight.bold,
+        fontWeight: FontWeight.w700,
       ),
       decoration: InputDecoration(
         hintText: '0.00',
         hintStyle: GoogleFonts.outfit(
           color: Colors.white.withOpacity(0.2),
           fontSize: 32,
-          fontWeight: FontWeight.bold,
+          fontWeight: FontWeight.w700,
         ),
         filled: true,
         fillColor: Colors.white.withOpacity(0.03),
@@ -173,8 +173,11 @@ class PrimaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    final scale = (width / 375.0).clamp(0.85, 1.15);
+
     return SizedBox(
-      height: 52,
+      height: 52 * scale,
       child: ElevatedButton(
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
@@ -184,17 +187,26 @@ class PrimaryButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
           ),
           elevation: 0,
+          padding: const EdgeInsets.symmetric(horizontal: 8),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             if (icon != null) ...[
-              Icon(icon, size: 18),
-              const SizedBox(width: 8),
+              Icon(icon, size: 18 * scale),
+              const SizedBox(width: 4),
             ],
-            Text(
-              label,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+            Flexible(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15 * scale,
+                  ),
+                ),
+              ),
             ),
           ],
         ),
@@ -211,8 +223,11 @@ class GhostButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    final scale = (width / 375.0).clamp(0.85, 1.15);
+
     return SizedBox(
-      height: 52,
+      height: 52 * scale,
       child: OutlinedButton(
         onPressed: onPressed,
         style: OutlinedButton.styleFrom(
@@ -221,20 +236,129 @@ class GhostButton extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
+          padding: const EdgeInsets.symmetric(horizontal: 8),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             if (icon != null) ...[
-              Icon(icon, size: 18),
-              const SizedBox(width: 8),
+              Icon(icon, size: 18 * scale),
+              const SizedBox(width: 4),
             ],
-            Text(
-              label,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+            Flexible(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15 * scale,
+                  ),
+                ),
+              ),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class LiveTimerWidget extends StatefulWidget {
+  final DateTime expiresAt;
+  final VoidCallback onExpired;
+  const LiveTimerWidget({
+    super.key,
+    required this.expiresAt,
+    required this.onExpired,
+  });
+
+  @override
+  State<LiveTimerWidget> createState() => _LiveTimerWidgetState();
+}
+
+class _LiveTimerWidgetState extends State<LiveTimerWidget> {
+  Timer? _timer;
+  late int _timeLeft;
+
+  @override
+  void initState() {
+    super.initState();
+    _calculateTimeLeft();
+    _startTimer();
+  }
+
+  @override
+  void didUpdateWidget(LiveTimerWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.expiresAt != widget.expiresAt) {
+      _calculateTimeLeft();
+    }
+  }
+
+  void _calculateTimeLeft() {
+    final now = DateTime.now();
+    _timeLeft = widget.expiresAt.difference(now).inSeconds;
+    if (_timeLeft < 0) _timeLeft = 0;
+  }
+
+  void _startTimer() {
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (mounted) {
+        setState(() {
+          _calculateTimeLeft();
+          if (_timeLeft <= 0) {
+            _timer?.cancel();
+            widget.onExpired();
+          }
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  String _formatTime(int totalSeconds) {
+    int minutes = totalSeconds ~/ 60;
+    int seconds = totalSeconds % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+  }
+
+  Color _timerColor() {
+    if (_timeLeft < 60) return Colors.redAccent;
+    if (_timeLeft < 300) return Colors.orangeAccent;
+    return const Color(0xFF00FF9D);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _timerColor();
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withOpacity(0.2)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.timer_outlined, color: color, size: 14),
+          const SizedBox(width: 6),
+          Text(
+            'REFRESHING IN: ${_formatTime(_timeLeft)}',
+            style: GoogleFonts.inter(
+              color: color,
+              fontSize: 10,
+              letterSpacing: 1,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -258,8 +382,6 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
 
   // QR Logic
   List<dynamic> _wallets = [];
-  Timer? _timer;
-  int _timeLeft = 1800; // 30 minutes in seconds
   String _qrSeed = "";
   double? _conversionRate;
 
@@ -267,9 +389,6 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
   void initState() {
     super.initState();
     _fetchData();
-    _fetchWallets();
-    _fetchConversionRate();
-    _startTimer();
   }
 
   @override
@@ -287,24 +406,7 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
   @override
   void dispose() {
     routeObserver.unsubscribe(this);
-    _timer?.cancel();
     super.dispose();
-  }
-
-  void _startTimer() {
-    _timer?.cancel();
-    // Default to 30 mins if not set yet, but it will be updated by _fetchWallets
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (mounted) {
-        setState(() {
-          if (_timeLeft > 0) {
-            _timeLeft--;
-          } else {
-            _fetchWallets(); // Refresh when timer hits 0 to get next assignment
-          }
-        });
-      }
-    });
   }
 
   void _generateQrData() {
@@ -314,18 +416,6 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
     });
   }
 
-  String _formatTime(int totalSeconds) {
-    int minutes = totalSeconds ~/ 60;
-    int seconds = totalSeconds % 60;
-    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
-  }
-
-  Color _timerColor() {
-    if (_timeLeft < 60) return Colors.redAccent;
-    if (_timeLeft < 300) return Colors.orangeAccent;
-    return _primary;
-  }
-
   Future<void> _fetchWallets() async {
     try {
       final res = await _api.getRequest('/settings/wallets');
@@ -333,12 +423,6 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
         final data = jsonDecode(res.body);
         setState(() {
           _wallets = data;
-          if (_wallets.isNotEmpty && _wallets[0]['expiresAt'] != null) {
-            final expiresAt = DateTime.parse(_wallets[0]['expiresAt']);
-            final now = DateTime.now();
-            _timeLeft = expiresAt.difference(now).inSeconds;
-            if (_timeLeft < 0) _timeLeft = 0;
-          }
           _generateQrData();
         });
       }
@@ -368,23 +452,30 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
 
   Future<void> _fetchData() async {
     try {
-      final userRes = await _api.getRequest('/users/me');
-      if (userRes.statusCode == 200) {
-        final data = jsonDecode(userRes.body);
-        setState(() {
-          _balance = (data['balance'] as num).toDouble();
-          _hasPasscode = data['passcode'] != null;
-        });
-      }
-
-      // Only fetch the last 10 for the home dashboard
-      final txRes = await _api.getRequest('/wallet/transactions?limit=10');
-      if (txRes.statusCode == 200) {
-        setState(() {
-          _transactions = jsonDecode(txRes.body);
-          _isLoading = false;
-        });
-      }
+      // Parallel fetch for speed
+      await Future.wait([
+        _fetchWallets(),
+        _fetchConversionRate(),
+        _api.getRequest('/users/me').then((userRes) {
+          if (userRes.statusCode == 200) {
+            final data = jsonDecode(userRes.body);
+            setState(() {
+              _balance = (data['balance'] as num).toDouble();
+              _hasPasscode = data['passcode'] != null;
+            });
+          }
+        }),
+        // Only fetch the last 10 for the home dashboard
+        _api.getRequest('/wallet/transactions?limit=10').then((txRes) {
+          if (txRes.statusCode == 200) {
+            setState(() {
+              _transactions = jsonDecode(txRes.body);
+            });
+          }
+        }),
+      ]);
+      
+      setState(() => _isLoading = false);
     } catch (e) {
       debugPrint(e.toString());
       setState(() => _isLoading = false);
@@ -401,163 +492,153 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
         title: 'Add Money',
         icon: Icons.arrow_downward,
         iconColor: _primary,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Rate Information
-            Container(
-              padding: const EdgeInsets.all(16),
-              margin: const EdgeInsets.only(bottom: 20),
-              decoration: BoxDecoration(
-                color: _primary.withOpacity(0.05),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: _primary.withOpacity(0.1)),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.info_outline, color: _primary, size: 18),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      _conversionRate != null
-                          ? 'Current Rate: 1 USDT = ₹${_conversionRate!.toStringAsFixed(2)}'
-                          : 'Rate not yet configured by admin.',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+        child: StatefulBuilder(
+          builder: (context, setSheetState) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Rate Information
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  margin: const EdgeInsets.only(bottom: 20),
+                  decoration: BoxDecoration(
+                    color: _primary.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: _primary.withOpacity(0.1)),
                   ),
-                ],
-              ),
-            ),
-
-            if (_wallets.isEmpty)
-              Container(
-                padding: const EdgeInsets.all(24),
-                child: const Text(
-                  'No deposit gateways available currently',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: _textDim),
-                ),
-              ),
-
-            ..._wallets.map((wallet) {
-              return Container(
-                margin: const EdgeInsets.only(bottom: 16),
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: _bgDark,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: _border),
-                ),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          (wallet['name'] != null &&
-                                  wallet['name'].toString().isNotEmpty)
-                              ? wallet['name'].toString().toUpperCase()
-                              : '${wallet['network']} GATEWAY',
-                          style: GoogleFonts.inter(
-                            color: _primary,
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.2,
+                  child: Row(
+                    children: [
+                      const Icon(Icons.info_outline, color: _primary, size: 18),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          _conversionRate != null
+                              ? 'Current Rate: 1 USDT = ₹${_conversionRate!.toStringAsFixed(2)}'
+                              : 'Rate not yet configured by admin.',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
-                        GestureDetector(
-                          onTap: () {
-                            Clipboard.setData(
-                              ClipboardData(text: wallet['address']),
-                            );
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Address copied to clipboard'),
+                      ),
+                    ],
+                  ),
+                ),
+
+                if (_wallets.isEmpty)
+                  Container(
+                    padding: const EdgeInsets.all(24),
+                    child: const Text(
+                      'No deposit gateways available currently',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: _textDim),
+                    ),
+                  ),
+
+                ..._wallets.map((wallet) {
+                  final expiresAt = wallet['expiresAt'] != null
+                      ? DateTime.parse(wallet['expiresAt'])
+                      : DateTime.now().add(const Duration(minutes: 30));
+
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 16),
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: _bgDark,
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(color: _border),
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              (wallet['name'] != null &&
+                                      wallet['name'].toString().isNotEmpty)
+                                  ? wallet['name'].toString().toUpperCase()
+                                  : '${wallet['network']} GATEWAY',
+                              style: GoogleFonts.inter(
+                                color: _primary,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 1.2,
                               ),
-                            );
-                          },
-                          child: Row(
-                            children: [
-                              const Icon(Icons.copy, color: _primary, size: 12),
-                              const SizedBox(width: 4),
-                              Text(
-                                'COPY',
-                                style: GoogleFonts.inter(
-                                  color: _primary,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                            ),
+                            GestureDetector(
+                              onTap: () {
+                                Clipboard.setData(
+                                  ClipboardData(text: wallet['address']),
+                                );
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Address copied to clipboard',
+                                    ),
+                                  ),
+                                );
+                              },
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.copy,
+                                    color: _primary,
+                                    size: 12,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'COPY',
+                                    style: GoogleFonts.inter(
+                                      color: _primary,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ],
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
                           ),
+                          child: QrImageView(
+                            data: '${wallet['address']}$_qrSeed',
+                            version: QrVersions.auto,
+                            size: 140.0,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          wallet['address'],
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.outfit(
+                            color: Colors.white,
+                            fontSize: 13,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        LiveTimerWidget(
+                          expiresAt: expiresAt,
+                          onExpired: () async {
+                            await _fetchWallets();
+                            if (mounted) {
+                              setSheetState(() {}); // Refresh sheet content
+                            }
+                          },
                         ),
                       ],
                     ),
-                    const SizedBox(height: 20),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: QrImageView(
-                        data: '${wallet['address']}$_qrSeed',
-                        version: QrVersions.auto,
-                        size: 140.0,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    const SizedBox(height: 16),
-                    Text(
-                      wallet['address'],
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.outfit(
-                        color: Colors.white,
-                        fontSize: 13,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: _timerColor().withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: _timerColor().withOpacity(0.2),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.timer_outlined,
-                            color: _timerColor(),
-                            size: 14,
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            'REFRESHING IN: ${_formatTime(_timeLeft)}',
-                            style: GoogleFonts.inter(
-                              color: _timerColor(),
-                              fontSize: 10,
-                              letterSpacing: 1,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }).toList(),
-          ],
+                  );
+                }),
+              ],
+            );
+          },
         ),
       ),
     );
@@ -569,6 +650,7 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
+    final widthScale = (size.width / 375.0).clamp(0.85, 1.2);
     final isSmall = size.width < 360;
 
     return Scaffold(
@@ -585,10 +667,10 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
                   _buildAppBar(context),
                   SliverPadding(
                     padding: EdgeInsets.fromLTRB(
-                      isSmall ? 16 : 24,
+                      (isSmall ? 16 : 24) * widthScale,
                       8,
-                      isSmall ? 16 : 24,
-                      100,
+                      (isSmall ? 16 : 24) * widthScale,
+                      100 * widthScale,
                     ),
                     sliver: SliverList(
                       delegate: SliverChildListDelegate([
@@ -608,7 +690,9 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
   }
 
   Widget _buildRateCard(BuildContext context) {
-    final isSmall = MediaQuery.of(context).size.width < 360;
+    final size = MediaQuery.of(context).size;
+    final widthScale = (size.width / 375.0).clamp(0.85, 1.2);
+    final isSmall = size.width < 360;
     return Container(
       padding: EdgeInsets.all(isSmall ? 16 : 24),
       decoration: BoxDecoration(
@@ -638,7 +722,7 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
                   style: GoogleFonts.inter(
                     color: _textDim,
                     fontSize: 10,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w700,
                     letterSpacing: 1.5,
                   ),
                 ),
@@ -649,8 +733,8 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
                       : 'Not Set',
                   style: GoogleFonts.outfit(
                     color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 24 * widthScale,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ],
@@ -689,7 +773,7 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
                   style: GoogleFonts.outfit(
                     color: Colors.white,
                     fontSize: 15,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
                 Text(
@@ -708,7 +792,7 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
               'SET NOW',
               style: TextStyle(
                 color: _primary,
-                fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.w700,
                 fontSize: 13,
               ),
             ),
@@ -746,7 +830,7 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
             text: TextSpan(
               style: GoogleFonts.outfit(
                 fontSize: isSmall ? 18 : 22,
-                fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.w700,
                 color: Colors.white,
               ),
               children: [
@@ -790,6 +874,7 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
 
   Widget _buildBalanceCard(BuildContext context) {
     final size = MediaQuery.of(context).size;
+    final widthScale = (size.width / 375.0).clamp(0.85, 1.2);
     final isSmall = size.width < 360;
     final isShort = size.height < 700;
 
@@ -812,7 +897,7 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
                 style: GoogleFonts.inter(
                   color: _textDim,
                   fontSize: isSmall ? 9 : 11,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w700,
                   letterSpacing: isSmall ? 1 : 2,
                 ),
               ),
@@ -844,8 +929,8 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
                   NumberFormat('#,##0.00').format(_balance),
                   style: GoogleFonts.outfit(
                     color: Colors.white,
-                    fontSize: isSmall ? 32 : 42,
-                    fontWeight: FontWeight.bold,
+                    fontSize: isSmall ? 32 * widthScale : 42 * widthScale,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -861,38 +946,45 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
             ),
           ),
           if (_conversionRate != null) ...[
-            const SizedBox(height: 4),
+            SizedBox(height: 4 * widthScale),
             Text(
               '≈ ₹${NumberFormat('#,##0.00').format(_balance * _conversionRate!)}',
               style: GoogleFonts.outfit(
                 color: _primary.withOpacity(0.7),
-                fontSize: isSmall ? 14 : 16,
+                fontSize: 14 * widthScale,
                 fontWeight: FontWeight.w600,
               ),
             ),
           ],
-          SizedBox(height: isShort ? 24 : 32),
-          Row(
-            children: [
-              Expanded(
-                child: PrimaryButton(
-                  label: 'Add Money',
-                  icon: Icons.add_circle_outline,
-                  onPressed: _showDepositSheet,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: PrimaryButton(
-                  label: 'Exchange',
-                  icon: Icons.account_balance,
-                  onPressed: () async {
-                    final res = await Navigator.pushNamed(context, '/exchange');
-                    if (res == true) _fetchData();
-                  },
-                ),
-              ),
-            ],
+          SizedBox(height: isShort ? 20 * widthScale : 28 * widthScale),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              return Row(
+                children: [
+                  Expanded(
+                    child: PrimaryButton(
+                      label: 'Add Money',
+                      icon: Icons.add_circle_outline,
+                      onPressed: _showDepositSheet,
+                    ),
+                  ),
+                  SizedBox(width: constraints.maxWidth * 0.04),
+                  Expanded(
+                    child: PrimaryButton(
+                      label: 'Exchange',
+                      icon: Icons.account_balance,
+                      onPressed: () async {
+                        final res = await Navigator.pushNamed(
+                          context,
+                          '/exchange',
+                        );
+                        if (res == true) _fetchData();
+                      },
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
         ],
       ),
@@ -920,7 +1012,7 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
                   'Recent Activity',
                   style: GoogleFonts.outfit(
                     fontSize: isSmall ? 18 : 22,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w700,
                     color: Colors.white,
                   ),
                 ),
@@ -936,7 +1028,7 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
                   style: TextStyle(
                     color: _primary,
                     fontSize: isSmall ? 12 : 13,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
@@ -966,7 +1058,7 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
                     'View Full History',
                     style: TextStyle(
                       color: _primary,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w700,
                       fontSize: isSmall ? 13 : 14,
                     ),
                   ),
@@ -1081,7 +1173,7 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
                 Text(
                   '${isDeposit ? '+' : '-'}${NumberFormat('#,##0.00').format(tx['amount'] as num)} USDT',
                   style: GoogleFonts.outfit(
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w700,
                     fontSize: isSmall ? 14 : 15,
                     color: isDeposit ? _primary : Colors.white,
                   ),
@@ -1106,7 +1198,7 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
                         style: TextStyle(
                           color: statusColor,
                           fontSize: 10,
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w700,
                           letterSpacing: 0.8,
                         ),
                       ),
@@ -1129,356 +1221,10 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (context) => _TransactionDetailSheet(tx: tx),
+      builder: (context) => TransactionDetailSheet(tx: tx),
     ).then((_) => _fetchData());
   }
 }
-
-class _TransactionDetailSheet extends StatelessWidget {
-  final Map<String, dynamic> tx;
-  const _TransactionDetailSheet({required this.tx});
-
-  @override
-  Widget build(BuildContext context) {
-    final status = tx['status'] as String? ?? 'PENDING';
-    final logs = tx['logs'] as List<dynamic>? ?? [];
-    final isDeposit = tx['type'] == 'DEPOSIT';
-    final bank = (!isDeposit && tx['bankDetails'] != null)
-        ? CryptoService.decrypt(tx['bankDetails'])
-        : null;
-
-    Color statusColor;
-    if (status == 'COMPLETED')
-      statusColor = _primary;
-    else if (status == 'PENDING')
-      statusColor = _blue;
-    else
-      statusColor = _danger;
-
-    return Container(
-      padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.85,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-          const SizedBox(height: 24),
-
-          Flexible(
-            child: ListView(
-              shrinkWrap: true,
-              padding: const EdgeInsets.only(bottom: 32),
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Transaction Details',
-                          style: GoogleFonts.outfit(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'TX-${tx['id']?.toString().substring(0, 12).toUpperCase() ?? 'UNKNOWN'}',
-                          style: const TextStyle(color: _textDim, fontSize: 12),
-                        ),
-                      ],
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: statusColor.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: statusColor.withOpacity(0.2)),
-                      ),
-                      child: Text(
-                        status,
-                        style: TextStyle(
-                          color: statusColor,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 32),
-
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: _bgDark,
-                    border: Border.all(color: _border),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Column(
-                    children: [
-                      _DetailRow(label: 'TYPE', value: tx['type'] ?? 'Unknown'),
-                      const SizedBox(height: 16),
-                      _DetailRow(
-                        label: 'AMOUNT',
-                        value:
-                            '${NumberFormat('#,##0.00').format(tx['amount'] as num)} USDT',
-                        valueColor: isDeposit ? _primary : Colors.white,
-                      ),
-                      if (tx['conversionRate'] != null) ...[
-                        const SizedBox(height: 16),
-                        _DetailRow(
-                          label: 'RATE',
-                          value:
-                              '₹${(tx['conversionRate'] as num).toStringAsFixed(2)}',
-                        ),
-                        const SizedBox(height: 16),
-                        _DetailRow(
-                          label: 'CREDIT ESTIMATE',
-                          value:
-                              '₹${NumberFormat('#,##0.00').format((tx['amount'] as num) * (tx['conversionRate'] as num))}',
-                          valueColor: _blue,
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 32),
-
-                if (bank != null) ...[
-                  const Text(
-                    'EXCHANGE INSTRUCTIONS',
-                    style: TextStyle(
-                      color: _textDim,
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.5,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: _bgDark,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: _primary.withOpacity(0.1)),
-                    ),
-                    child: Column(
-                      children: [
-                        _infoRow('Beneficiary', bank['name'] ?? 'Unknown'),
-                        const SizedBox(height: 8),
-                        _infoRow('Account', bank['account'] ?? 'Locked'),
-                        const SizedBox(height: 8),
-                        _infoRow('Bank', bank['bank'] ?? 'Private'),
-                        const SizedBox(height: 8),
-                        _infoRow(
-                          'IFSC/Sort',
-                          bank['ifsc'] ?? 'LOCKED',
-                          isLast: true,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-                ],
-
-                const Text(
-                  'ACTIVITY LOGS',
-                  style: TextStyle(
-                    color: _textDim,
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.5,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                if (logs.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.only(bottom: 24),
-                    child: Text(
-                      'No activity history found',
-                      style: TextStyle(color: _textDim, fontSize: 13),
-                    ),
-                  )
-                else
-                  ...logs.map(
-                    (log) => _buildLogItem(
-                      log,
-                      logs.indexOf(log) == logs.length - 1,
-                    ),
-                  ),
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  height: 54,
-                  child: ElevatedButton(
-                    onPressed: () => Navigator.pop(context),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white.withOpacity(0.05),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        side: BorderSide(color: Colors.white.withOpacity(0.05)),
-                      ),
-                      elevation: 0,
-                    ),
-                    child: const Text(
-                      'Close',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _infoRow(String label, String value, {bool isLast = false}) {
-    return Container(
-      padding: EdgeInsets.only(bottom: isLast ? 0 : 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: const TextStyle(color: _textDim, fontSize: 12)),
-          Text(
-            value,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 12,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLogItem(Map<String, dynamic> log, bool isLast) {
-    return IntrinsicHeight(
-      child: Row(
-        children: [
-          Column(
-            children: [
-              Container(
-                width: 12,
-                height: 12,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: _primary.withOpacity(0.3),
-                  border: Border.all(color: _primary, width: 2),
-                ),
-              ),
-              if (!isLast)
-                Expanded(
-                  child: Container(width: 2, color: _primary.withOpacity(0.1)),
-                ),
-            ],
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        log['status'],
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                        ),
-                      ),
-                      Text(
-                        DateFormat(
-                          'MMM dd, HH:mm',
-                        ).format(DateTime.parse(log['createdAt'])),
-                        style: const TextStyle(color: _textDim, fontSize: 11),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    log['note'] ?? 'Status updated',
-                    style: const TextStyle(color: _textDim, fontSize: 13),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'by ${log['actor']}',
-                    style: TextStyle(
-                      color: _primary.withOpacity(0.5),
-                      fontSize: 11,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _DetailRow extends StatelessWidget {
-  final String label;
-  final String value;
-  final Color? valueColor;
-  const _DetailRow({required this.label, required this.value, this.valueColor});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            color: _textDim,
-            fontSize: 11,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 0.5,
-          ),
-        ),
-        Text(
-          value,
-          style: TextStyle(
-            color: valueColor ?? Colors.white,
-            fontSize: 13,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// Removed passcode entry sheet - Use dedicated /exchange-passcode screen
 
 extension StringExtension on String {
   String capitalize() =>

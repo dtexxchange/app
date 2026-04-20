@@ -26,6 +26,17 @@ class _AuthScreenState extends State<AuthScreen> {
         'email': _emailController.text,
       });
       if (res.statusCode == 201 || res.statusCode == 200) {
+        if (_otpSent && mounted) {
+           ScaffoldMessenger.of(context).showSnackBar(
+             SnackBar(
+               content: const Text('OTP sent successfully', style: TextStyle(fontWeight: FontWeight.w600, color: Colors.black)),
+               backgroundColor: const Color(0xFF00FF9D),
+               behavior: SnackBarBehavior.floating,
+               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+               margin: const EdgeInsets.all(16),
+             ),
+           );
+        }
         setState(() => _otpSent = true);
       } else {
         final body = jsonDecode(res.body);
@@ -359,6 +370,13 @@ class _AuthScreenState extends State<AuthScreen> {
           label: 'Verify & Sign In',
         ),
         const SizedBox(height: 12),
+        TextButton(
+          onPressed: _isLoading ? null : _sendOtp,
+          child: const Text(
+            'Resend Code',
+            style: TextStyle(color: Color(0xFF00FF9D), fontSize: 14),
+          ),
+        ),
         TextButton(
           onPressed: () => setState(() => _otpSent = false),
           child: const Text(

@@ -296,7 +296,7 @@ const BankAccounts: React.FC = () => {
                                             <span className="text-[10px] font-bold text-text-dim">
                                                 {format(
                                                     new Date(log.createdAt),
-                                                    "MMM dd, HH:mm",
+                                                    "MMM dd, hh:mm a",
                                                 )}
                                             </span>
                                         </div>

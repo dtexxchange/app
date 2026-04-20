@@ -54,12 +54,18 @@ export class UsersService {
       include: { 
         transactions: {
             orderBy: { createdAt: 'desc' },
-            take: 20
+            take: 20,
+            include: {
+                logs: { orderBy: { createdAt: 'asc' } },
+                user: { select: { email: true, firstName: true, lastName: true } }
+            }
         },
-        walletAssignment: {
+        walletAssignments: {
             include: {
                 wallet: true
-            }
+            },
+            orderBy: { createdAt: 'desc' },
+            take: 1
         }
       }
     });

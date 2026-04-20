@@ -1,10 +1,12 @@
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import '../services/api_service.dart';
-import '../services/crypto_service.dart';
+
 import '../main.dart' show routeObserver;
+import '../services/api_service.dart';
+import '../widgets/transaction_detail_sheet.dart';
 
 const _bgDark = Color(0xFF0A0B0D);
 const _bgCard = Color(0xFF15171C);
@@ -24,7 +26,8 @@ class TransactionsScreen extends StatefulWidget {
 }
 
 // State exposed so MainScreen can refresh via GlobalKey<TransactionsScreenState>.
-class TransactionsScreenState extends State<TransactionsScreen> with RouteAware {
+class TransactionsScreenState extends State<TransactionsScreen>
+    with RouteAware {
   List _transactions = [];
   bool _isLoading = true;
   bool _isFetchingMore = false;
@@ -87,10 +90,7 @@ class TransactionsScreenState extends State<TransactionsScreen> with RouteAware 
     }
 
     try {
-      final params = <String, String>{
-        'page': '1',
-        'limit': '$_pageSize',
-      };
+      final params = <String, String>{'page': '1', 'limit': '$_pageSize'};
       if (_filterType.isNotEmpty) params['type'] = _filterType;
       if (_filterStatus.isNotEmpty) params['status'] = _filterStatus;
 
@@ -119,10 +119,7 @@ class TransactionsScreenState extends State<TransactionsScreen> with RouteAware 
     setState(() => _isFetchingMore = true);
 
     try {
-      final params = <String, String>{
-        'page': '$_page',
-        'limit': '$_pageSize',
-      };
+      final params = <String, String>{'page': '$_page', 'limit': '$_pageSize'};
       if (_filterType.isNotEmpty) params['type'] = _filterType;
       if (_filterStatus.isNotEmpty) params['status'] = _filterStatus;
 
@@ -163,18 +160,20 @@ class TransactionsScreenState extends State<TransactionsScreen> with RouteAware 
               backgroundColor: _bgDark.withOpacity(0.9),
               elevation: 0,
               titleSpacing: 24,
-              title: Row(children: [
-                const Icon(Icons.receipt_long, color: _primary, size: 20),
-                const SizedBox(width: 10),
-                Text(
-                  'Transaction History',
-                  style: GoogleFonts.outfit(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+              title: Row(
+                children: [
+                  const Icon(Icons.receipt_long, color: _primary, size: 20),
+                  const SizedBox(width: 10),
+                  Text(
+                    'Transaction History',
+                    style: GoogleFonts.outfit(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
-                ),
-              ]),
+                ],
+              ),
               bottom: PreferredSize(
                 preferredSize: const Size.fromHeight(1),
                 child: Container(height: 1, color: _border),
@@ -219,19 +218,19 @@ class TransactionsScreenState extends State<TransactionsScreen> with RouteAware 
                           ),
                         )
                       : _hasMore
-                          ? const SizedBox.shrink()
-                          : Center(
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 24),
-                                child: Text(
-                                  '— All transactions loaded —',
-                                  style: TextStyle(
-                                    color: _textDim.withOpacity(0.5),
-                                    fontSize: 12,
-                                  ),
-                                ),
+                      ? const SizedBox.shrink()
+                      : Center(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 24),
+                            child: Text(
+                              '— All transactions loaded —',
+                              style: TextStyle(
+                                color: _textDim.withOpacity(0.5),
+                                fontSize: 12,
                               ),
                             ),
+                          ),
+                        ),
                 ),
               ),
             ],
@@ -364,8 +363,9 @@ class TransactionsScreenState extends State<TransactionsScreen> with RouteAware 
                   ),
                   const SizedBox(height: 3),
                   Text(
-                    DateFormat('MMM dd, yyyy • HH:mm')
-                        .format(DateTime.parse(tx['createdAt'])),
+                    DateFormat(
+                      'MMM dd, yyyy • hh:mm a',
+                    ).format(DateTime.parse(tx['createdAt'])),
                     style: const TextStyle(color: _textDim, fontSize: 11),
                   ),
                 ],
@@ -383,10 +383,16 @@ class TransactionsScreenState extends State<TransactionsScreen> with RouteAware 
                   ),
                 ),
                 const SizedBox(height: 3),
-                const Text('USDT', style: TextStyle(color: _textDim, fontSize: 11)),
+                const Text(
+                  'USDT',
+                  style: TextStyle(color: _textDim, fontSize: 11),
+                ),
                 const SizedBox(height: 6),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
                     color: statusBg,
                     borderRadius: BorderRadius.circular(20),
@@ -424,7 +430,7 @@ class TransactionsScreenState extends State<TransactionsScreen> with RouteAware 
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (context) => _TransactionDetailSheet(tx: tx),
+      builder: (context) => TransactionDetailSheet(tx: tx),
     );
   }
 }
@@ -524,303 +530,4 @@ class _FilterChip extends StatelessWidget {
 extension StringExtension on String {
   String capitalize() =>
       isEmpty ? this : '${this[0].toUpperCase()}${substring(1).toLowerCase()}';
-}
-
-class _TransactionDetailSheet extends StatelessWidget {
-  final Map<String, dynamic> tx;
-  const _TransactionDetailSheet({required this.tx});
-
-  @override
-  Widget build(BuildContext context) {
-    final status = tx['status'] as String? ?? 'PENDING';
-    final logs = tx['logs'] as List? ?? [];
-    final isDeposit = tx['type'] == 'DEPOSIT';
-    final bank = (!isDeposit && tx['bankDetails'] != null)
-        ? CryptoService.decrypt(tx['bankDetails'])
-        : null;
-
-    Color statusColor;
-    if (status == 'COMPLETED')
-      statusColor = _primary;
-    else if (status == 'PENDING')
-      statusColor = _blue;
-    else
-      statusColor = const Color(0xFFF87171);
-
-    return Container(
-      padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.85,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-          const SizedBox(height: 24),
-          Flexible(
-            child: ListView(
-              shrinkWrap: true,
-              padding: const EdgeInsets.only(bottom: 32),
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Transaction Details',
-                          style: GoogleFonts.outfit(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'TX-${tx['id'].toString().substring(0, 12).toUpperCase()}',
-                          style: const TextStyle(color: _textDim, fontSize: 12),
-                        ),
-                      ],
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: statusColor.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: statusColor.withOpacity(0.2)),
-                      ),
-                      child: Text(
-                        status,
-                        style: TextStyle(
-                          color: statusColor,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 32),
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: _bgDark,
-                    border: Border.all(color: _border),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Column(
-                    children: [
-                      _DetailRow(label: 'TYPE', value: tx['type'] ?? 'Unknown'),
-                      const SizedBox(height: 16),
-                      _DetailRow(
-                        label: 'AMOUNT',
-                        value:
-                            '${NumberFormat('#,##0.00').format(tx['amount'])} USDT',
-                        valueColor: isDeposit ? _primary : Colors.white,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 32),
-                if (bank != null) ...[
-                  const Text(
-                    'EXCHANGE INSTRUCTIONS',
-                    style: TextStyle(
-                      color: _textDim,
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.5,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: _bgDark,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: _primary.withOpacity(0.1)),
-                    ),
-                    child: Column(
-                      children: [
-                        _infoRow('Beneficiary', bank['name'] ?? 'Unknown'),
-                        const SizedBox(height: 8),
-                        _infoRow('Account', bank['account'] ?? 'Locked'),
-                        const SizedBox(height: 8),
-                        _infoRow('Bank', bank['bank'] ?? 'Private'),
-                        const SizedBox(height: 8),
-                        _infoRow(
-                          'IFSC/Sort',
-                          bank['ifsc'] ?? 'LOCKED',
-                          isLast: true,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-                ],
-                const Text(
-                  'ACTIVITY LOGS',
-                  style: TextStyle(
-                    color: _textDim,
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.5,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                if (logs.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.only(bottom: 24),
-                    child: Text(
-                      'No logs available',
-                      style: TextStyle(color: _textDim, fontSize: 13),
-                    ),
-                  )
-                else
-                  ...logs.map(
-                    (log) =>
-                        _buildLogItem(log, logs.indexOf(log) == logs.length - 1),
-                  ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLogItem(Map<String, dynamic> log, bool isLast) {
-    return IntrinsicHeight(
-      child: Row(
-        children: [
-          Column(
-            children: [
-              Container(
-                width: 12,
-                height: 12,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: _primary.withOpacity(0.3),
-                  border: Border.all(color: _primary, width: 2),
-                ),
-              ),
-              if (!isLast)
-                Expanded(
-                  child: Container(width: 2, color: _primary.withOpacity(0.1)),
-                ),
-            ],
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        log['status'],
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                        ),
-                      ),
-                      Text(
-                        DateFormat(
-                          'HH:mm',
-                        ).format(DateTime.parse(log['createdAt'])),
-                        style: const TextStyle(color: _textDim, fontSize: 11),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    log['note'] ?? 'Status updated',
-                    style: const TextStyle(color: _textDim, fontSize: 13),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'by ${log['actor']}',
-                    style: TextStyle(
-                      color: _primary.withOpacity(0.5),
-                      fontSize: 11,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _infoRow(String label, String value, {bool isLast = false}) {
-    return Container(
-      padding: EdgeInsets.only(bottom: isLast ? 0 : 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: const TextStyle(color: _textDim, fontSize: 12)),
-          Text(
-            value,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 12,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _DetailRow extends StatelessWidget {
-  final String label;
-  final String value;
-  final Color? valueColor;
-  const _DetailRow({required this.label, required this.value, this.valueColor});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            color: _textDim,
-            fontSize: 11,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 0.5,
-          ),
-        ),
-        Text(
-          value,
-          style: TextStyle(
-            color: valueColor ?? Colors.white,
-            fontSize: 13,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ],
-    );
-  }
 }

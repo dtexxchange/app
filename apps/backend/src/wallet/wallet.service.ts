@@ -197,7 +197,7 @@ export class WalletService {
         if (transaction.type === TransactionType.EXCHANGE) {
           const user = await tx.user.findUnique({
             where: { id: transaction.userId },
-            select: { referredById: true, email: true },
+            select: { referredById: true, email: true, firstName: true, lastName: true },
           });
 
           if (user?.referredById) {
@@ -217,12 +217,16 @@ export class WalletService {
                 },
               });
 
+              const name = (user.firstName || user.lastName)
+                ? `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim()
+                : user.email;
+
               await this.writeLog(
                 tx,
                 commTx.id,
                 TransactionStatus.COMPLETED,
                 'SYSTEM',
-                `Referral commission from ${user.email} exchange`,
+                `Referral commission from ${name} exchange`,
               );
             }
           }

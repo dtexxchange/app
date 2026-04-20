@@ -12,6 +12,7 @@ import ExchangeRate from "./pages/admin/ExchangeRate";
 import AdminOverview from "./pages/admin/Overview";
 import Settings from "./pages/admin/Settings";
 import Users from "./pages/admin/Users";
+import Assignments from "./pages/admin/Assignments";
 import UserOverview from "./pages/user/Overview";
 import History from "./pages/user/History";
 import BankAccounts from "./pages/user/BankAccounts";
@@ -73,6 +74,7 @@ const App: React.FC = () => {
                         />
                         <Route path="/settings" element={<Settings />} />
                         <Route path="/wallets" element={<Wallets />} />
+                        <Route path="/assignments" element={<Assignments />} />
                     </Route>
 
                     {/* User Routes */}

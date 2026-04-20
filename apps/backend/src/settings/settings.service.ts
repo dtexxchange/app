@@ -49,11 +49,12 @@ export class SettingsService implements OnModuleInit {
     const now = new Date();
 
     // Check if there is an active assignment
-    const assignment = await this.prisma.walletAssignment.findUnique({
-      where: { userId },
+    const assignment = await this.prisma.walletAssignment.findFirst({
+      where: { userId, expiresAt: { gt: now } },
+      orderBy: { createdAt: 'desc' },
     });
 
-    if (assignment && assignment.expiresAt > now) {
+    if (assignment) {
       // Find the wallet assigned
       const wallet = await this.prisma.globalWallet.findUnique({
         where: { id: assignment.walletId, isActive: true },
@@ -83,14 +84,9 @@ export class SettingsService implements OnModuleInit {
     // Set expiry to 30 minutes from now
     const expiresAt = new Date(now.getTime() + 30 * 60 * 1000);
 
-    // Save or update assignment
-    const assignmentRecord = await this.prisma.walletAssignment.upsert({
-      where: { userId },
-      update: {
-        walletId: randomWallet.id,
-        expiresAt,
-      },
-      create: {
+    // ALWAYS CREATE a new assignment to keep history
+    const assignmentRecord = await this.prisma.walletAssignment.create({
+      data: {
         userId,
         walletId: randomWallet.id,
         expiresAt,
@@ -123,11 +119,7 @@ export class SettingsService implements OnModuleInit {
   }
 
   async getActiveAssignments() {
-    const now = new Date();
     return this.prisma.walletAssignment.findMany({
-      where: {
-        expiresAt: { gt: now },
-      },
       include: {
         user: {
           select: {
@@ -138,7 +130,8 @@ export class SettingsService implements OnModuleInit {
         },
         wallet: true,
       },
-      orderBy: { expiresAt: 'asc' },
+      orderBy: { createdAt: 'desc' }, // Switched to createdAt desc to see latest first
+      take: 100, // Show last 100 assignments
     });
   }
 

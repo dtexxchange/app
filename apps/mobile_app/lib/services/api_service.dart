@@ -6,8 +6,10 @@ import '../main.dart';
 
 class ApiService {
   static String get baseUrl {
-    const bool isProduction =
-        false; // Toggle this to false for local development
+    // Automatically switches based on build mode:
+    // - Development (flutter run): uses localhost/10.0.2.2
+    // - Production (flutter build): uses the live URL
+    const bool isProduction = kReleaseMode;
 
     if (kIsWeb) {
       return isProduction
@@ -18,6 +20,13 @@ class ApiService {
     return isProduction
         ? 'https://app-production-0ff2.up.railway.app'
         : 'http://10.0.2.2:3000'; // Special IP for Android Emulator to reach host
+  }
+
+  static String get webUrl {
+    const bool isProduction = kReleaseMode;
+    return isProduction
+        ? 'https://dtexxchange.netlify.app'
+        : 'http://localhost:5173'; // Vite default dev port
   }
 
   final _storage = const FlutterSecureStorage(

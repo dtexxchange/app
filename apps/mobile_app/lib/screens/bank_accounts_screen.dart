@@ -294,7 +294,7 @@ class _BankAccountsScreenState extends State<BankAccountsScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(l['action'], style: TextStyle(color: l['action'] == 'DELETE' ? _danger : _primary, fontWeight: FontWeight.bold, fontSize: 12)),
-                          Text(DateFormat('MMM dd, yyyy HH:mm').format(DateTime.parse(l['createdAt'])), style: const TextStyle(color: _textDim, fontSize: 10)),
+                          Text(DateFormat('MMM dd, yyyy • hh:mm a').format(DateTime.parse(l['createdAt'])), style: const TextStyle(color: _textDim, fontSize: 10)),
                         ],
                       ),
                     ],

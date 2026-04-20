@@ -500,7 +500,7 @@ const Overview: React.FC = () => {
                                     <td className="px-10 py-5 text-right text-text-dim text-xs font-medium">
                                         {format(
                                             new Date(tx.createdAt),
-                                            "MMM dd, HH:mm",
+                                            "MMM dd, hh:mm a",
                                         )}
                                     </td>
                                 </tr>

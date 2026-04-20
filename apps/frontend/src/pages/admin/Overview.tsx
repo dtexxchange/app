@@ -44,8 +44,13 @@ const Overview: React.FC = () => {
             if (txFilter.search) {
                 const searchLower = txFilter.search.toLowerCase();
                 filtered = data.filter((t: any) => {
-                    const emailMatch = t.user?.email?.toLowerCase().includes(searchLower);
-                    const nameMatch = `${t.user?.firstName || ''} ${t.user?.lastName || ''}`.toLowerCase().includes(searchLower);
+                    const emailMatch = t.user?.email
+                        ?.toLowerCase()
+                        .includes(searchLower);
+                    const nameMatch =
+                        `${t.user?.firstName || ""} ${t.user?.lastName || ""}`
+                            .toLowerCase()
+                            .includes(searchLower);
                     return emailMatch || nameMatch;
                 });
             }
@@ -250,8 +255,9 @@ const Overview: React.FC = () => {
                                 >
                                     <td className="px-8 py-6">
                                         <div className="font-bold text-white text-base mb-1">
-                                            {tx.user?.firstName || tx.user?.lastName 
-                                                ? `${tx.user.firstName || ''} ${tx.user.lastName || ''}`.trim() 
+                                            {tx.user?.firstName ||
+                                            tx.user?.lastName
+                                                ? `${tx.user.firstName || ""} ${tx.user.lastName || ""}`.trim()
                                                 : tx.user?.email}
                                         </div>
                                         <div className="text-[10px] text-text-dim font-mono tracking-tighter">
@@ -272,7 +278,7 @@ const Overview: React.FC = () => {
                                         <div className="text-[10px] text-text-dim mt-2 font-medium">
                                             {format(
                                                 new Date(tx.createdAt),
-                                                "MMM dd, HH:mm",
+                                                "MMM dd, hh:mm a",
                                             )}
                                         </div>
                                     </td>
@@ -368,7 +374,9 @@ const Overview: React.FC = () => {
                                                 Transaction Manifest
                                             </p>
                                             <h2 className="text-4xl font-outfit font-bold text-white tracking-tight">
-                                                {formatAmount(selectedTx.amount)}{" "}
+                                                {formatAmount(
+                                                    selectedTx.amount,
+                                                )}{" "}
                                                 <span className="text-text-dim font-normal">
                                                     USDT
                                                 </span>
@@ -509,7 +517,7 @@ const Overview: React.FC = () => {
                                                                         new Date(
                                                                             log.createdAt,
                                                                         ),
-                                                                        "MMM dd, HH:mm",
+                                                                        "MMM dd, hh:mm a",
                                                                     )}
                                                                 </div>
                                                                 <div className="text-[10px] text-primary/60 font-bold uppercase tracking-tighter">

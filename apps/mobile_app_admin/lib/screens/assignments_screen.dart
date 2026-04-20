@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -13,12 +14,105 @@ const _textDim = Color(0xFF94A3B8);
 const _border = Color(0x0DFFFFFF);
 const _danger = Color(0xFFF87171);
 
+class LiveTimerWidget extends StatefulWidget {
+  final DateTime expiresAt;
+  const LiveTimerWidget({super.key, required this.expiresAt});
+
+  @override
+  State<LiveTimerWidget> createState() => _LiveTimerWidgetState();
+}
+
+class _LiveTimerWidgetState extends State<LiveTimerWidget> {
+  Timer? _timer;
+  late int _timeLeft;
+
+  @override
+  void initState() {
+    super.initState();
+    _calculateTimeLeft();
+    _startTimer();
+  }
+
+  @override
+  void didUpdateWidget(LiveTimerWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.expiresAt != widget.expiresAt) {
+      _calculateTimeLeft();
+    }
+  }
+
+  void _calculateTimeLeft() {
+    final now = DateTime.now();
+    _timeLeft = widget.expiresAt.difference(now).inSeconds;
+    if (_timeLeft < 0) _timeLeft = 0;
+  }
+
+  void _startTimer() {
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (mounted) {
+        setState(() {
+          _calculateTimeLeft();
+          if (_timeLeft <= 0) {
+            _timer?.cancel();
+          }
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  String _formatTime(int totalSeconds) {
+    int minutes = totalSeconds ~/ 60;
+    int seconds = totalSeconds % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+  }
+
+  Color _timerColor() {
+    if (_timeLeft <= 0) return _danger;
+    if (_timeLeft < 60) return Colors.redAccent;
+    if (_timeLeft < 300) return Colors.orangeAccent;
+    return _blue;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _timerColor();
+    final isExpired = _timeLeft <= 0;
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 8,
+        vertical: 4,
+      ),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        isExpired ? 'EXPIRED' : '${_formatTime(_timeLeft)} LEFT',
+        style: GoogleFonts.inter(
+          color: color, 
+          fontSize: 9,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+}
+
 class AssignmentsScreen extends StatefulWidget {
   const AssignmentsScreen({super.key});
 
   @override
   State<AssignmentsScreen> createState() => _AssignmentsScreenState();
 }
+
+// ... rest of the classes ...
 
 class _AssignmentsScreenState extends State<AssignmentsScreen> {
   final _api = ApiService();
@@ -49,8 +143,12 @@ class _AssignmentsScreenState extends State<AssignmentsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: _bgDark,
-      body: CustomScrollView(
-        slivers: [
+      body: RefreshIndicator(
+        onRefresh: _fetchAssignments,
+        color: _primary,
+        backgroundColor: _bgCard,
+        child: CustomScrollView(
+          slivers: [
           SliverAppBar(
             pinned: true,
             expandedHeight: 120,
@@ -124,6 +222,7 @@ class _AssignmentsScreenState extends State<AssignmentsScreen> {
                   ),
           ),
         ],
+        ),
       ),
     );
   }
@@ -132,10 +231,6 @@ class _AssignmentsScreenState extends State<AssignmentsScreen> {
     final user = a['user'];
     final wallet = a['wallet'];
     final expiresAt = DateTime.tryParse(a['expiresAt'] ?? '');
-    final now = DateTime.now();
-    final minutesLeft = expiresAt != null
-        ? expiresAt.difference(now).inMinutes
-        : 0;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -192,20 +287,7 @@ class _AssignmentsScreenState extends State<AssignmentsScreen> {
                     ],
                   ),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: _blue.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    '${minutesLeft}M LEFT',
-                    style: GoogleFonts.inter(color: _blue, fontSize: 9),
-                  ),
-                ),
+                if (expiresAt != null) LiveTimerWidget(expiresAt: expiresAt),
               ],
             ),
             const SizedBox(height: 20),

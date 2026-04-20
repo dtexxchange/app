@@ -4,10 +4,8 @@ import 'package:google_fonts/google_fonts.dart';
 import '../services/api_service.dart';
 
 const _bgDark = Color(0xFF0A0B0D);
-const _bgCard = Color(0xFF15171C);
 const _primary = Color(0xFF00FF9D);
 const _textDim = Color(0xFF94A3B8);
-const _border = Color(0x0DFFFFFF);
 const _danger = Color(0xFFF87171);
 
 enum PasscodeFlowStep { enterOld, enterNew, confirmNew }
@@ -183,6 +181,11 @@ class _PasscodeScreenState extends State<PasscodeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final widthScale = (size.width / 375.0).clamp(0.85, 1.2);
+    final heightScale = (size.height / 812.0).clamp(0.8, 1.1);
+    final isShort = size.height < 700;
+
     return Scaffold(
       backgroundColor: _bgDark,
       appBar: AppBar(
@@ -194,49 +197,57 @@ class _PasscodeScreenState extends State<PasscodeScreen> {
         ),
         title: Text(
           'Security Passcode',
-          style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
+          style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 18 * widthScale),
         ),
       ),
       body: SafeArea(
         child: _isLoading
             ? const Center(child: CircularProgressIndicator(color: _primary))
-            : Column(
-                children: [
-                  const SizedBox(height: 60),
-                  Text(
-                    _getStepTitle(),
-                    style: GoogleFonts.outfit(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
+            : SingleChildScrollView(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 24 * widthScale),
+                  child: Column(
+                    children: [
+                      SizedBox(height: (isShort ? 30 : 60) * heightScale),
+                      Text(
+                        _getStepTitle(),
+                        style: GoogleFonts.outfit(
+                          fontSize: 24 * widthScale,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      SizedBox(height: 12 * heightScale),
+                      Text(
+                        _getStepDescription(),
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.inter(
+                          color: _textDim, 
+                          fontSize: 14 * widthScale,
+                        ),
+                      ),
+                      SizedBox(height: (isShort ? 40 : 60) * heightScale),
+                      _buildPasscodeDots(widthScale),
+                      SizedBox(height: (isShort ? 60 : 80) * heightScale),
+                      _buildKeyboard(widthScale, heightScale),
+                      SizedBox(height: 48 * heightScale),
+                    ],
                   ),
-                  const SizedBox(height: 12),
-                  Text(
-                    _getStepDescription(),
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.inter(color: _textDim, fontSize: 14),
-                  ),
-                  const SizedBox(height: 60),
-                  _buildPasscodeDots(),
-                  const Spacer(),
-                  _buildKeyboard(),
-                  const SizedBox(height: 48),
-                ],
+                ),
               ),
       ),
     );
   }
 
-  Widget _buildPasscodeDots() {
+  Widget _buildPasscodeDots(double widthScale) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: List.generate(6, (index) {
         bool isFilled = index < _currentInput.length;
         return Container(
-          margin: const EdgeInsets.symmetric(horizontal: 12),
-          width: 16,
-          height: 16,
+          margin: EdgeInsets.symmetric(horizontal: 10 * widthScale),
+          width: 16 * widthScale,
+          height: 16 * widthScale,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: isFilled ? _primary : Colors.transparent,
@@ -250,31 +261,32 @@ class _PasscodeScreenState extends State<PasscodeScreen> {
     );
   }
 
-  Widget _buildKeyboard() {
+  Widget _buildKeyboard(double widthScale, double heightScale) {
+    final btnSize = 75.0 * widthScale;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 32),
+      padding: EdgeInsets.symmetric(horizontal: 24 * widthScale),
       child: Column(
         children: [
-          _buildKeyboardRow(['1', '2', '3']),
-          const SizedBox(height: 24),
-          _buildKeyboardRow(['4', '5', '6']),
-          const SizedBox(height: 24),
-          _buildKeyboardRow(['7', '8', '9']),
-          const SizedBox(height: 24),
+          _buildKeyboardRow(['1', '2', '3'], widthScale),
+          SizedBox(height: 20 * heightScale),
+          _buildKeyboardRow(['4', '5', '6'], widthScale),
+          SizedBox(height: 20 * heightScale),
+          _buildKeyboardRow(['7', '8', '9'], widthScale),
+          SizedBox(height: 20 * heightScale),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              const SizedBox(width: 80),
-              _buildKeyboardButton('0'),
+              SizedBox(width: btnSize),
+              _buildKeyboardButton('0', widthScale),
               SizedBox(
-                width: 80,
-                height: 80,
+                width: btnSize,
+                height: btnSize,
                 child: IconButton(
                   onPressed: _onBackspace,
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.backspace_outlined,
                     color: Colors.white,
-                    size: 28,
+                    size: 24 * widthScale,
                   ),
                 ),
               ),
@@ -285,19 +297,20 @@ class _PasscodeScreenState extends State<PasscodeScreen> {
     );
   }
 
-  Widget _buildKeyboardRow(List<String> numbers) {
+  Widget _buildKeyboardRow(List<String> numbers, double widthScale) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: numbers.map((n) => _buildKeyboardButton(n)).toList(),
+      children: numbers.map((n) => _buildKeyboardButton(n, widthScale)).toList(),
     );
   }
 
-  Widget _buildKeyboardButton(String number) {
+  Widget _buildKeyboardButton(String number, double widthScale) {
+    final btnSize = 75.0 * widthScale;
     return GestureDetector(
       onTap: () => _onNumberTap(number),
       child: Container(
-        width: 80,
-        height: 80,
+        width: btnSize,
+        height: btnSize,
         decoration: BoxDecoration(
           color: Colors.white.withOpacity(0.05),
           shape: BoxShape.circle,
@@ -306,7 +319,7 @@ class _PasscodeScreenState extends State<PasscodeScreen> {
           child: Text(
             number,
             style: GoogleFonts.outfit(
-              fontSize: 32,
+              fontSize: 30 * widthScale,
               fontWeight: FontWeight.w600,
               color: Colors.white,
             ),

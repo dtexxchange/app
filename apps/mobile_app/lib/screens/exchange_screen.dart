@@ -27,11 +27,13 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
   final _accountCtrl = TextEditingController();
   final _bankCtrl = TextEditingController();
   final _ifscCtrl = TextEditingController();
+  final _searchCtrl = TextEditingController();
 
   final _api = ApiService();
   double _balance = 0.0;
   double? _conversionRate;
   List<dynamic> _savedAccounts = [];
+  List<dynamic> _filteredAccounts = [];
   String? _selectedAccountId;
   bool _showManualForm = false;
   bool _saveNewAccount = true;
@@ -56,6 +58,7 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
               (jsonDecode(settingsRes.body)['usdtToInrRate'] as num?)
                   ?.toDouble();
           _savedAccounts = jsonDecode(accountsRes.body);
+          _filteredAccounts = List.from(_savedAccounts);
           if (_savedAccounts.isNotEmpty) {
             _selectedAccountId = _savedAccounts[0]['id'];
           } else {
@@ -82,6 +85,7 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
   void _onInrChanged(String val) {
     if (_conversionRate == null || val.isEmpty) {
       _amountCtrl.text = "";
+      setState(() {});
       return;
     }
     final inr = double.tryParse(val) ?? 0;
@@ -89,9 +93,34 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
     setState(() {});
   }
 
+  void _onSearch(String query) {
+    setState(() {
+      _filteredAccounts = _savedAccounts
+          .where((acc) =>
+              acc['name'].toString().toLowerCase().contains(query.toLowerCase()) ||
+              acc['bankName']
+                  .toString()
+                  .toLowerCase()
+                  .contains(query.toLowerCase()) ||
+              acc['accountNo'].toString().contains(query))
+          .toList();
+    });
+  }
+
   Future<void> _proceedToPasscode() async {
     if (_amountCtrl.text.isEmpty) return;
     final amount = double.tryParse(_amountCtrl.text) ?? 0;
+    
+    if (amount < 15) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Minimum transaction amount is 15 USDT'),
+          backgroundColor: _danger,
+        ),
+      );
+      return;
+    }
+
     if (amount > _balance) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -153,6 +182,7 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
+    final widthScale = (size.width / 375.0).clamp(0.85, 1.2);
     final isSmall = size.width < 360;
     final isShort = size.height < 700;
 
@@ -237,10 +267,11 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
                   const SizedBox(height: 24),
                   SizedBox(
                     width: double.infinity,
-                    height: isSmall ? 52 : 56,
+                    height: (isSmall ? 52 : 56) * widthScale,
                     child: ElevatedButton(
                       onPressed:
                           (_amountCtrl.text.isEmpty ||
+                              (double.tryParse(_amountCtrl.text) ?? 0) < 15 ||
                               (double.tryParse(_amountCtrl.text) ?? 0) >
                                   _balance)
                           ? null
@@ -257,12 +288,13 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
                         style: TextStyle(
                           color:
                               (_amountCtrl.text.isEmpty ||
+                                  (double.tryParse(_amountCtrl.text) ?? 0) < 15 ||
                                   (double.tryParse(_amountCtrl.text) ?? 0) >
                                       _balance)
                               ? Colors.white24
                               : _bgDark,
                           fontWeight: FontWeight.bold,
-                          fontSize: isSmall ? 14 : 16,
+                          fontSize: (isSmall ? 14 : 16) * widthScale,
                         ),
                       ),
                     ),
@@ -275,7 +307,9 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
   }
 
   Widget _buildBalanceCard(BuildContext context) {
-    final isSmall = MediaQuery.of(context).size.width < 360;
+    final size = MediaQuery.of(context).size;
+    final widthScale = (size.width / 375.0).clamp(0.85, 1.2);
+    final isSmall = size.width < 360;
     return Container(
       padding: EdgeInsets.all(isSmall ? 16 : 24),
       decoration: BoxDecoration(
@@ -303,7 +337,7 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
                   Text(
                     '\$${_balance.toStringAsFixed(2)}',
                     style: GoogleFonts.outfit(
-                      fontSize: isSmall ? 22 : 28,
+                      fontSize: (isSmall ? 22 : 28) * widthScale,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
@@ -369,7 +403,7 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
                       '1 USDT = ₹${_conversionRate!.toStringAsFixed(2)}',
                       style: TextStyle(
                         color: Colors.white70,
-                        fontSize: isSmall ? 10 : 12,
+                        fontSize: (isSmall ? 10 : 12) * widthScale,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -384,7 +418,8 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
   }
 
   Widget _buildExchangeForm(BuildContext context) {
-    final isSmall = MediaQuery.of(context).size.width < 360;
+    final size = MediaQuery.of(context).size;
+    final widthScale = (size.width / 375.0).clamp(0.85, 1.2);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -394,26 +429,29 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
         ),
         const SizedBox(height: 16),
         _buildInputField(
-          controller: _amountCtrl,
-          label: 'You Pay',
-          suffix: 'USDT',
-          onChanged: _onUsdtChanged,
+          controller: _inrCtrl,
+          label: 'You Pay (INR)',
+          suffix: 'INR',
+          onChanged: _onInrChanged,
         ),
         const SizedBox(height: 16),
         _buildInputField(
-          controller: _inrCtrl,
-          label: 'You Receive',
-          suffix: 'INR',
-          onChanged: _onInrChanged,
+          controller: _amountCtrl,
+          label: 'You Receive (USDT)',
+          suffix: 'USDT',
+          onChanged: _onUsdtChanged,
+          readOnly: true,
         ),
         if (_conversionRate != null)
           Padding(
             padding: const EdgeInsets.only(top: 8, left: 4),
             child: Text(
-              'Rate: 1 USDT = ₹${_conversionRate!.toStringAsFixed(2)}',
-              style: const TextStyle(
-                color: _primary,
-                fontSize: 12,
+              'Minimum exchange amount is 15 USDT',
+              style: TextStyle(
+                color: (double.tryParse(_amountCtrl.text) ?? 0) < 15 && _amountCtrl.text.isNotEmpty
+                    ? _danger
+                    : _primary,
+                fontSize: 12 * widthScale,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -427,32 +465,59 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
     required String label,
     required String suffix,
     required Function(String) onChanged,
+    bool readOnly = false,
   }) {
+    final widthScale = (MediaQuery.of(context).size.width / 375.0).clamp(0.85, 1.2);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: EdgeInsets.symmetric(horizontal: 16 * widthScale, vertical: 12 * widthScale),
       decoration: BoxDecoration(
-        color: _bgCard,
+        color: readOnly ? _bgCard.withOpacity(0.5) : _bgCard,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: _border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(color: _textDim, fontSize: 11)),
-          TextField(
-            controller: controller,
-            onChanged: onChanged,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-            decoration: InputDecoration(
-              border: InputBorder.none,
-              suffixText: suffix,
-              suffixStyle: const TextStyle(color: _textDim, fontSize: 14),
-            ),
+          Text(label, style: TextStyle(color: _textDim, fontSize: 11 * widthScale)),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: controller,
+                  onChanged: onChanged,
+                  readOnly: readOnly,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  style: GoogleFonts.outfit(
+                    color: readOnly ? Colors.white70 : Colors.white,
+                    fontSize: 24 * widthScale,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  decoration: const InputDecoration(
+                    border: InputBorder.none,
+                    isDense: true,
+                    contentPadding: EdgeInsets.symmetric(vertical: 8),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 12 * widthScale, vertical: 6 * widthScale),
+                decoration: BoxDecoration(
+                  color: _bgDark,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: _border),
+                ),
+                child: Text(
+                  suffix,
+                  style: GoogleFonts.inter(
+                    color: _primary,
+                    fontSize: 12 * widthScale,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -460,7 +525,6 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
   }
 
   Widget _buildBankSelection(BuildContext context) {
-    final isSmall = MediaQuery.of(context).size.width < 360;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -489,8 +553,31 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
             ),
           ],
         ),
+        if (!_showManualForm && _savedAccounts.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              color: _bgCard,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: _border),
+            ),
+            child: TextField(
+              controller: _searchCtrl,
+              onChanged: _onSearch,
+              style: const TextStyle(color: Colors.white, fontSize: 14),
+              decoration: const InputDecoration(
+                border: InputBorder.none,
+                hintText: 'Search saved accounts...',
+                hintStyle: TextStyle(color: Colors.white24),
+                icon: Icon(Icons.search, color: _textDim, size: 18),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
         if (!_showManualForm && _savedAccounts.isNotEmpty)
-          ..._savedAccounts.map((acc) {
+          ..._filteredAccounts.map((acc) {
             bool isSelected = _selectedAccountId == acc['id'];
             return GestureDetector(
               onTap: () => setState(() => _selectedAccountId = acc['id']),

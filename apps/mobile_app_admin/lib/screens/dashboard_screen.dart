@@ -1,14 +1,15 @@
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+
 import '../services/api_service.dart';
+import '../widgets/transaction_detail_sheet.dart';
+import 'assignments_screen.dart';
 import 'user_detail_screen.dart';
 import 'wallets_screen.dart';
-import 'assignments_screen.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:encrypt/encrypt.dart' as enc;
-import 'package:pointycastle/export.dart' as pc;
 
 // ─── Design Tokens ────────────────────────────────────────────────────────────
 const _bgDark = Color(0xFF0A0B0D);
@@ -229,11 +230,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
   // ─── Build ───────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final widthScale = (size.width / 375.0).clamp(0.85, 1.2);
+
     return Scaffold(
       backgroundColor: _bgDark,
       body: Column(
         children: [
-          _buildTopBar(),
+          _buildTopBar(widthScale),
           Expanded(
             child: _isLoading
                 ? const Center(
@@ -243,7 +247,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     onRefresh: _fetchAll,
                     color: _primary,
                     backgroundColor: _bgCard,
-                    child: _buildTabContent(),
+                    child: _buildTabContent(widthScale),
                   ),
           ),
         ],
@@ -294,7 +298,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildTopBar() {
+  Widget _buildTopBar(double widthScale) {
     return Container(
       decoration: BoxDecoration(
         color: _bgDark.withOpacity(0.9),
@@ -303,21 +307,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: SafeArea(
         bottom: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
+          padding: EdgeInsets.fromLTRB(
+            24 * widthScale,
+            16,
+            24 * widthScale,
+            16,
+          ),
           child: Row(
             children: [
               Container(
-                width: 36,
-                height: 36,
+                width: 36 * widthScale,
+                height: 36 * widthScale,
                 decoration: BoxDecoration(
                   color: _primary.withOpacity(0.10),
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: _primary.withOpacity(0.20)),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.diamond_outlined,
                   color: _primary,
-                  size: 18,
+                  size: 18 * widthScale,
                 ),
               ),
               const SizedBox(width: 12),
@@ -383,23 +392,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildTabContent() {
+  Widget _buildTabContent(double widthScale) {
     switch (_tabIndex) {
       case 0:
-        return _buildOverview();
+        return _buildOverview(widthScale);
       case 1:
-        return _buildUsers();
+        return _buildUsers(widthScale);
       case 2:
-        return _buildExchange();
+        return _buildExchange(widthScale);
       case 3:
-        return _buildSettings();
+        return _buildSettings(widthScale);
       default:
         return const SizedBox();
     }
   }
 
   // ─── EXCHANGE TAB ─────────────────────────────────────────────────────────────
-  Widget _buildExchange() {
+  Widget _buildExchange(double widthScale) {
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
@@ -545,7 +554,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             ),
                             Text(
                               DateFormat(
-                                'MMM dd, HH:mm',
+                                'MMM dd, hh:mm a',
                               ).format(DateTime.parse(h['createdAt'])),
                               style: const TextStyle(
                                 color: _textDim,
@@ -565,7 +574,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   // ─── SETTINGS TAB ─────────────────────────────────────────────────────────────
-  Widget _buildSettings() {
+  Widget _buildSettings(double widthScale) {
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
@@ -672,10 +681,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       color: _blue.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(14),
                     ),
-                    child: const Icon(
-                      Icons.history_toggle_off,
-                      color: _blue,
-                    ),
+                    child: const Icon(Icons.history_toggle_off, color: _blue),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -1020,50 +1026,86 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   // ─── OVERVIEW TAB ─────────────────────────────────────────────────────────────
-  Widget _buildOverview() {
+  Widget _buildOverview(double widthScale) {
     final pending = _transactions.where((t) => t['status'] == 'PENDING').length;
-    final complete = _transactions
-        .where((t) => t['status'] == 'COMPLETED')
-        .length;
+    final isSmall = MediaQuery.of(context).size.width < 360;
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(24, 8, 24, 100),
+      padding: EdgeInsets.fromLTRB(22 * widthScale, 8, 22 * widthScale, 100),
       physics: const AlwaysScrollableScrollPhysics(),
       children: [
         // Stats row
-        Row(
-          children: [
-            Expanded(
-              child: _StatCard(
-                label: 'Total Users',
-                value: _users.length.toString(),
-                icon: Icons.people_outline,
-                iconColor: _blue,
+        if (isSmall) ...[
+          Row(
+            children: [
+              Expanded(
+                child: _StatCard(
+                  label: 'Total Users',
+                  value: _users.length.toString(),
+                  icon: Icons.people_outline,
+                  iconColor: _blue,
+                  widthScale: widthScale,
+                ),
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _StatCard(
-                label: 'Pending',
-                value: pending.toString(),
-                icon: Icons.access_time,
-                iconColor: _blue,
+              SizedBox(width: 12 * widthScale),
+              Expanded(
+                child: _StatCard(
+                  label: 'Pending',
+                  value: pending.toString(),
+                  icon: Icons.access_time,
+                  iconColor: _blue,
+                  widthScale: widthScale,
+                ),
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _StatCard(
-                label: 'USD Rate',
-                value: _conversionRate != null
-                    ? '₹${_conversionRate!.toStringAsFixed(2)}'
-                    : '---',
-                icon: Icons.show_chart,
-                iconColor: _blue,
+            ],
+          ),
+          SizedBox(height: 12 * widthScale),
+          _StatCard(
+            label: 'Current Conversion Rate',
+            value: _conversionRate != null
+                ? '₹${_conversionRate!.toStringAsFixed(2)}'
+                : '---',
+            icon: Icons.show_chart,
+            iconColor: _blue,
+            widthScale: widthScale,
+          ),
+        ] else
+          Row(
+            children: [
+              Expanded(
+                child: _StatCard(
+                  label: 'Total Users',
+                  value: _users.length.toString(),
+                  icon: Icons.people_outline,
+                  iconColor: _blue,
+                  widthScale: widthScale,
+                ),
               ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 24),
+              SizedBox(width: 12 * widthScale),
+              Expanded(
+                child: _StatCard(
+                  label: 'Pending',
+                  value: pending.toString(),
+                  icon: Icons.access_time,
+                  iconColor: _blue,
+                  widthScale: widthScale,
+                ),
+              ),
+              SizedBox(width: 12 * widthScale),
+              Expanded(
+                child: _StatCard(
+                  label: 'USD Rate',
+                  value: _conversionRate != null
+                      ? '₹${_conversionRate!.toStringAsFixed(2)}'
+                      : '---',
+                  icon: Icons.show_chart,
+                  iconColor: _blue,
+                  widthScale: widthScale,
+                ),
+              ),
+            ],
+          ),
+        SizedBox(height: 24 * widthScale),
 
         // Filters
         Row(
@@ -1105,31 +1147,32 @@ class _DashboardScreenState extends State<DashboardScreen> {
         const SizedBox(height: 16),
 
         // Transactions list
+        SizedBox(height: 12 * widthScale),
         Row(
           children: [
-            const Icon(Icons.show_chart, color: _primary, size: 20),
-            const SizedBox(width: 10),
+            Icon(Icons.show_chart, color: _primary, size: 20 * widthScale),
+            SizedBox(width: 10 * widthScale),
             Text(
               'Global Transactions',
               style: GoogleFonts.outfit(
-                fontSize: 20,
+                fontSize: 20 * widthScale,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
               ),
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: 12 * widthScale),
 
         if (_transactions.isEmpty)
           _emptyState('No transactions', Icons.show_chart)
         else
-          ..._transactions.map((tx) => _buildTxCard(tx)),
+          ..._transactions.map((tx) => _buildTxCard(tx, widthScale)),
       ],
     );
   }
 
-  Widget _buildTxCard(Map<String, dynamic> tx) {
+  Widget _buildTxCard(Map<String, dynamic> tx, double widthScale) {
     final isDeposit = tx['type'] == 'DEPOSIT';
     final status = tx['status'] as String;
     final isPending = status == 'PENDING';
@@ -1150,8 +1193,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return GestureDetector(
       onTap: () => _showTransactionDetail(tx),
       child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.all(16),
+        margin: EdgeInsets.only(bottom: 10 * widthScale),
+        padding: EdgeInsets.all(16 * widthScale),
         decoration: BoxDecoration(
           color: _bgCard,
           borderRadius: BorderRadius.circular(16),
@@ -1163,8 +1206,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Row(
               children: [
                 Container(
-                  width: 40,
-                  height: 40,
+                  width: 40 * widthScale,
+                  height: 40 * widthScale,
                   decoration: BoxDecoration(
                     color: isDeposit
                         ? _primary.withOpacity(0.10)
@@ -1173,29 +1216,34 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                   child: Icon(
                     isDeposit ? Icons.arrow_downward : Icons.arrow_upward,
-                    size: 18,
+                    size: 18 * widthScale,
                     color: isDeposit ? _primary : _blue,
                   ),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12 * widthScale),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        (tx['user']?['firstName'] != null || tx['user']?['lastName'] != null)
-                            ? '${tx['user']?['firstName'] ?? ''} ${tx['user']?['lastName'] ?? ''}'.trim()
+                        (tx['user']?['firstName'] != null ||
+                                tx['user']?['lastName'] != null)
+                            ? '${tx['user']?['firstName'] ?? ''} ${tx['user']?['lastName'] ?? ''}'
+                                  .trim()
                             : tx['user']?['email'] ?? 'Unknown',
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w600,
-                          fontSize: 14,
+                          fontSize: 14 * widthScale,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
                       Text(
-                        'TX-${tx['id']?.toString().substring(0, 8).toUpperCase() ?? 'UNKNOWN'} • ${DateFormat('MMM dd, HH:mm').format(DateTime.tryParse(tx['createdAt']?.toString() ?? '') ?? DateTime.now())}',
-                        style: const TextStyle(color: _textDim, fontSize: 11),
+                        'TX-${tx['id']?.toString().substring(0, 8).toUpperCase() ?? 'UNKNOWN'} • ${DateFormat('MMM dd, hh:mm a').format(DateTime.tryParse(tx['createdAt']?.toString() ?? '') ?? DateTime.now())}',
+                        style: TextStyle(
+                          color: _textDim,
+                          fontSize: 11 * widthScale,
+                        ),
                       ),
                     ],
                   ),
@@ -1208,7 +1256,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       style: GoogleFonts.outfit(
                         color: isDeposit ? _primary : Colors.white,
                         fontWeight: FontWeight.bold,
-                        fontSize: 15,
+                        fontSize: 14 * widthScale,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -1224,13 +1272,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(statusIcon, size: 10, color: statusColor),
-                          const SizedBox(width: 4),
+                          Icon(
+                            statusIcon,
+                            size: 10 * widthScale,
+                            color: statusColor,
+                          ),
+                          SizedBox(width: 4 * widthScale),
                           Text(
                             status,
                             style: TextStyle(
                               color: statusColor,
-                              fontSize: 10,
+                              fontSize: 9 * widthScale,
                               fontWeight: FontWeight.bold,
                               letterSpacing: 0.8,
                             ),
@@ -1275,26 +1327,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  void _showTransactionDetail(Map<String, dynamic> tx) async {
-    Map<String, dynamic>? decrypted;
-    if (tx['type'] == 'EXCHANGE' && tx['bankDetails'] != null) {
-      try {
-        final res = await _api.getRequest('/wallet/transactions/${tx['id']}');
-        if (res.statusCode == 200) {
-          final fullTx = jsonDecode(res.body);
-          // Try to decrypt if we have keys (would need PGP/RSA lib in flutter)
-          // Since I haven't implemented PGP in mobile_app_admin yet or user didn't ask
-          // for the mobile decryption logic specifically, I will just display the holder
-          // but wait, the mobile admin SHOULD see it.
-          // In the previous sessions I didn't add RSA to mobile_app_admin.
-          // BUT the user said "remove the eye icon... make the data visible".
-          // This implies I should handle it.
-        }
-      } catch (e) {
-        debugPrint(e.toString());
-      }
-    }
-
+  void _showTransactionDetail(Map<String, dynamic> tx) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -1302,111 +1335,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (context) => _TransactionDetailSheet(
+      builder: (context) => TransactionDetailSheet(
         tx: tx,
         onStatusUpdate: (s) => _updateTxStatus(tx['id'], s),
-      ),
-    );
-  }
-
-  void _showBankDetails(Map<String, dynamic> tx) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: _bgCard,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (_) => Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            Row(
-              children: [
-                const Icon(Icons.shield_outlined, color: _primary, size: 20),
-                const SizedBox(width: 10),
-                Text(
-                  'Bank Details (Encrypted)',
-                  style: GoogleFonts.outfit(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: _bgDark,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: _border),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Encrypted bank details are stored on the server.\nUse the web admin panel to decrypt with your private key.',
-                    style: const TextStyle(
-                      color: _textDim,
-                      fontSize: 13,
-                      height: 1.6,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: _danger.withOpacity(0.06),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: _danger.withOpacity(0.2)),
-              ),
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.warning_amber_rounded,
-                    color: _danger,
-                    size: 16,
-                  ),
-                  const SizedBox(width: 10),
-                  const Expanded(
-                    child: Text(
-                      'RSA decryption requires the web admin panel.',
-                      style: TextStyle(
-                        color: _danger,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-          ],
-        ),
+        allUsers: _users,
       ),
     );
   }
 
   // ─── USERS TAB ────────────────────────────────────────────────────────────────
-  Widget _buildUsers() {
+  Widget _buildUsers(double widthScale) {
     return ListView(
       padding: const EdgeInsets.fromLTRB(24, 8, 24, 100),
       physics: const AlwaysScrollableScrollPhysics(),
@@ -1492,24 +1430,29 @@ class _DashboardScreenState extends State<DashboardScreen> {
         if (_users.isEmpty)
           _emptyState('No users found', Icons.people_outline)
         else
-          ..._users.map((u) => _buildUserCard(u)),
+          ..._users.map((u) => _buildUserCard(u, widthScale)),
       ],
     );
   }
 
-  Widget _buildUserCard(Map<String, dynamic> u) {
+  Widget _buildUserCard(Map<String, dynamic> u, double widthScale) {
     final isAdmin = u['role'] == 'ADMIN';
-    final initial = (u['firstName']?.toString() ?? u['email']?.toString() ?? '?').substring(0, 1).toUpperCase();
+    final initial =
+        (u['firstName']?.toString() ?? u['email']?.toString() ?? '?')
+            .substring(0, 1)
+            .toUpperCase();
     final joined = DateTime.tryParse(u['createdAt']?.toString() ?? '');
 
     return GestureDetector(
       onTap: () => Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => UserDetailScreen(userId: u['id'])),
-      ),
+        MaterialPageRoute(
+          builder: (_) => UserDetailScreen(userId: u['id'], allUsers: _users),
+        ),
+      ).then((_) => _fetchAll()),
       child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.all(16),
+        margin: EdgeInsets.only(bottom: 10 * widthScale),
+        padding: EdgeInsets.all(16 * widthScale),
         decoration: BoxDecoration(
           color: _bgCard,
           borderRadius: BorderRadius.circular(16),
@@ -1518,8 +1461,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: Row(
           children: [
             Container(
-              width: 44,
-              height: 44,
+              width: 44 * widthScale,
+              height: 44 * widthScale,
               decoration: BoxDecoration(
                 color: (isAdmin ? _primary : _blue).withOpacity(0.10),
                 borderRadius: BorderRadius.circular(12),
@@ -1529,35 +1472,39 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   initial,
                   style: TextStyle(
                     color: isAdmin ? _primary : _blue,
-                    fontSize: 18,
+                    fontSize: 18 * widthScale,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
             ),
-            const SizedBox(width: 14),
+            SizedBox(width: 14 * widthScale),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     (u['firstName'] != null || u['lastName'] != null)
-                        ? '${u['firstName'] ?? ''} ${u['lastName'] ?? ''}'.trim()
+                        ? '${u['firstName'] ?? ''} ${u['lastName'] ?? ''}'
+                              .trim()
                         : u['email'],
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w600,
-                      fontSize: 14,
+                      fontSize: 14 * widthScale,
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 4),
-                  Row(
+                  SizedBox(height: 4 * widthScale),
+                  Wrap(
+                    spacing: 8 * widthScale,
+                    runSpacing: 4 * widthScale,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 7,
-                          vertical: 2,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 7 * widthScale,
+                          vertical: 2 * widthScale,
                         ),
                         decoration: BoxDecoration(
                           color: (isAdmin ? _primary : Colors.white)
@@ -1568,40 +1515,76 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           u['role'],
                           style: TextStyle(
                             color: isAdmin ? _primary : Colors.white,
-                            fontSize: 9,
+                            fontSize: 9 * widthScale,
                             fontWeight: FontWeight.bold,
-                            letterSpacing: 1,
+                            letterSpacing: 0.5,
                           ),
                         ),
                       ),
-                      if (joined != null) ...[
-                        const SizedBox(width: 8),
+                      if (u['status'] != null)
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 7 * widthScale,
+                            vertical: 2 * widthScale,
+                          ),
+                          decoration: BoxDecoration(
+                            color:
+                                (u['status'] == 'APPROVED'
+                                        ? _primary
+                                        : u['status'] == 'PENDING_APPROVAL'
+                                        ? _blue
+                                        : _danger)
+                                    .withOpacity(0.08),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            (u['status'] as String).replaceAll('_', ' '),
+                            style: TextStyle(
+                              color: u['status'] == 'APPROVED'
+                                  ? _primary
+                                  : u['status'] == 'PENDING_APPROVAL'
+                                  ? _blue
+                                  : _danger,
+                              fontSize: 9 * widthScale,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                      if (joined != null)
                         Text(
                           DateFormat('MMM dd, yyyy').format(joined),
-                          style: const TextStyle(color: _textDim, fontSize: 11),
+                          style: TextStyle(
+                            color: _textDim,
+                            fontSize: 10 * widthScale,
+                          ),
                         ),
-                      ],
                     ],
                   ),
                 ],
               ),
             ),
+            SizedBox(width: 12 * widthScale),
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  NumberFormat('#,##0.00').format(u['balance'] ?? 0),
-                  style: GoogleFonts.outfit(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15,
-                    color: Colors.white,
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    NumberFormat('#,##0.00').format(u['balance'] ?? 0),
+                    style: GoogleFonts.outfit(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15 * widthScale,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
-                const Text(
+                Text(
                   'USDT',
                   style: TextStyle(
                     color: _primary,
-                    fontSize: 10,
+                    fontSize: 10 * widthScale,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -1797,17 +1780,19 @@ class _StatCard extends StatelessWidget {
   final String value;
   final IconData icon;
   final Color iconColor;
+  final double widthScale;
   const _StatCard({
     required this.label,
     required this.value,
     required this.icon,
     required this.iconColor,
+    this.widthScale = 1.0,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16 * widthScale),
       decoration: BoxDecoration(
         color: _bgCard,
         borderRadius: BorderRadius.circular(16),
@@ -1817,31 +1802,37 @@ class _StatCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 36,
-            height: 36,
+            width: 36 * widthScale,
+            height: 36 * widthScale,
             decoration: BoxDecoration(
               color: iconColor.withOpacity(0.10),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(icon, size: 18, color: iconColor),
+            child: Icon(icon, size: 18 * widthScale, color: iconColor),
           ),
-          const SizedBox(height: 12),
-          Text(
-            value,
-            style: GoogleFonts.outfit(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
+          SizedBox(height: 12 * widthScale),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              value,
+              style: GoogleFonts.outfit(
+                fontSize: 22 * widthScale,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
             ),
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: 4 * widthScale),
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               color: _textDim,
-              fontSize: 11,
+              fontSize: 11 * widthScale,
               fontWeight: FontWeight.w500,
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
@@ -2028,476 +2019,5 @@ class _RoleChip extends StatelessWidget {
         ),
       ),
     );
-  }
-}
-
-class _TransactionDetailSheet extends StatefulWidget {
-  final Map<String, dynamic> tx;
-  final Function(String)? onStatusUpdate;
-
-  const _TransactionDetailSheet({required this.tx, this.onStatusUpdate});
-
-  @override
-  State<_TransactionDetailSheet> createState() =>
-      _TransactionDetailSheetState();
-}
-
-class _TransactionDetailSheetState extends State<_TransactionDetailSheet> {
-  Map<String, dynamic>? _decrypted;
-  bool _isLoadingInfo = false;
-
-  @override
-  void initState() {
-    super.initState();
-    if (widget.tx['type'] == 'EXCHANGE') {
-      _loadDetails();
-    }
-  }
-
-  Future<void> _loadDetails() async {
-    setState(() => _isLoadingInfo = true);
-    try {
-      final storage = const FlutterSecureStorage();
-      final privPem = await storage.read(key: 'admin_private_key');
-
-      if (_CryptoHelper.enableE2EE == false ||
-          (privPem != null && widget.tx['bankDetails'] != null)) {
-        // Attempt decryption
-        final api = ApiService();
-        final res = await api.getRequest(
-          '/wallet/transactions/${widget.tx['id']}',
-        );
-        if (res.statusCode == 200) {
-          final txFull = jsonDecode(res.body);
-          final encrypted = txFull['bankDetails'];
-
-          if (encrypted != null) {
-            // RSA Decryption
-            final decryptedStr = _CryptoHelper.decrypt(
-              privPem ?? "",
-              encrypted,
-            );
-            if (decryptedStr != null) {
-              setState(() => _decrypted = jsonDecode(decryptedStr));
-            }
-          }
-        }
-      }
-    } catch (e) {
-      debugPrint('Decryption error: $e');
-    }
-    if (mounted) setState(() => _isLoadingInfo = false);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final tx = widget.tx;
-    final logs = tx['logs'] as List<dynamic>? ?? [];
-    final isDeposit = tx['type'] == 'DEPOSIT';
-    final status = tx['status'] as String? ?? 'PENDING';
-    final isPending = status == 'PENDING';
-
-    Color statusColor;
-    if (status == 'COMPLETED')
-      statusColor = _primary;
-    else if (status == 'PENDING')
-      statusColor = _blue;
-    else
-      statusColor = _danger;
-
-    return Container(
-      padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.85,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Handle fixed at top
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-          const SizedBox(height: 24),
-
-          Flexible(
-            child: ListView(
-              shrinkWrap: true,
-              padding: const EdgeInsets.only(bottom: 32),
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Transaction Review',
-                          style: GoogleFonts.outfit(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'TX-${tx['id']?.toString().substring(0, 12).toUpperCase() ?? 'UNKNOWN'}',
-                          style: const TextStyle(color: _textDim, fontSize: 12),
-                        ),
-                      ],
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: statusColor.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: statusColor.withOpacity(0.2)),
-                      ),
-                      child: Text(
-                        status,
-                        style: TextStyle(
-                          color: statusColor,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 32),
-
-                // Details Card
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: _bgDark,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: _border),
-                  ),
-                  child: Column(
-                    children: [
-                      _DetailRow(
-                        label: 'USER',
-                        value: (tx['user']?['firstName'] != null || tx['user']?['lastName'] != null)
-                            ? '${tx['user']?['firstName'] ?? ''} ${tx['user']?['lastName'] ?? ''}'.trim()
-                            : tx['user']?['email'] ?? 'Unknown',
-                      ),
-                      const SizedBox(height: 16),
-                      _DetailRow(
-                        label: 'AMOUNT',
-                        value:
-                            '${NumberFormat('#,##0.00').format(tx['amount'] as num)} USDT',
-                        valueColor: isDeposit ? _primary : Colors.white,
-                      ),
-                      const SizedBox(height: 16),
-                      _DetailRow(label: 'TYPE', value: tx['type']),
-                      if (tx['conversionRate'] != null) ...[
-                        const SizedBox(height: 16),
-                        _DetailRow(
-                          label: 'RATE',
-                          value:
-                              '₹${(tx['conversionRate'] as num).toStringAsFixed(2)}',
-                        ),
-                        const SizedBox(height: 16),
-                        _DetailRow(
-                          label: 'CREDIT (INR)',
-                          value:
-                              '₹${NumberFormat('#,##0.00').format((tx['amount'] as num) * (tx['conversionRate'] as num))}',
-                          valueColor: _blue,
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-
-                // Action Buttons
-                if (isPending && widget.onStatusUpdate != null) ...[
-                  const SizedBox(height: 24),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _ActionBtn(
-                          label: 'Approve',
-                          icon: Icons.check_circle_outline,
-                          color: _primary,
-                          filled: true,
-                          onPressed: () {
-                            Navigator.pop(context);
-                            widget.onStatusUpdate!('COMPLETED');
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _ActionBtn(
-                          label: 'Reject',
-                          icon: Icons.cancel_outlined,
-                          color: _danger,
-                          onPressed: () {
-                            Navigator.pop(context);
-                            widget.onStatusUpdate!('REJECTED');
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-
-                const SizedBox(height: 32),
-
-                if (!isDeposit) ...[
-                  const Text(
-                    'BANK DETAILS (E2EE)',
-                    style: TextStyle(
-                      color: _textDim,
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.5,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  if (_isLoadingInfo)
-                    const Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(20),
-                        child: CircularProgressIndicator(
-                          color: _primary,
-                          strokeWidth: 2,
-                        ),
-                      ),
-                    )
-                  else if (_decrypted != null)
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: _bgDark,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: _primary.withOpacity(0.1)),
-                      ),
-                      child: Column(
-                        children: [
-                          _infoRow(
-                            'Beneficiary',
-                            _decrypted!['name'] ?? 'Unknown',
-                          ),
-                          const SizedBox(height: 8),
-                          _infoRow(
-                            'Account',
-                            _decrypted!['account'] ?? 'Locked',
-                          ),
-                          const SizedBox(height: 8),
-                          _infoRow('Bank', _decrypted!['bank'] ?? 'Private'),
-                          const SizedBox(height: 8),
-                          _infoRow(
-                            'IFSC/Sort',
-                            _decrypted!['ifsc'] ?? 'LOCKED',
-                            isLast: true,
-                          ),
-                        ],
-                      ),
-                    )
-                  else
-                    const Text(
-                      'Locked: Requires Admin RSA Key',
-                      style: TextStyle(color: _danger, fontSize: 12),
-                    ),
-                  const SizedBox(height: 32),
-                ],
-
-                const Text(
-                  'ACTIVITY TIMELINE',
-                  style: TextStyle(
-                    color: _textDim,
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.5,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                if (logs.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.only(bottom: 24),
-                    child: Text(
-                      'No activity logs found',
-                      style: TextStyle(color: _textDim, fontSize: 13),
-                    ),
-                  )
-                else
-                  ...logs.map(
-                    (log) => _buildLogItem(
-                      log,
-                      logs.indexOf(log) == logs.length - 1,
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _infoRow(String label, String value, {bool isLast = false}) {
-    return Container(
-      padding: EdgeInsets.only(bottom: isLast ? 0 : 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: const TextStyle(color: _textDim, fontSize: 12)),
-          Text(
-            value,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 12,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLogItem(Map<String, dynamic> log, bool isLast) {
-    return IntrinsicHeight(
-      child: Row(
-        children: [
-          Column(
-            children: [
-              Container(
-                width: 12,
-                height: 12,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: _primary.withOpacity(0.3),
-                  border: Border.all(color: _primary, width: 2),
-                ),
-              ),
-              if (!isLast)
-                Expanded(
-                  child: Container(width: 2, color: _primary.withOpacity(0.1)),
-                ),
-            ],
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        log['status'],
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                        ),
-                      ),
-                      Text(
-                        DateFormat(
-                          'MMM dd, HH:mm',
-                        ).format(DateTime.parse(log['createdAt'])),
-                        style: const TextStyle(color: _textDim, fontSize: 11),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    log['note'] ?? 'Status updated',
-                    style: const TextStyle(color: _textDim, fontSize: 13),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'by ${log['actor']}',
-                    style: TextStyle(
-                      color: _primary.withOpacity(0.5),
-                      fontSize: 11,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _DetailRow extends StatelessWidget {
-  final String label;
-  final String value;
-  final Color? valueColor;
-  const _DetailRow({required this.label, required this.value, this.valueColor});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            color: _textDim,
-            fontSize: 11,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 0.5,
-          ),
-        ),
-        Text(
-          value,
-          style: TextStyle(
-            color: valueColor ?? Colors.white,
-            fontSize: 13,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _CryptoHelper {
-  static const bool enableE2EE = false;
-  static String? decrypt(String pem, String encryptedBase64) {
-    if (!enableE2EE) {
-      try {
-        return utf8.decode(base64Decode(encryptedBase64));
-      } catch (e) {
-        return null;
-      }
-    }
-    try {
-      // Clean PEM
-      final privKeyString = pem
-          .replaceAll('-----BEGIN PRIVATE KEY-----', '')
-          .replaceAll('-----END PRIVATE KEY-----', '')
-          .replaceAll('\n', '')
-          .replaceAll('\r', '')
-          .trim();
-
-      final privateKey = enc.RSAKeyParser().parse(pem) as pc.RSAPrivateKey;
-      final crypter = enc.Encrypter(enc.RSA(privateKey: privateKey));
-
-      final decrypted = crypter.decrypt(
-        enc.Encrypted.fromBase64(encryptedBase64),
-      );
-      return decrypted;
-    } catch (e) {
-      print('RSA Decrypt Error: $e');
-      return null;
-    }
   }
 }

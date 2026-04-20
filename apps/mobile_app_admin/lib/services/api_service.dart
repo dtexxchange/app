@@ -6,8 +6,10 @@ import '../main.dart';
 
 class ApiService {
   static String get baseUrl {
-    const bool isProduction =
-        false; // Toggle this to false for local development
+    // Automatically switches based on build mode:
+    // - Development (flutter run): uses localhost/10.0.2.2
+    // - Production (flutter build): uses the live URL
+    const bool isProduction = kReleaseMode;
 
     if (kIsWeb) {
       return isProduction

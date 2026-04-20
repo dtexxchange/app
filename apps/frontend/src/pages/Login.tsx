@@ -22,8 +22,8 @@ const Login: React.FC = () => {
     } | null>(null);
     const { login } = useAuth();
 
-    const handleSendOtp = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleSendOtp = async (e?: React.FormEvent | React.MouseEvent) => {
+        if (e) e.preventDefault();
         setLoading(true);
         try {
             await api.post("/auth/send-otp", { email });
@@ -173,6 +173,14 @@ const Login: React.FC = () => {
                                     ) : (
                                         "Verify & Sign In"
                                     )}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleSendOtp}
+                                    disabled={loading}
+                                    className="w-full text-center text-primary text-sm hover:text-white transition-colors"
+                                >
+                                    Resend Code
                                 </button>
                                 <button
                                     type="button"

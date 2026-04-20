@@ -6,6 +6,7 @@ import {
     Settings,
     Users,
     Wallet,
+    QrCode,
 } from "lucide-react";
 import React from "react";
 import { NavLink, Outlet } from "react-router-dom";
@@ -22,6 +23,7 @@ const AdminLayout: React.FC = () => {
         },
         { path: "/users", icon: <Users size={20} />, label: "Users" },
         { path: "/wallets", icon: <Wallet size={20} />, label: "Wallets" },
+        { path: "/assignments", icon: <QrCode size={20} />, label: "Live QR Views" },
         {
             path: "/exchange-rate",
             icon: <ArrowRightLeft size={20} />,

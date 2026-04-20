@@ -294,10 +294,17 @@ class _WalletsScreenState extends State<WalletsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final widthScale = (size.width / 375.0).clamp(0.85, 1.2);
+
     return Scaffold(
       backgroundColor: _bgDark,
-      body: CustomScrollView(
-        slivers: [
+      body: RefreshIndicator(
+        onRefresh: _fetchWallets,
+        color: _primary,
+        backgroundColor: _bgCard,
+        child: CustomScrollView(
+          slivers: [
           SliverAppBar(
             pinned: true,
             expandedHeight: 120,
@@ -321,12 +328,12 @@ class _WalletsScreenState extends State<WalletsScreen> {
                   ),
                 ),
               ),
-              titlePadding: const EdgeInsets.only(left: 56, bottom: 16),
+              titlePadding: EdgeInsets.only(left: 56 * widthScale, bottom: 16),
             ),
             iconTheme: const IconThemeData(color: Colors.white),
           ),
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(24, 8, 24, 100),
+            padding: EdgeInsets.fromLTRB(24 * widthScale, 8, 24 * widthScale, 100),
             sliver: _isLoading
                 ? const SliverToBoxAdapter(
                     child: Center(
@@ -360,11 +367,12 @@ class _WalletsScreenState extends State<WalletsScreen> {
                     delegate: SliverChildBuilderDelegate((ctx, i) {
                       final w = _wallets[i];
                       final isActive = w['isActive'] as bool;
-                      return _buildWalletCard(w, isActive);
+                      return _buildWalletCard(w, isActive, widthScale);
                     }, childCount: _wallets.length),
                   ),
           ),
         ],
+        ),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showAddModal,
@@ -379,9 +387,9 @@ class _WalletsScreenState extends State<WalletsScreen> {
     );
   }
 
-  Widget _buildWalletCard(dynamic w, bool isActive) {
+  Widget _buildWalletCard(dynamic w, bool isActive, double widthScale) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 20),
+      margin: EdgeInsets.only(bottom: 20 * widthScale),
       decoration: BoxDecoration(
         color: _bgCard,
         borderRadius: BorderRadius.circular(28),
@@ -401,91 +409,94 @@ class _WalletsScreenState extends State<WalletsScreen> {
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.all(24),
+              padding: EdgeInsets.all(24 * widthScale),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.05),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: Colors.white.withOpacity(0.1),
-                              ),
-                            ),
-                            child: Text(
-                              w['network'] ?? 'TRC20',
-                              style: GoogleFonts.inter(
-                                color: Colors.white,
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 1,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: (isActive ? _primary : Colors.redAccent)
-                                  .withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              isActive ? 'ACTIVE' : 'DISABLED',
-                              style: GoogleFonts.inter(
-                                color: isActive ? _primary : Colors.redAccent,
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 1,
-                              ),
-                            ),
-                          ),
-                          if (isActive) ...[
-                            const SizedBox(width: 8),
+                      Expanded(
+                        child: Wrap(
+                          spacing: 8 * widthScale,
+                          runSpacing: 8 * widthScale,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
                             Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 4,
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 10 * widthScale,
+                                vertical: 4 * widthScale,
                               ),
                               decoration: BoxDecoration(
-                                color: _blue.withOpacity(0.1),
+                                color: Colors.white.withOpacity(0.05),
                                 borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: Colors.white.withOpacity(0.1),
+                                ),
                               ),
-                              child: Row(
-                                children: [
-                                  const Icon(
-                                    Icons.people_outline,
-                                    color: _blue,
-                                    size: 10,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    '${w['_count']?['assignments'] ?? 0} USERS',
-                                    style: GoogleFonts.inter(
-                                      color: _blue,
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
-                                      letterSpacing: 1,
-                                    ),
-                                  ),
-                                ],
+                              child: Text(
+                                w['network'] ?? 'TRC20',
+                                style: GoogleFonts.inter(
+                                  color: Colors.white,
+                                  fontSize: 10 * widthScale,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 0.5,
+                                ),
                               ),
                             ),
+                            Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 10 * widthScale,
+                                vertical: 4 * widthScale,
+                              ),
+                              decoration: BoxDecoration(
+                                color: (isActive ? _primary : Colors.redAccent)
+                                    .withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                isActive ? 'ACTIVE' : 'DISABLED',
+                                style: GoogleFonts.inter(
+                                  color: isActive ? _primary : Colors.redAccent,
+                                  fontSize: 10 * widthScale,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ),
+                            if (isActive)
+                              Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 10 * widthScale,
+                                  vertical: 4 * widthScale,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: _blue.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.people_outline,
+                                      color: _blue,
+                                      size: 10 * widthScale,
+                                    ),
+                                    SizedBox(width: 4 * widthScale),
+                                    Text(
+                                      '${w['_count']?['assignments'] ?? 0} USERS',
+                                      style: GoogleFonts.inter(
+                                        color: _blue,
+                                        fontSize: 10 * widthScale,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                           ],
-                        ],
+                        ),
                       ),
                       Switch.adaptive(
                         value: isActive,
@@ -495,18 +506,18 @@ class _WalletsScreenState extends State<WalletsScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 24),
+                  SizedBox(height: 24 * widthScale),
                   if (w['name'] != null && w['name'].toString().isNotEmpty) ...[
                     Text(
                       w['name'].toUpperCase(),
                       style: GoogleFonts.outfit(
                         color: _primary,
-                        fontSize: 12,
+                        fontSize: 12 * widthScale,
                         fontWeight: FontWeight.w900,
                         letterSpacing: 1.5,
                       ),
                     ),
-                    const SizedBox(height: 6),
+                    SizedBox(height: 6 * widthScale),
                   ],
                   Row(
                     children: [
@@ -515,12 +526,12 @@ class _WalletsScreenState extends State<WalletsScreen> {
                           w['address'],
                           style: GoogleFonts.firaCode(
                             color: Colors.white,
-                            fontSize: 14,
+                            fontSize: 14 * widthScale,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      SizedBox(width: 8 * widthScale),
                       GestureDetector(
                         onTap: () {
                           Clipboard.setData(ClipboardData(text: w['address']));
@@ -533,7 +544,7 @@ class _WalletsScreenState extends State<WalletsScreen> {
                         },
                         child: Icon(
                           Icons.copy,
-                          size: 16,
+                          size: 16 * widthScale,
                           color: Colors.white.withOpacity(0.3),
                         ),
                       ),
@@ -543,7 +554,7 @@ class _WalletsScreenState extends State<WalletsScreen> {
               ),
             ),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              padding: EdgeInsets.symmetric(horizontal: 12 * widthScale, vertical: 4),
               decoration: BoxDecoration(
                 color: Colors.black.withOpacity(0.2),
                 border: Border(top: BorderSide(color: _border)),
@@ -558,11 +569,11 @@ class _WalletsScreenState extends State<WalletsScreen> {
                       size: 16,
                       color: Colors.redAccent,
                     ),
-                    label: const Text(
+                    label: Text(
                       'REMOVE NODE',
                       style: TextStyle(
                         color: Colors.redAccent,
-                        fontSize: 10,
+                        fontSize: 10 * widthScale,
                         fontWeight: FontWeight.bold,
                         letterSpacing: 1,
                       ),

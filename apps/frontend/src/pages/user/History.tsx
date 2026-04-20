@@ -269,7 +269,7 @@ const History: React.FC = () => {
                                                         ₹
                                                         {formatAmount(
                                                             selectedTx.amount *
-                                                            selectedTx.conversionRate
+                                                                selectedTx.conversionRate,
                                                         )}
                                                     </p>
                                                 </div>
@@ -311,7 +311,7 @@ const History: React.FC = () => {
                                                                         new Date(
                                                                             log.createdAt,
                                                                         ),
-                                                                        "MMM dd, HH:mm",
+                                                                        "MMM dd, hh:mm a",
                                                                     )}
                                                                 </div>
                                                                 <div className="text-[10px] text-accent-blue/60 font-black uppercase tracking-tighter">

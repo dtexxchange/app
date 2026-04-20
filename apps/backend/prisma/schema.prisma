@@ -47,7 +47,7 @@ model User {
   transactions  Transaction[]
   otps          Otp[]
   bankAccounts  BankAccount[]
-  walletAssignment WalletAssignment?
+  walletAssignments WalletAssignment[]
 }
 
 model Transaction {
@@ -146,7 +146,7 @@ model BankAccountLog {
 
 model WalletAssignment {
   id        String   @id @default(uuid())
-  userId    String   @unique
+  userId    String
   user      User     @relation(fields: [userId], references: [id])
   walletId  String
   wallet    GlobalWallet @relation(fields: [walletId], references: [id])

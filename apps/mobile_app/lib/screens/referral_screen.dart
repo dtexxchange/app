@@ -57,12 +57,27 @@ class _ReferralScreenState extends State<ReferralScreen> {
     );
   }
 
+  void _copyLinkToClipboard() {
+    if (_referralCode == null) return;
+    final link = '${ApiService.webUrl}/signup?ref=$_referralCode';
+    Clipboard.setData(ClipboardData(text: link));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Referral link copied to clipboard'),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: Color(0xFF00FF9D),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final widthScale = (size.width / 375.0).clamp(0.85, 1.2);
     return Scaffold(
       backgroundColor: const Color(0xFF0A0B0D),
       appBar: AppBar(
-        title: Text('Referral Network', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+        title: Text('Referral Network', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 18 * widthScale)),
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
@@ -73,17 +88,17 @@ class _ReferralScreenState extends State<ReferralScreen> {
             onRefresh: _fetchData,
             color: const Color(0xFF00FF9D),
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
+              padding: EdgeInsets.all(24 * widthScale),
               physics: const AlwaysScrollableScrollPhysics(),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildReferralCard(),
-                  const SizedBox(height: 32),
+                  _buildReferralCard(widthScale),
+                  SizedBox(height: 32 * widthScale),
                   Text(
                     'Friends who joined (${_referrals.length})',
                     style: GoogleFonts.outfit(
-                      fontSize: 20,
+                      fontSize: 20 * widthScale,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
@@ -105,9 +120,9 @@ class _ReferralScreenState extends State<ReferralScreen> {
     );
   }
 
-  Widget _buildReferralCard() {
+  Widget _buildReferralCard(double widthScale) {
     return Container(
-      padding: const EdgeInsets.all(32),
+      padding: EdgeInsets.all(32 * widthScale),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
@@ -122,21 +137,21 @@ class _ReferralScreenState extends State<ReferralScreen> {
       ),
       child: Column(
         children: [
-          const Icon(Icons.stars, color: Color(0xFF00FF9D), size: 48),
-          const SizedBox(height: 24),
+          Icon(Icons.stars, color: const Color(0xFF00FF9D), size: 48 * widthScale),
+          SizedBox(height: 24 * widthScale),
           Text(
             'Share the wealth',
-            style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
+            style: GoogleFonts.outfit(fontSize: 24 * widthScale, fontWeight: FontWeight.bold, color: Colors.white),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Invite friends and track your network as it grows.',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Color(0xFF94A3B8), fontSize: 14),
+            style: TextStyle(color: const Color(0xFF94A3B8), fontSize: 13 * widthScale),
           ),
           const SizedBox(height: 32),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            padding: EdgeInsets.symmetric(horizontal: 20 * widthScale, vertical: 12 * widthScale),
             decoration: BoxDecoration(
               color: Colors.black.withOpacity(0.3),
               borderRadius: BorderRadius.circular(16),
@@ -145,18 +160,75 @@ class _ReferralScreenState extends State<ReferralScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  _referralCode ?? '------',
-                  style: GoogleFonts.outfit(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: const Color(0xFF00FF9D),
-                    letterSpacing: 4,
+                Expanded(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      _referralCode ?? '------',
+                      style: GoogleFonts.outfit(
+                        fontSize: 28 * widthScale,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF00FF9D),
+                        letterSpacing: 4,
+                      ),
+                    ),
                   ),
                 ),
                 IconButton(
                   onPressed: _copyToClipboard,
-                  icon: const Icon(Icons.copy, color: Color(0xFF00FF9D)),
+                  icon: Icon(Icons.copy, color: const Color(0xFF00FF9D), size: 20 * widthScale),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.white.withOpacity(0.1)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'QUICK SHARE LINK',
+                  style: TextStyle(
+                    color: Color(0xFF94A3B8),
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        '${ApiService.webUrl}/signup?ref=${_referralCode ?? '------'}',
+                        style: GoogleFonts.firaCode(
+                          color: Colors.white70,
+                          fontSize: 11,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    InkWell(
+                      onTap: _copyLinkToClipboard,
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(Icons.copy, size: 14, color: Colors.white),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
