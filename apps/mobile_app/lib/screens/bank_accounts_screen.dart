@@ -1,7 +1,9 @@
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+
 import '../services/api_service.dart';
 
 class BankAccountsScreen extends StatefulWidget {
@@ -18,7 +20,6 @@ class _BankAccountsScreenState extends State<BankAccountsScreen> {
   Color get _primary => Theme.of(context).primaryColor;
   Color get _textDim => Theme.of(context).colorScheme.onSurfaceVariant;
   Color get _border => Theme.of(context).dividerColor;
-  static const Color _blue = Color(0xFF3B82F6);
   static const Color _danger = Color(0xFFF87171);
   final _api = ApiService();
   List<dynamic> _accounts = [];
@@ -51,13 +52,28 @@ class _BankAccountsScreenState extends State<BankAccountsScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: _bgCard,
-        title: Text('Delete Account', style: GoogleFonts.outfit(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold)),
-        content: Text('Are you sure you want to remove this bank account?', style: TextStyle(color: _textDim)),
+        title: Text(
+          'Delete Account',
+          style: GoogleFonts.outfit(
+            color: Theme.of(context).colorScheme.onSurface,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: Text(
+          'Are you sure you want to remove this bank account?',
+          style: TextStyle(color: _textDim),
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('Cancel', style: TextStyle(color: _textDim))),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('Cancel', style: TextStyle(color: _textDim)),
+          ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text('Delete', style: TextStyle(color: _danger, fontWeight: FontWeight.bold)),
+            child: Text(
+              'Delete',
+              style: TextStyle(color: _danger, fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),
@@ -69,7 +85,10 @@ class _BankAccountsScreenState extends State<BankAccountsScreen> {
       final res = await _api.deleteRequest('/bank-accounts/$id');
       if (res.statusCode == 200) {
         _fetchAccounts();
-        if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Account removed')));
+        if (mounted)
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Account removed')));
       }
     } catch (e) {
       debugPrint(e.toString());
@@ -87,14 +106,28 @@ class _BankAccountsScreenState extends State<BankAccountsScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: _bgCard,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
       builder: (ctx) => Padding(
-        padding: EdgeInsets.fromLTRB(24, 24, 24, MediaQuery.of(ctx).viewInsets.bottom + 40),
+        padding: EdgeInsets.fromLTRB(
+          24,
+          24,
+          24,
+          MediaQuery.of(ctx).viewInsets.bottom + 40,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(isEdit ? 'Edit Bank Account' : 'Add Bank Account', style: GoogleFonts.outfit(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
+            Text(
+              isEdit ? 'Edit Bank Account' : 'Add Bank Account',
+              style: GoogleFonts.outfit(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
             const SizedBox(height: 24),
             _buildField(nameCtrl, 'Account Holder Name'),
             const SizedBox(height: 16),
@@ -112,10 +145,13 @@ class _BankAccountsScreenState extends State<BankAccountsScreen> {
                   'accountNo': accNoCtrl.text,
                   'ifsc': ifscCtrl.text,
                 };
-                final res = isEdit 
-                  ? await _api.patchRequest('/bank-accounts/${account['id']}', data)
-                  : await _api.postRequest('/bank-accounts', data);
-                
+                final res = isEdit
+                    ? await _api.patchRequest(
+                        '/bank-accounts/${account['id']}',
+                        data,
+                      )
+                    : await _api.postRequest('/bank-accounts', data);
+
                 if (res.statusCode == 200 || res.statusCode == 201) {
                   Navigator.pop(ctx);
                   _fetchAccounts();
@@ -125,9 +161,14 @@ class _BankAccountsScreenState extends State<BankAccountsScreen> {
                 backgroundColor: _primary,
                 foregroundColor: Colors.black,
                 padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
-              child: Text(isEdit ? 'Update Account' : 'Save Account', style: const TextStyle(fontWeight: FontWeight.bold)),
+              child: Text(
+                isEdit ? 'Update Account' : 'Save Account',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
             ),
           ],
         ),
@@ -138,13 +179,19 @@ class _BankAccountsScreenState extends State<BankAccountsScreen> {
   Widget _buildField(TextEditingController ctrl, String hint) {
     return TextField(
       controller: ctrl,
-      style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 14),
+      style: TextStyle(
+        color: Theme.of(context).colorScheme.onSurface,
+        fontSize: 14,
+      ),
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: TextStyle(color: _textDim, fontSize: 14),
         filled: true,
         fillColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.03),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: _border)),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: _border),
+        ),
         contentPadding: const EdgeInsets.all(16),
       ),
     );
@@ -169,9 +216,9 @@ class _BankAccountsScreenState extends State<BankAccountsScreen> {
           ),
         ],
       ),
-      body: _isLoading 
-        ? Center(child: CircularProgressIndicator(color: _primary))
-        : _accounts.isEmpty 
+      body: _isLoading
+          ? Center(child: CircularProgressIndicator(color: _primary))
+          : _accounts.isEmpty
           ? _buildEmptyState()
           : ListView.builder(
               padding: EdgeInsets.all(isSmall ? 16 : 24),
@@ -186,7 +233,11 @@ class _BankAccountsScreenState extends State<BankAccountsScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.account_balance, size: 64, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.05)),
+          Icon(
+            Icons.account_balance,
+            size: 64,
+            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.05),
+          ),
           const SizedBox(height: 16),
           Text('No saved bank accounts', style: TextStyle(color: _textDim)),
           const SizedBox(height: 24),
@@ -217,18 +268,34 @@ class _BankAccountsScreenState extends State<BankAccountsScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(acc['bankName'], style: GoogleFonts.inter(color: _primary, fontWeight: FontWeight.bold, fontSize: isSmall ? 10 : 12, letterSpacing: 1)),
+              Text(
+                acc['bankName'],
+                style: GoogleFonts.inter(
+                  color: _primary,
+                  fontWeight: FontWeight.bold,
+                  fontSize: isSmall ? 10 : 12,
+                  letterSpacing: 1,
+                ),
+              ),
               Row(
                 children: [
                   IconButton(
-                    onPressed: () => _showAddEditModal(acc), 
-                    icon: Icon(Icons.edit_outlined, size: isSmall ? 16 : 18, color: _textDim),
+                    onPressed: () => _showAddEditModal(acc),
+                    icon: Icon(
+                      Icons.edit_outlined,
+                      size: isSmall ? 16 : 18,
+                      color: _textDim,
+                    ),
                     constraints: const BoxConstraints(),
                     padding: const EdgeInsets.all(8),
                   ),
                   IconButton(
-                    onPressed: () => _deleteAccount(acc['id']), 
-                    icon: Icon(Icons.delete_outline, size: isSmall ? 16 : 18, color: _danger),
+                    onPressed: () => _deleteAccount(acc['id']),
+                    icon: Icon(
+                      Icons.delete_outline,
+                      size: isSmall ? 16 : 18,
+                      color: _danger,
+                    ),
                     constraints: const BoxConstraints(),
                     padding: const EdgeInsets.all(8),
                   ),
@@ -237,26 +304,56 @@ class _BankAccountsScreenState extends State<BankAccountsScreen> {
             ],
           ),
           const SizedBox(height: 8),
-          Text(acc['name'], style: GoogleFonts.outfit(fontSize: isSmall ? 16 : 18, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
+          Text(
+            acc['name'],
+            style: GoogleFonts.outfit(
+              fontSize: isSmall ? 16 : 18,
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
+          ),
           const SizedBox(height: 4),
-          Text(acc['accountNo'], style: TextStyle(color: _textDim, letterSpacing: 1.2, fontSize: isSmall ? 13 : 14)),
+          Text(
+            acc['accountNo'],
+            style: TextStyle(
+              color: _textDim,
+              letterSpacing: 1.2,
+              fontSize: isSmall ? 13 : 14,
+            ),
+          ),
           const SizedBox(height: 16),
           Row(
             children: [
-              Text('TRC20 Network Only', style: TextStyle(color: _textDim, fontSize: 11, fontWeight: FontWeight.w600)),
+              Text(
+                'TRC20 Network Only',
+                style: TextStyle(
+                  color: _textDim,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
               const SizedBox(width: 4),
               Icon(Icons.info_outline, size: 14, color: _textDim),
               const SizedBox(width: 6),
-              Text('IFSC: ${acc['ifsc']}', style: TextStyle(color: _textDim, fontSize: isSmall ? 11 : 12)),
+              Text(
+                'IFSC: ${acc['ifsc']}',
+                style: TextStyle(color: _textDim, fontSize: isSmall ? 11 : 12),
+              ),
               const Spacer(),
               TextButton(
                 onPressed: () => _showLogs(acc['id']),
                 style: TextButton.styleFrom(
                   minimumSize: Size.zero,
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
-                child: Text('Logs', style: TextStyle(fontSize: isSmall ? 11 : 12)),
+                child: Text(
+                  'Logs',
+                  style: TextStyle(fontSize: isSmall ? 11 : 12),
+                ),
               ),
             ],
           ),
@@ -269,11 +366,14 @@ class _BankAccountsScreenState extends State<BankAccountsScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: _bgCard,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
       builder: (ctx) => FutureBuilder(
         future: _api.getRequest('/bank-accounts/$id/logs'),
         builder: (ctx, snapshot) {
-          if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+          if (!snapshot.hasData)
+            return const Center(child: CircularProgressIndicator());
           final logs = jsonDecode(snapshot.data!.body) as List;
           return Padding(
             padding: const EdgeInsets.all(24),
@@ -281,24 +381,48 @@ class _BankAccountsScreenState extends State<BankAccountsScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Modification History', style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
-                const SizedBox(height: 24),
-                if (logs.isEmpty) Text('No logs available', style: TextStyle(color: _textDim)),
-                ...logs.map((l) => Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(l['action'], style: TextStyle(color: l['action'] == 'DELETE' ? _danger : _primary, fontWeight: FontWeight.bold, fontSize: 12)),
-                          Text(DateFormat('MMM dd, yyyy • hh:mm a').format(DateTime.parse(l['createdAt'])), style: TextStyle(color: _textDim, fontSize: 10)),
-                        ],
-                      ),
-                    ],
+                Text(
+                  'Modification History',
+                  style: GoogleFonts.outfit(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
                   ),
-                )),
+                ),
+                const SizedBox(height: 24),
+                if (logs.isEmpty)
+                  Text('No logs available', style: TextStyle(color: _textDim)),
+                ...logs.map(
+                  (l) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              l['action'],
+                              style: TextStyle(
+                                color: l['action'] == 'DELETE'
+                                    ? _danger
+                                    : _primary,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
+                            ),
+                            Text(
+                              DateFormat(
+                                'MMM dd, yyyy • hh:mm a',
+                              ).format(DateTime.parse(l['createdAt'])),
+                              style: TextStyle(color: _textDim, fontSize: 10),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ],
             ),
           );

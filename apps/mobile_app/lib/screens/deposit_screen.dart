@@ -20,7 +20,7 @@ class _DepositScreenState extends State<DepositScreen> {
   Color get _primary => Theme.of(context).primaryColor;
   Color get _textDim => Theme.of(context).colorScheme.onSurfaceVariant;
   Color get _border => Theme.of(context).dividerColor;
-  Color get _onSurface => Theme.of(context).colorScheme.onSurface;
+  Color get _onSurface => Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF0F172A);
 
   final _api = ApiService();
   List<dynamic> _wallets = [];

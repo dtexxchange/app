@@ -25,7 +25,6 @@ class TransactionsScreenState extends State<TransactionsScreen>
   Color get _textDim => Theme.of(context).colorScheme.onSurfaceVariant;
   Color get _border => Theme.of(context).dividerColor;
   static const Color _blue = Color(0xFF3B82F6);
-  static const Color _danger = Color(0xFFF87171);
 
   /// Number of items to fetch per page.
   static const _pageSize = 15;

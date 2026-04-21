@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+
 import '../services/crypto_service.dart';
 
 class TransactionDetailSheet extends StatelessWidget {
@@ -10,11 +11,12 @@ class TransactionDetailSheet extends StatelessWidget {
   const TransactionDetailSheet({super.key, required this.tx});
 
   // ─── Design Tokens (Dynamic) ──────────────────────────────────────────────────
-  Color _bgDark(BuildContext context) => Theme.of(context).scaffoldBackgroundColor;
-  Color _bgCard(BuildContext context) => Theme.of(context).cardColor;
+  Color _bgDark(BuildContext context) =>
+      Theme.of(context).scaffoldBackgroundColor;
   Color _primary(BuildContext context) => Theme.of(context).primaryColor;
   Color _blue(BuildContext context) => const Color(0xFF3B82F6);
-  Color _textDim(BuildContext context) => Theme.of(context).colorScheme.onSurfaceVariant;
+  Color _textDim(BuildContext context) =>
+      Theme.of(context).colorScheme.onSurfaceVariant;
   Color _border(BuildContext context) => Theme.of(context).dividerColor;
   Color _danger(BuildContext context) => const Color(0xFFF87171);
 
@@ -24,7 +26,7 @@ class TransactionDetailSheet extends StatelessWidget {
     final logs = tx['logs'] as List? ?? [];
     final isDeposit = tx['type'] == 'DEPOSIT';
     final isExchange = tx['type'] == 'EXCHANGE';
-    
+
     final bank = (isExchange && tx['bankDetails'] != null)
         ? CryptoService.decrypt(tx['bankDetails'])
         : null;
@@ -81,7 +83,10 @@ class TransactionDetailSheet extends StatelessWidget {
                         const SizedBox(height: 4),
                         Text(
                           'TX-${tx['id']?.toString().substring(0, 12).toUpperCase() ?? 'UNKNOWN'}',
-                          style: TextStyle(color: _textDim(context), fontSize: 12),
+                          style: TextStyle(
+                            color: _textDim(context),
+                            fontSize: 12,
+                          ),
                         ),
                       ],
                     ),
@@ -124,7 +129,9 @@ class TransactionDetailSheet extends StatelessWidget {
                         label: 'AMOUNT',
                         value:
                             '${NumberFormat('#,##0.00').format(tx['amount'] as num)} USDT',
-                        valueColor: isDeposit ? _primary(context) : Theme.of(context).colorScheme.onSurface,
+                        valueColor: isDeposit
+                            ? _primary(context)
+                            : Theme.of(context).colorScheme.onSurface,
                       ),
                       if (tx['conversionRate'] != null) ...[
                         const SizedBox(height: 16),
@@ -164,7 +171,9 @@ class TransactionDetailSheet extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: _bgDark(context),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: _primary(context).withOpacity(0.1)),
+                      border: Border.all(
+                        color: _primary(context).withOpacity(0.1),
+                      ),
                     ),
                     child: Column(
                       children: [
@@ -195,15 +204,15 @@ class TransactionDetailSheet extends StatelessWidget {
                 ],
 
                 // Activity Logs
-                  Text(
-                    'ACTIVITY LOGS',
-                    style: TextStyle(
-                      color: _textDim(context),
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.5,
-                    ),
+                Text(
+                  'ACTIVITY LOGS',
+                  style: TextStyle(
+                    color: _textDim(context),
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.5,
                   ),
+                ),
                 const SizedBox(height: 16),
                 if (logs.isEmpty)
                   Padding(
@@ -230,8 +239,12 @@ class TransactionDetailSheet extends StatelessWidget {
     );
   }
 
-  Widget _infoRow(String label, String value, BuildContext context,
-      {bool isLast = false}) {
+  Widget _infoRow(
+    String label,
+    String value,
+    BuildContext context, {
+    bool isLast = false,
+  }) {
     return Container(
       padding: EdgeInsets.only(bottom: isLast ? 0 : 8),
       child: Row(
@@ -264,7 +277,12 @@ class TransactionDetailSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildLogItem(BuildContext context, Map<String, dynamic> tx, Map<String, dynamic> log, bool isLast) {
+  Widget _buildLogItem(
+    BuildContext context,
+    Map<String, dynamic> tx,
+    Map<String, dynamic> log,
+    bool isLast,
+  ) {
     String actorStr = log['actor'] ?? 'Unknown';
     String note = log['note'] ?? 'Status updated';
 
@@ -293,7 +311,10 @@ class TransactionDetailSheet extends StatelessWidget {
               ),
               if (!isLast)
                 Expanded(
-                  child: Container(width: 2, color: _primary(context).withOpacity(0.3)),
+                  child: Container(
+                    width: 2,
+                    color: _primary(context).withOpacity(0.3),
+                  ),
                 ),
             ],
           ),
@@ -319,7 +340,10 @@ class TransactionDetailSheet extends StatelessWidget {
                         DateFormat(
                           'hh:mm a',
                         ).format(DateTime.parse(log['createdAt'])),
-                        style: TextStyle(color: _textDim(context), fontSize: 11),
+                        style: TextStyle(
+                          color: _textDim(context),
+                          fontSize: 11,
+                        ),
                       ),
                     ],
                   ),
@@ -401,8 +425,10 @@ class _CopyButtonState extends State<_CopyButton> {
         content: Text(
           '${widget.label} Copied',
           textAlign: TextAlign.center,
-          style:
-              const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          style: const TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         duration: const Duration(seconds: 1),
         behavior: SnackBarBehavior.floating,
@@ -426,14 +452,17 @@ class _CopyButtonState extends State<_CopyButton> {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.all(6),
         decoration: BoxDecoration(
-          color:
-              _copied ? Theme.of(context).primaryColor.withOpacity(0.15) : Colors.transparent,
+          color: _copied
+              ? Theme.of(context).primaryColor.withOpacity(0.15)
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(6),
         ),
         child: Icon(
           _copied ? Icons.check_rounded : Icons.copy_rounded,
           size: 14,
-          color: _copied ? Theme.of(context).primaryColor : Theme.of(context).colorScheme.onSurface.withOpacity(0.25),
+          color: _copied
+              ? Theme.of(context).primaryColor
+              : Theme.of(context).colorScheme.onSurface.withOpacity(0.25),
         ),
       ),
     );

@@ -26,6 +26,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Color get _primary => Theme.of(context).primaryColor;
   Color get _textDim => Theme.of(context).colorScheme.onSurfaceVariant;
   Color get _border => Theme.of(context).dividerColor;
+  Color get _onSurface => Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF0F172A);
   static const Color _blue = Color(0xFF3B82F6);
   static const Color _danger = Color(0xFFF87171);
 
@@ -328,14 +329,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   style: GoogleFonts.outfit(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
+                    color: _onSurface,
                   ),
                   children: [
                     const TextSpan(text: 'USDT'),
                     TextSpan(
                       text: '.EX',
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
-                      ),
+                      style: TextStyle(color: _onSurface.withOpacity(0.4)),
                     ),
                   ],
                 ),
