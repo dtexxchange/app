@@ -31,6 +31,11 @@ export class BankAccountsController {
     return this.bankAccountsService.findAll(req.user.userId);
   }
 
+  @Get('archived')
+  findAllArchived(@Request() req) {
+    return this.bankAccountsService.findAllArchived(req.user.userId);
+  }
+
   @Patch(':id')
   update(@Request() req, @Param('id') id: string, @Body() data: any) {
     return this.bankAccountsService.update(req.user.userId, id, data);
@@ -39,6 +44,11 @@ export class BankAccountsController {
   @Delete(':id')
   remove(@Request() req, @Param('id') id: string) {
     return this.bankAccountsService.remove(req.user.userId, id);
+  }
+
+  @Post(':id/restore')
+  restore(@Request() req, @Param('id') id: string) {
+    return this.bankAccountsService.restore(req.user.userId, id);
   }
 
   @Get(':id/logs')

@@ -5,7 +5,7 @@ class AppTheme {
   // User App Primary: Blue
   static const Color primary = Color(0xFF3B82F6);
   static const Color primaryDark = Color(0xFF2563EB);
-  
+
   // Neutral Colors - Light Mode
   static const Color bgLight = Color(0xFFF8FAFC);
   static const Color cardLight = Colors.white;
@@ -28,10 +28,9 @@ class AppTheme {
       scaffoldBackgroundColor: bgLight,
       cardColor: cardLight,
       dividerColor: borderLight,
-      textTheme: GoogleFonts.outfitTextTheme(ThemeData.light().textTheme).apply(
-        bodyColor: textMainLight,
-        displayColor: textMainLight,
-      ),
+      textTheme: GoogleFonts.outfitTextTheme(
+        ThemeData.light().textTheme,
+      ).apply(bodyColor: textMainLight, displayColor: textMainLight),
       colorScheme: const ColorScheme.light(
         primary: primary,
         secondary: primaryDark,
@@ -47,7 +46,7 @@ class AppTheme {
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: bgLight,
-        indicatorColor: primary.withOpacity(0.1),
+        indicatorColor: primary.withValues(alpha: 0.1),
         labelTextStyle: WidgetStateProperty.all(
           const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
         ),
@@ -63,10 +62,9 @@ class AppTheme {
       scaffoldBackgroundColor: bgDark,
       cardColor: cardDark,
       dividerColor: borderDark,
-      textTheme: GoogleFonts.outfitTextTheme(ThemeData.dark().textTheme).apply(
-        bodyColor: textMainDark,
-        displayColor: textMainDark,
-      ),
+      textTheme: GoogleFonts.outfitTextTheme(
+        ThemeData.dark().textTheme,
+      ).apply(bodyColor: textMainDark, displayColor: textMainDark),
       colorScheme: const ColorScheme.dark(
         primary: primary,
         secondary: primaryDark,
@@ -82,9 +80,13 @@ class AppTheme {
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: bgDark,
-        indicatorColor: primary.withOpacity(0.1),
+        indicatorColor: primary.withValues(alpha: 0.1),
         labelTextStyle: WidgetStateProperty.all(
-          const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: textDimDark),
+          const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+            color: textDimDark,
+          ),
         ),
       ),
     );

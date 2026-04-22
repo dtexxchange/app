@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
 import '../services/api_service.dart';
+import 'archived_bank_accounts_screen.dart';
 
 class BankAccountsScreen extends StatefulWidget {
   const BankAccountsScreen({super.key});
@@ -20,10 +21,17 @@ class _BankAccountsScreenState extends State<BankAccountsScreen> {
   Color get _primary => Theme.of(context).primaryColor;
   Color get _textDim => Theme.of(context).colorScheme.onSurfaceVariant;
   Color get _border => Theme.of(context).dividerColor;
-  static const Color _danger = Color(0xFFF87171);
   final _api = ApiService();
   List<dynamic> _accounts = [];
+  List<dynamic> _filteredAccounts = [];
   bool _isLoading = true;
+  final TextEditingController _searchCtrl = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -38,6 +46,7 @@ class _BankAccountsScreenState extends State<BankAccountsScreen> {
       if (res.statusCode == 200 && mounted) {
         setState(() {
           _accounts = jsonDecode(res.body);
+          _filteredAccounts = _accounts;
           _isLoading = false;
         });
       }
@@ -47,20 +56,34 @@ class _BankAccountsScreenState extends State<BankAccountsScreen> {
     }
   }
 
-  Future<void> _deleteAccount(String id) async {
+  void _onSearchChanged(String query) {
+    setState(() {
+      _filteredAccounts = _accounts.where((acc) {
+        final name = acc['name'].toString().toLowerCase();
+        final bank = acc['bankName'].toString().toLowerCase();
+        final accNo = acc['accountNo'].toString().toLowerCase();
+        return name.contains(query.toLowerCase()) ||
+            bank.contains(query.toLowerCase()) ||
+            accNo.contains(query.toLowerCase());
+      }).toList();
+    });
+  }
+
+  Future<void> _archiveAccount(String id) async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: _bgCard,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(
-          'Delete Account',
+          'Archive Account',
           style: GoogleFonts.outfit(
             color: Theme.of(context).colorScheme.onSurface,
             fontWeight: FontWeight.bold,
           ),
         ),
         content: Text(
-          'Are you sure you want to remove this bank account?',
+          'Are you sure you want to archive this bank account? You can restore it later from the archive.',
           style: TextStyle(color: _textDim),
         ),
         actions: [
@@ -71,8 +94,11 @@ class _BankAccountsScreenState extends State<BankAccountsScreen> {
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
             child: Text(
-              'Delete',
-              style: TextStyle(color: _danger, fontWeight: FontWeight.bold),
+              'Archive',
+              style: TextStyle(
+                color: Colors.orange,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],
@@ -85,10 +111,11 @@ class _BankAccountsScreenState extends State<BankAccountsScreen> {
       final res = await _api.deleteRequest('/bank-accounts/$id');
       if (res.statusCode == 200) {
         _fetchAccounts();
-        if (mounted)
+        if (mounted) {
           ScaffoldMessenger.of(
             context,
-          ).showSnackBar(const SnackBar(content: Text('Account removed')));
+          ).showSnackBar(const SnackBar(content: Text('Account archived')));
+        }
       }
     } catch (e) {
       debugPrint(e.toString());
@@ -187,7 +214,9 @@ class _BankAccountsScreenState extends State<BankAccountsScreen> {
         hintText: hint,
         hintStyle: TextStyle(color: _textDim, fontSize: 14),
         filled: true,
-        fillColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.03),
+        fillColor: Theme.of(
+          context,
+        ).colorScheme.onSurface.withValues(alpha: 0.03),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: _border),
@@ -211,20 +240,81 @@ class _BankAccountsScreenState extends State<BankAccountsScreen> {
         ),
         actions: [
           IconButton(
-            onPressed: () => _showAddEditModal(),
-            icon: Icon(Icons.add_circle_outline, color: _primary),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const ArchivedBankAccountsScreen(),
+              ),
+            ).then((_) => _fetchAccounts()),
+            icon: Icon(Icons.archive_outlined, color: _textDim),
+            tooltip: 'Archive',
           ),
         ],
       ),
-      body: _isLoading
-          ? Center(child: CircularProgressIndicator(color: _primary))
-          : _accounts.isEmpty
-          ? _buildEmptyState()
-          : ListView.builder(
-              padding: EdgeInsets.all(isSmall ? 16 : 24),
-              itemCount: _accounts.length,
-              itemBuilder: (ctx, i) => _buildAccountItem(_accounts[i], context),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _showAddEditModal(),
+        backgroundColor: _primary,
+        foregroundColor: Colors.black,
+        icon: const Icon(Icons.add),
+        label: Text(
+          'Add Account',
+          style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
+        ),
+      ),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+            child: TextField(
+              controller: _searchCtrl,
+              onChanged: _onSearchChanged,
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+              decoration: InputDecoration(
+                hintText: 'Search bank or account name...',
+                hintStyle: TextStyle(color: _textDim, fontSize: 14),
+                prefixIcon: Icon(Icons.search, color: _textDim, size: 20),
+                suffixIcon: _searchCtrl.text.isNotEmpty
+                    ? IconButton(
+                        icon: Icon(Icons.clear, color: _textDim, size: 18),
+                        onPressed: () {
+                          _searchCtrl.clear();
+                          _onSearchChanged('');
+                        },
+                      )
+                    : null,
+                filled: true,
+                fillColor: _bgCard,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(color: _border),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(color: _border),
+                ),
+                contentPadding: const EdgeInsets.symmetric(vertical: 12),
+              ),
             ),
+          ),
+          Expanded(
+            child: _isLoading
+                ? Center(child: CircularProgressIndicator(color: _primary))
+                : _filteredAccounts.isEmpty
+                ? _buildEmptyState()
+                : ListView.builder(
+                    padding: EdgeInsets.fromLTRB(
+                      isSmall ? 16 : 24,
+                      0,
+                      isSmall ? 16 : 24,
+                      24,
+                    ),
+                    itemCount: _filteredAccounts.length,
+                    itemBuilder: (ctx, i) =>
+                        _buildAccountItem(_filteredAccounts[i], context),
+                  ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -236,7 +326,9 @@ class _BankAccountsScreenState extends State<BankAccountsScreen> {
           Icon(
             Icons.account_balance,
             size: 64,
-            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.05),
+            color: Theme.of(
+              context,
+            ).colorScheme.onSurface.withValues(alpha: 0.05),
           ),
           const SizedBox(height: 16),
           Text('No saved bank accounts', style: TextStyle(color: _textDim)),
@@ -290,11 +382,11 @@ class _BankAccountsScreenState extends State<BankAccountsScreen> {
                     padding: const EdgeInsets.all(8),
                   ),
                   IconButton(
-                    onPressed: () => _deleteAccount(acc['id']),
+                    onPressed: () => _archiveAccount(acc['id']),
                     icon: Icon(
-                      Icons.delete_outline,
+                      Icons.archive_outlined,
                       size: isSmall ? 16 : 18,
-                      color: _danger,
+                      color: Colors.orange,
                     ),
                     constraints: const BoxConstraints(),
                     padding: const EdgeInsets.all(8),
@@ -372,8 +464,9 @@ class _BankAccountsScreenState extends State<BankAccountsScreen> {
       builder: (ctx) => FutureBuilder(
         future: _api.getRequest('/bank-accounts/$id/logs'),
         builder: (ctx, snapshot) {
-          if (!snapshot.hasData)
+          if (!snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());
+          }
           final logs = jsonDecode(snapshot.data!.body) as List;
           return Padding(
             padding: const EdgeInsets.all(24),
@@ -404,8 +497,8 @@ class _BankAccountsScreenState extends State<BankAccountsScreen> {
                             Text(
                               l['action'],
                               style: TextStyle(
-                                color: l['action'] == 'DELETE'
-                                    ? _danger
+                                color: l['action'] == 'ARCHIVE'
+                                    ? Colors.orange
                                     : _primary,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 12,

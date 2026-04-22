@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
-  // Admin App Primary: Green
-  static const Color primary = Color(0xFF00FF9D);
-  static const Color primaryDark = Color(0xFF00CC7E);
+  // Admin App Primary: Refined Emerald Green
+  static const Color primary = Color(0xFF10B981);
+  static const Color primaryDark = Color(0xFF059669);
 
   // Neutral Colors - Light Mode
   static const Color bgLight = Color(0xFFF8FAFC);
@@ -46,7 +46,7 @@ class AppTheme {
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: bgLight,
-        indicatorColor: primary.withOpacity(0.1),
+        indicatorColor: primary.withValues(alpha: 0.1),
         labelTextStyle: WidgetStateProperty.all(
           const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
         ),
@@ -80,7 +80,7 @@ class AppTheme {
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: bgDark,
-        indicatorColor: primary.withOpacity(0.1),
+        indicatorColor: primary.withValues(alpha: 0.1),
         labelTextStyle: WidgetStateProperty.all(
           const TextStyle(
             fontSize: 12,

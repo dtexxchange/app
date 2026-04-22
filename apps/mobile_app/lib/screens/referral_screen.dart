@@ -183,7 +183,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.onSurface.withOpacity(0.05),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: _primary.withOpacity(0.3)),
+              border: Border.all(color: _primary.withValues(alpha: 0.3)),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -279,14 +279,14 @@ class _ReferralScreenState extends State<ReferralScreen> {
         children: [
           Icon(
             Icons.people_outline,
-            color: Colors.white.withOpacity(0.1),
+            color: Colors.white.withValues(alpha: 0.1),
             size: 64,
           ),
           const SizedBox(height: 16),
           Text(
             'No referrals yet',
             style: TextStyle(
-              color: Colors.white.withOpacity(0.3),
+              color: Colors.white.withValues(alpha: 0.3),
               fontSize: 16,
             ),
           ),
@@ -311,7 +311,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: _blue.withOpacity(0.1),
+              color: _blue.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(14),
             ),
             child: const Icon(Icons.person, color: _blue, size: 20),
@@ -350,8 +350,8 @@ class _ReferralScreenState extends State<ReferralScreen> {
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
                 color: isApproved
-                    ? _primary.withOpacity(0.2)
-                    : Colors.orange.withOpacity(0.2),
+                    ? _primary.withValues(alpha: 0.2)
+                    : Colors.orange.withValues(alpha: 0.2),
               ),
             ),
             child: Text(

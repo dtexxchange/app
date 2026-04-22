@@ -157,7 +157,7 @@ class TransactionsScreenState extends State<TransactionsScreen>
           slivers: [
             SliverAppBar(
               pinned: true,
-              backgroundColor: _bgDark.withOpacity(0.9),
+              backgroundColor: _bgDark.withValues(alpha: 0.9),
               elevation: 0,
               titleSpacing: 24,
               title: Row(
@@ -225,7 +225,7 @@ class TransactionsScreenState extends State<TransactionsScreen>
                             child: Text(
                               '— All transactions loaded —',
                               style: TextStyle(
-                                color: _textDim.withOpacity(0.5),
+                                color: _textDim.withValues(alpha: 0.5),
                                 fontSize: 12,
                               ),
                             ),
@@ -381,7 +381,7 @@ class TransactionsScreenState extends State<TransactionsScreen>
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  '${isIncome ? '+' : '-'}${NumberFormat('#,##0.00').format(tx['amount'])}',
+                  '${isIncome ? '+' : '-'}${NumberFormat('#,##0.00').format(tx['amount'])} USDT',
                   style: GoogleFonts.outfit(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
@@ -390,8 +390,6 @@ class TransactionsScreenState extends State<TransactionsScreen>
                         : Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
-                const SizedBox(height: 3),
-                Text('USDT', style: TextStyle(color: _textDim, fontSize: 11)),
                 const SizedBox(height: 6),
                 Container(
                   padding: const EdgeInsets.symmetric(
@@ -516,7 +514,7 @@ class _FilterChip extends StatelessWidget {
           color: _bgCard,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: value.isNotEmpty ? _primary.withOpacity(0.4) : _border,
+            color: value.isNotEmpty ? _primary.withValues(alpha: 0.4) : _border,
           ),
         ),
         child: Row(

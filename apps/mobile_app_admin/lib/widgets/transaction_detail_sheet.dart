@@ -34,7 +34,6 @@ class _TransactionDetailSheetState extends State<TransactionDetailSheet> {
 
   // ─── Design Tokens (Dynamic) ──────────────────────────────────────────────────
   Color get _bgDarkToken => Theme.of(context).scaffoldBackgroundColor;
-  Color get _bgCardToken => Theme.of(context).cardColor;
   Color get _primaryToken => Theme.of(context).primaryColor;
   Color get _blueToken => const Color(0xFF3B82F6);
   Color get _textDimToken => Theme.of(context).colorScheme.onSurfaceVariant;
@@ -125,7 +124,9 @@ class _TransactionDetailSheetState extends State<TransactionDetailSheet> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -140,22 +141,12 @@ class _TransactionDetailSheetState extends State<TransactionDetailSheet> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Transaction Review',
-                          style: GoogleFonts.outfit(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'TX-${tx['id']?.toString().substring(0, 12).toUpperCase() ?? 'UNKNOWN'}',
-                          style: TextStyle(color: _textDim, fontSize: 12),
-                        ),
-                      ],
+                    Text(
+                      'Transaction Review',
+                      style: GoogleFonts.outfit(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     Container(
                       padding: const EdgeInsets.symmetric(
@@ -163,9 +154,11 @@ class _TransactionDetailSheetState extends State<TransactionDetailSheet> {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: statusColor.withOpacity(0.1),
+                        color: statusColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: statusColor.withOpacity(0.2)),
+                        border: Border.all(
+                          color: statusColor.withValues(alpha: 0.2),
+                        ),
                       ),
                       child: Text(
                         status,
@@ -191,6 +184,12 @@ class _TransactionDetailSheetState extends State<TransactionDetailSheet> {
                   child: Column(
                     children: [
                       _DetailRow(
+                        label: 'TRANSACTION ID',
+                        value: tx['readableId']?.toString() ?? 'UNKNOWN',
+                        showCopy: true,
+                      ),
+                      const SizedBox(height: 16),
+                      _DetailRow(
                         label: 'USER',
                         value:
                             (user?['firstName'] != null ||
@@ -204,7 +203,9 @@ class _TransactionDetailSheetState extends State<TransactionDetailSheet> {
                         label: 'AMOUNT',
                         value:
                             '${NumberFormat('#,##0.00').format(tx['amount'] as num)} USDT',
-                        valueColor: isDeposit ? _primary : Theme.of(context).colorScheme.onSurface,
+                        valueColor: isDeposit
+                            ? _primary
+                            : Theme.of(context).colorScheme.onSurface,
                       ),
                       const SizedBox(height: 16),
                       _DetailRow(label: 'TYPE', value: tx['type']),
@@ -289,7 +290,9 @@ class _TransactionDetailSheetState extends State<TransactionDetailSheet> {
                       decoration: BoxDecoration(
                         color: _bgDark,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: _primary.withOpacity(0.1)),
+                        border: Border.all(
+                          color: _primary.withValues(alpha: 0.1),
+                        ),
                       ),
                       child: Column(
                         children: [
@@ -382,10 +385,7 @@ class _TransactionDetailSheetState extends State<TransactionDetailSheet> {
                 Flexible(
                   child: Text(
                     value,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
@@ -443,13 +443,16 @@ class _TransactionDetailSheetState extends State<TransactionDetailSheet> {
                 height: 12,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: _primary.withOpacity(0.3),
+                  color: _primary.withValues(alpha: 0.3),
                   border: Border.all(color: _primary, width: 2),
                 ),
               ),
               if (!isLast)
                 Expanded(
-                  child: Container(width: 2, color: _primary.withOpacity(0.1)),
+                  child: Container(
+                    width: 2,
+                    color: _primary.withValues(alpha: 0.1),
+                  ),
                 ),
             ],
           ),
@@ -487,7 +490,7 @@ class _TransactionDetailSheetState extends State<TransactionDetailSheet> {
                   Text(
                     'by $actorStr',
                     style: TextStyle(
-                      color: _primary.withOpacity(0.5),
+                      color: _primary.withValues(alpha: 0.5),
                       fontSize: 11,
                     ),
                   ),
@@ -505,7 +508,14 @@ class _DetailRow extends StatelessWidget {
   final String label;
   final String value;
   final Color? valueColor;
-  const _DetailRow({required this.label, required this.value, this.valueColor});
+  final bool showCopy;
+
+  const _DetailRow({
+    required this.label,
+    required this.value,
+    this.valueColor,
+    this.showCopy = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -522,12 +532,28 @@ class _DetailRow extends StatelessWidget {
             letterSpacing: 0.5,
           ),
         ),
-        Text(
-          value,
-          style: TextStyle(
-            color: valueColor ?? Theme.of(context).colorScheme.onSurface,
-            fontSize: 13,
-            fontWeight: FontWeight.bold,
+        const SizedBox(width: 8),
+        Expanded(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Flexible(
+                child: Text(
+                  value,
+                  style: TextStyle(
+                    color:
+                        valueColor ?? Theme.of(context).colorScheme.onSurface,
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              if (showCopy) ...[
+                const SizedBox(width: 4),
+                _CopyButton(label: label, value: value),
+              ],
+            ],
           ),
         ),
       ],
@@ -640,7 +666,9 @@ class _CopyButtonState extends State<_CopyButton> {
         child: Icon(
           _copied ? Icons.check_rounded : Icons.copy_rounded,
           size: 14,
-          color: _copied ? _primary : Theme.of(context).colorScheme.onSurface.withOpacity(0.25),
+          color: _copied
+              ? _primary
+              : Theme.of(context).colorScheme.onSurface.withOpacity(0.25),
         ),
       ),
     );

@@ -46,76 +46,93 @@ export class SettingsService implements OnModuleInit {
 
   async getAssignedWallet(userId: string) {
     if (!userId) return null;
-    const now = new Date();
 
-    // Check if there is an active assignment
-    const assignment = await this.prisma.walletAssignment.findFirst({
-      where: { userId, expiresAt: { gt: now } },
-      orderBy: { createdAt: 'desc' },
-    });
+    return await this.prisma.$transaction(async (tx) => {
+      const now = new Date();
 
-    if (assignment) {
-      // Find the wallet assigned
-      const wallet = await this.prisma.globalWallet.findUnique({
-        where: { id: assignment.walletId, isActive: true },
+      // 1. Check if user ALREADY has an active assignment
+      const currentAssignment = await tx.walletAssignment.findFirst({
+        where: { userId, expiresAt: { gt: now } },
+        include: { wallet: true },
+        orderBy: { createdAt: 'desc' },
       });
 
-      if (wallet) {
+      if (currentAssignment && currentAssignment.wallet.isActive) {
         return {
-          ...wallet,
-          expiresAt: assignment.expiresAt,
+          ...currentAssignment.wallet,
+          expiresAt: currentAssignment.expiresAt,
         };
       }
-    }
 
-    // No active assignment or wallet became inactive, pick a new one
-    const activeWallets = await this.prisma.globalWallet.findMany({
-      where: { isActive: true },
-    });
+      // 2. User doesn't have an active assignment. Find an unassigned active wallet.
+      const activeWallets = await tx.globalWallet.findMany({
+        where: { isActive: true },
+      });
 
-    if (activeWallets.length === 0) {
-      return null;
-    }
+      if (activeWallets.length === 0) {
+        return null;
+      }
 
-    // Pick a random wallet
-    const randomWallet =
-      activeWallets[Math.floor(Math.random() * activeWallets.length)];
+      // Find wallets that are currently assigned to SOMEONE ELSE
+      const activeAssignments = await tx.walletAssignment.findMany({
+        where: { expiresAt: { gt: now } },
+        select: { walletId: true },
+      });
+      const assignedWalletIds = activeAssignments.map((a) => a.walletId);
 
-    // Set expiry to 30 minutes from now
-    const expiresAt = new Date(now.getTime() + 30 * 60 * 1000);
-
-    // ALWAYS CREATE a new assignment to keep history
-    const assignmentRecord = await this.prisma.walletAssignment.create({
-      data: {
-        userId,
-        walletId: randomWallet.id,
-        expiresAt,
-      },
-      include: {
-        wallet: true,
-        user: true,
-      },
-    });
-
-    // Notify Admins
-    const admins = await this.prisma.user.findMany({
-      where: { role: Role.ADMIN },
-    });
-
-    for (const admin of admins) {
-      this.emailService.sendAssignmentAlert(
-        admin.email,
-        assignmentRecord.user.email,
-        assignmentRecord.wallet.address,
-        assignmentRecord.wallet.name ||
-          `${assignmentRecord.wallet.network} Gateway`,
+      const availableWallets = activeWallets.filter(
+        (w) => !assignedWalletIds.includes(w.id),
       );
-    }
 
-    return {
-      ...assignmentRecord.wallet,
-      expiresAt: assignmentRecord.expiresAt,
-    };
+      if (availableWallets.length > 0) {
+        // Pick one (randomly)
+        const walletToAssign =
+          availableWallets[Math.floor(Math.random() * availableWallets.length)];
+        const expiresAt = new Date(now.getTime() + 30 * 60 * 1000);
+
+        const assignmentRecord = await tx.walletAssignment.create({
+          data: {
+            userId,
+            walletId: walletToAssign.id,
+            expiresAt,
+          },
+          include: { wallet: true, user: true },
+        });
+
+        // Notify Admins
+        const admins = await tx.user.findMany({
+          where: { role: Role.ADMIN },
+        });
+
+        for (const admin of admins) {
+          // We can call this outside if we want, but inside is fine for consistency
+          this.emailService.sendAssignmentAlert(
+            admin.email,
+            assignmentRecord.user.email,
+            assignmentRecord.wallet.address,
+            assignmentRecord.wallet.name ||
+              `${assignmentRecord.wallet.network} Gateway`,
+          );
+        }
+
+        return {
+          ...assignmentRecord.wallet,
+          expiresAt: assignmentRecord.expiresAt,
+        };
+      }
+
+      // 3. All wallets are busy. Find when the next one becomes available.
+      const soonestExpiry = await tx.walletAssignment.findFirst({
+        where: { wallet: { isActive: true }, expiresAt: { gt: now } },
+        orderBy: { expiresAt: 'asc' },
+        select: { expiresAt: true },
+      });
+
+      return {
+        isBusy: true,
+        availableAt: soonestExpiry?.expiresAt || null,
+      };
+    });
   }
 
   async getActiveAssignments() {

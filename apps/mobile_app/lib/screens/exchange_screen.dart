@@ -224,7 +224,9 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
                       decoration: BoxDecoration(
                         color: _danger.withOpacity(0.08),
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: _danger.withOpacity(0.2)),
+                        border: Border.all(
+                          color: _danger.withValues(alpha: 0.2),
+                        ),
                       ),
                       child: Row(
                         children: [
@@ -258,9 +260,10 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
                                 Text(
                                   'You cannot exchange more than your balance.',
                                   style: TextStyle(
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.onSurface.withOpacity(0.7),
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurface
+                                        .withValues(alpha: 0.7),
                                     fontSize: isSmall ? 10 : 11,
                                   ),
                                 ),
@@ -358,7 +361,7 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
               Container(
                 padding: EdgeInsets.all(isSmall ? 10 : 12),
                 decoration: BoxDecoration(
-                  color: _primary.withOpacity(0.1),
+                  color: _primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Icon(
@@ -415,7 +418,7 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
                       style: TextStyle(
                         color: Theme.of(
                           context,
-                        ).colorScheme.onSurface.withOpacity(0.7),
+                        ).colorScheme.onSurface.withValues(alpha: 0.7),
                         fontSize: (isSmall ? 10 : 12) * widthScale,
                         fontWeight: FontWeight.bold,
                       ),
@@ -492,7 +495,7 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
         vertical: 12 * widthScale,
       ),
       decoration: BoxDecoration(
-        color: readOnly ? _bgCard.withOpacity(0.5) : _bgCard,
+        color: readOnly ? _bgCard.withValues(alpha: 0.5) : _bgCard,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: _border),
       ),
@@ -517,7 +520,7 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
                     color: readOnly
                         ? Theme.of(
                             context,
-                          ).colorScheme.onSurface.withOpacity(0.7)
+                          ).colorScheme.onSurface.withValues(alpha: 0.7)
                         : Theme.of(context).colorScheme.onSurface,
                     fontSize: 24 * widthScale,
                     fontWeight: FontWeight.bold,
@@ -628,7 +631,9 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
                   color: isSelected ? _primary.withOpacity(0.05) : _bgCard,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: isSelected ? _primary.withOpacity(0.3) : _border,
+                    color: isSelected
+                        ? _primary.withValues(alpha: 0.3)
+                        : _border,
                   ),
                 ),
                 child: Row(

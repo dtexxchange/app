@@ -32,7 +32,35 @@ export class UsersService {
   async findAll(search?: string, role?: Role) {
     const where: any = {};
     if (search) {
-      where.email = { contains: search, mode: 'insensitive' };
+      const s = search.trim();
+      const parts = s.split(/\s+/).filter(p => p.length > 0);
+      
+      const whereOr: any[] = [
+        { email: { contains: s, mode: 'insensitive' } },
+        { firstName: { contains: s, mode: 'insensitive' } },
+        { lastName: { contains: s, mode: 'insensitive' } },
+      ];
+
+      // Support full name search (e.g. "John Doe")
+      if (parts.length > 1) {
+        whereOr.push({
+          AND: [
+            { firstName: { contains: parts[0], mode: 'insensitive' } },
+            { lastName: { contains: parts[parts.length - 1], mode: 'insensitive' } },
+          ],
+        });
+      }
+
+      // readableId is BigInt, it doesn't support 'contains'. 
+      // We only search it if the input is purely numeric.
+      if (/^\d+$/.test(s)) {
+        try {
+          whereOr.push({ readableId: BigInt(s) });
+        } catch (e) {
+          // Ignore if too large for BigInt
+        }
+      }
+      where.OR = whereOr;
     }
     if (role) {
       where.role = role;
@@ -55,9 +83,15 @@ export class UsersService {
         transactions: {
             orderBy: { createdAt: 'desc' },
             take: 20,
-            include: {
+            select: {
+                id: true,
+                readableId: true,
+                type: true,
+                amount: true,
+                status: true,
+                createdAt: true,
                 logs: { orderBy: { createdAt: 'asc' } },
-                user: { select: { email: true, firstName: true, lastName: true } }
+                user: { select: { email: true, firstName: true, lastName: true, readableId: true } }
             }
         },
         walletAssignments: {
@@ -99,6 +133,7 @@ export class UsersService {
       where: { referredById: userId },
       select: {
         id: true,
+        readableId: true,
         email: true,
         firstName: true,
         lastName: true,

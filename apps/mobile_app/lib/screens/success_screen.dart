@@ -96,7 +96,7 @@ class _SuccessScreenState extends State<SuccessScreen>
                     onPressed: () =>
                         Navigator.popUntil(context, (route) => route.isFirst),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: _primary.withOpacity(0.1),
+                      backgroundColor: _primary.withValues(alpha: 0.1),
                       foregroundColor: _primary,
                       elevation: 0,
                       shape: RoundedRectangleBorder(

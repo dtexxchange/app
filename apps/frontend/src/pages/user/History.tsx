@@ -121,10 +121,7 @@ const History: React.FC = () => {
                                             </div>
                                             <div>
                                                 <div className="font-bold text-white group-hover:text-accent-blue transition-colors">
-                                                    TX-
-                                                    {tx.id
-                                                        .substring(0, 8)
-                                                        .toUpperCase()}
+                                                    {tx.id.toUpperCase()}
                                                 </div>
                                                 <p className="text-[10px] font-bold text-text-dim uppercase tracking-tighter mt-0.5">
                                                     {tx.type} Request

@@ -2,6 +2,11 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { PrismaService } from './prisma/prisma.service';
+import { TransactionType } from '@prisma/client';
+
+(BigInt.prototype as any).toJSON = function () {
+  return this.toString().padStart(12, '0');
+};
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);

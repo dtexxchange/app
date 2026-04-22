@@ -149,7 +149,8 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
           slivers: [
             SliverAppBar(
               pinned: true,
-              backgroundColor: _bgDark.withOpacity(0.95),
+              floating: true,
+              backgroundColor: _bgDark.withValues(alpha: 0.95),
               elevation: 0,
               titleSpacing: 0,
               leading: IconButton(
@@ -167,6 +168,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                 style: GoogleFonts.outfit(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
                 overflow: TextOverflow.ellipsis,
               ),
@@ -189,7 +191,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                     Icon(
                       Icons.error_outline,
                       size: 48,
-                      color: Colors.white.withOpacity(0.1),
+                      color: Colors.white.withValues(alpha: 0.1),
                     ),
                     const SizedBox(height: 16),
                     Text(
@@ -244,7 +246,6 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
         (user['firstName']?.toString() ?? user['email']?.toString() ?? '?')
             .substring(0, 1)
             .toUpperCase();
-    final userId = 'USR-${user['id'].toString().substring(0, 8).toUpperCase()}';
 
     return Container(
       padding: EdgeInsets.all(24 * widthScale),
@@ -295,22 +296,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                   overflow: TextOverflow.ellipsis,
                 ),
                 SizedBox(height: 6 * widthScale),
-                Row(
-                  children: [
-                    _RoleBadge(role: user['role'], widthScale: widthScale),
-                    SizedBox(width: 8 * widthScale),
-                    Flexible(
-                      child: Text(
-                        userId,
-                        style: TextStyle(
-                          color: _textDim,
-                          fontSize: 11 * widthScale,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
+                _RoleBadge(role: user['role'], widthScale: widthScale),
               ],
             ),
           ),
@@ -367,6 +353,13 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
       ),
       child: Column(
         children: [
+          _InfoRow(
+            icon: Icons.person_outline,
+            label: 'User ID',
+            value: user['readableId'],
+            widthScale: widthScale,
+          ),
+          Divider(height: 1, color: _border),
           _InfoRow(
             icon: Icons.person_outline,
             label: (user['firstName'] != null || user['lastName'] != null)
@@ -456,13 +449,13 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
             icon: Icon(Icons.close, size: 18 * widthScale),
             onPressed: () => _updateUserStatus('REJECTED'),
             style: ElevatedButton.styleFrom(
-              backgroundColor: _danger.withOpacity(0.1),
+              backgroundColor: _danger.withValues(alpha: 0.1),
               foregroundColor: _danger,
               padding: EdgeInsets.symmetric(vertical: 14 * widthScale),
               elevation: 0,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
-                side: BorderSide(color: _danger.withOpacity(0.3)),
+                side: BorderSide(color: _danger.withValues(alpha: 0.3)),
               ),
             ),
             label: Text(
@@ -507,13 +500,13 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
         icon: Icon(Icons.add, size: 18),
         onPressed: _showManualDepositModal,
         style: ElevatedButton.styleFrom(
-          backgroundColor: _primary.withOpacity(0.1),
+          backgroundColor: _primary.withValues(alpha: 0.1),
           foregroundColor: _primary,
           padding: const EdgeInsets.symmetric(vertical: 14),
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
-            side: BorderSide(color: _primary.withOpacity(0.3)),
+            side: BorderSide(color: _primary.withValues(alpha: 0.3)),
           ),
         ),
         label: Text(
@@ -659,7 +652,9 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                   Icon(
                     Icons.show_chart,
                     size: 48,
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.1),
                   ),
                   const SizedBox(height: 16),
                   Text(
@@ -859,7 +854,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
           decoration: BoxDecoration(
             color: _bgCard,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: _primary.withOpacity(0.3)),
+            border: Border.all(color: _primary.withValues(alpha: 0.3)),
           ),
           child: Column(
             children: [
@@ -972,15 +967,11 @@ class _RoleBadge extends StatelessWidget {
         vertical: 3 * widthScale,
       ),
       decoration: BoxDecoration(
-        color: (isAdmin
-                ? _primary
-                : Theme.of(context).colorScheme.onSurface)
+        color: (isAdmin ? _primary : Theme.of(context).colorScheme.onSurface)
             .withOpacity(0.08),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: (isAdmin
-                  ? _primary
-                  : Theme.of(context).colorScheme.onSurface)
+          color: (isAdmin ? _primary : Theme.of(context).colorScheme.onSurface)
               .withOpacity(0.20),
         ),
       ),

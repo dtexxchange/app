@@ -54,7 +54,9 @@ class TransactionDetailSheet extends StatelessWidget {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -69,26 +71,13 @@ class TransactionDetailSheet extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Transaction Details',
-                          style: GoogleFonts.outfit(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Theme.of(context).colorScheme.onSurface,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'TX-${tx['id']?.toString().substring(0, 12).toUpperCase() ?? 'UNKNOWN'}',
-                          style: TextStyle(
-                            color: _textDim(context),
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
+                    Text(
+                      'Transaction Details',
+                      style: GoogleFonts.outfit(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
                     ),
                     Container(
                       padding: const EdgeInsets.symmetric(
@@ -96,9 +85,11 @@ class TransactionDetailSheet extends StatelessWidget {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: statusColor.withOpacity(0.1),
+                        color: statusColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: statusColor.withOpacity(0.2)),
+                        border: Border.all(
+                          color: statusColor.withValues(alpha: 0.2),
+                        ),
                       ),
                       child: Text(
                         status,
@@ -123,6 +114,12 @@ class TransactionDetailSheet extends StatelessWidget {
                   ),
                   child: Column(
                     children: [
+                      _DetailRow(
+                        label: 'TRANSACTION ID',
+                        value: tx['readableId']?.toString() ?? 'UNKNOWN',
+                        showCopy: true,
+                      ),
+                      const SizedBox(height: 16),
                       _DetailRow(label: 'TYPE', value: tx['type'] ?? 'Unknown'),
                       const SizedBox(height: 16),
                       _DetailRow(
@@ -172,7 +169,7 @@ class TransactionDetailSheet extends StatelessWidget {
                       color: _bgDark(context),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: _primary(context).withOpacity(0.1),
+                        color: _primary(context).withValues(alpha: 0.1),
                       ),
                     ),
                     child: Column(
@@ -305,7 +302,7 @@ class TransactionDetailSheet extends StatelessWidget {
                 height: 12,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: _primary(context).withOpacity(0.3),
+                  color: _primary(context).withValues(alpha: 0.3),
                   border: Border.all(color: _primary(context), width: 2),
                 ),
               ),
@@ -313,7 +310,7 @@ class TransactionDetailSheet extends StatelessWidget {
                 Expanded(
                   child: Container(
                     width: 2,
-                    color: _primary(context).withOpacity(0.3),
+                    color: _primary(context).withValues(alpha: 0.3),
                   ),
                 ),
             ],
@@ -356,7 +353,7 @@ class TransactionDetailSheet extends StatelessWidget {
                   Text(
                     'by $actorStr',
                     style: TextStyle(
-                      color: _primary(context).withOpacity(0.5),
+                      color: _primary(context).withValues(alpha: 0.5),
                       fontSize: 11,
                     ),
                   ),
@@ -374,7 +371,14 @@ class _DetailRow extends StatelessWidget {
   final String label;
   final String value;
   final Color? valueColor;
-  const _DetailRow({required this.label, required this.value, this.valueColor});
+  final bool showCopy;
+
+  const _DetailRow({
+    required this.label,
+    required this.value,
+    this.valueColor,
+    this.showCopy = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -390,12 +394,28 @@ class _DetailRow extends StatelessWidget {
             letterSpacing: 0.5,
           ),
         ),
-        Text(
-          value,
-          style: TextStyle(
-            color: valueColor ?? Theme.of(context).colorScheme.onSurface,
-            fontSize: 13,
-            fontWeight: FontWeight.bold,
+        const SizedBox(width: 8),
+        Expanded(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Flexible(
+                child: Text(
+                  value,
+                  style: TextStyle(
+                    color:
+                        valueColor ?? Theme.of(context).colorScheme.onSurface,
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              if (showCopy) ...[
+                const SizedBox(width: 4),
+                _CopyButton(label: label, value: value),
+              ],
+            ],
           ),
         ),
       ],

@@ -46,7 +46,9 @@ class CustomBottomSheet extends StatelessWidget {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.15),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -88,7 +90,7 @@ class AmountField extends StatelessWidget {
       decoration: InputDecoration(
         hintText: '0.00',
         hintStyle: GoogleFonts.outfit(
-          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.2),
+          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.2),
           fontSize: 32,
           fontWeight: FontWeight.w700,
         ),
@@ -270,7 +272,9 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
   Color get _primary => Theme.of(context).primaryColor;
   Color get _textDim => Theme.of(context).colorScheme.onSurfaceVariant;
   Color get _border => Theme.of(context).dividerColor;
-  Color get _onSurface => Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF0F172A);
+  Color get _onSurface => Theme.of(context).brightness == Brightness.dark
+      ? Colors.white
+      : const Color(0xFF0F172A);
   static const Color _blue = Color(0xFF3B82F6);
   static const Color _danger = Color(0xFFF87171);
 
@@ -413,9 +417,9 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
             width: 52,
             height: 52,
             decoration: BoxDecoration(
-              color: _blue.withOpacity(0.1),
+              color: _blue.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: _blue.withOpacity(0.2)),
+              border: Border.all(color: _blue.withValues(alpha: 0.2)),
             ),
             child: const Icon(Icons.show_chart, color: _blue, size: 24),
           ),
@@ -448,7 +452,9 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
           ),
           Icon(
             Icons.arrow_forward_ios,
-            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
+            color: Theme.of(
+              context,
+            ).colorScheme.onSurface.withValues(alpha: 0.1),
             size: 14,
           ),
         ],
@@ -462,9 +468,9 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
       margin: const EdgeInsets.only(bottom: 16),
       padding: EdgeInsets.all(isSmall ? 12 : 16),
       decoration: BoxDecoration(
-        color: _danger.withOpacity(0.1),
+        color: _danger.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _danger.withOpacity(0.2)),
+        border: Border.all(color: _danger.withValues(alpha: 0.2)),
       ),
       child: Row(
         children: [
@@ -511,7 +517,7 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
     final isSmall = MediaQuery.of(context).size.width < 360;
     return SliverAppBar(
       pinned: true,
-      backgroundColor: _bgDark.withOpacity(0.9),
+      backgroundColor: _bgDark.withValues(alpha: 0.9),
       elevation: 0,
       titleSpacing: isSmall ? 16 : 24,
       title: Row(
@@ -542,7 +548,7 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
                 const TextSpan(text: 'USDT'),
                 TextSpan(
                   text: '.EX',
-                  style: TextStyle(color: _onSurface.withOpacity(0.4)),
+                  style: TextStyle(color: _onSurface.withValues(alpha: 0.4)),
                 ),
               ],
             ),
@@ -559,7 +565,7 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
               decoration: BoxDecoration(
                 color: _danger.withOpacity(0.08),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: _danger.withOpacity(0.2)),
+                border: Border.all(color: _danger.withValues(alpha: 0.2)),
               ),
               child: Icon(
                 Icons.logout,
@@ -654,7 +660,7 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
             Text(
               '≈ ₹${NumberFormat('#,##0.00').format(_balance * _conversionRate!)}',
               style: GoogleFonts.outfit(
-                color: _primary.withOpacity(0.7),
+                color: _primary.withValues(alpha: 0.7),
                 fontSize: 14 * widthScale,
                 fontWeight: FontWeight.w600,
               ),
@@ -752,7 +758,7 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
               decoration: BoxDecoration(
                 color: _bgCard,
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: _primary.withOpacity(0.2)),
+                border: Border.all(color: _primary.withValues(alpha: 0.2)),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -784,7 +790,9 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
           Icon(
             Icons.show_chart,
             size: 48,
-            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
+            color: Theme.of(
+              context,
+            ).colorScheme.onSurface.withValues(alpha: 0.1),
           ),
           const SizedBox(height: 16),
           Text(
@@ -861,11 +869,10 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
                   ),
                   const SizedBox(height: 3),
                   Text(
-                    'TX-${tx['id']?.toString().substring(0, 8).toUpperCase() ?? 'UNKNOWN'}',
-                    style: TextStyle(
-                      color: _textDim,
-                      fontSize: isSmall ? 10 : 11,
-                    ),
+                    DateFormat(
+                      'MMM dd, yyyy • hh:mm a',
+                    ).format(DateTime.parse(tx['createdAt'])),
+                    style: TextStyle(color: _textDim, fontSize: 11),
                   ),
                 ],
               ),

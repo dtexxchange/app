@@ -20,7 +20,9 @@ class _DepositScreenState extends State<DepositScreen> {
   Color get _primary => Theme.of(context).primaryColor;
   Color get _textDim => Theme.of(context).colorScheme.onSurfaceVariant;
   Color get _border => Theme.of(context).dividerColor;
-  Color get _onSurface => Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF0F172A);
+  Color get _onSurface => Theme.of(context).brightness == Brightness.dark
+      ? Colors.white
+      : const Color(0xFF0F172A);
 
   final _api = ApiService();
   List<dynamic> _wallets = [];
@@ -93,16 +95,18 @@ class _DepositScreenState extends State<DepositScreen> {
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: _primary.withOpacity(0.05),
+                      color: _primary.withValues(alpha: 0.05),
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: _primary.withOpacity(0.1)),
+                      border: Border.all(
+                        color: _primary.withValues(alpha: 0.1),
+                      ),
                     ),
                     child: Row(
                       children: [
                         Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: _primary.withOpacity(0.1),
+                            color: _primary.withValues(alpha: 0.1),
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
@@ -119,7 +123,7 @@ class _DepositScreenState extends State<DepositScreen> {
                               Text(
                                 'CURRENT EXCHANGE RATE',
                                 style: GoogleFonts.inter(
-                                  color: _primary.withOpacity(0.6),
+                                  color: _primary.withValues(alpha: 0.6),
                                   fontSize: 10,
                                   fontWeight: FontWeight.bold,
                                   letterSpacing: 1.2,
@@ -145,8 +149,18 @@ class _DepositScreenState extends State<DepositScreen> {
 
                   if (_wallets.isEmpty)
                     _buildEmptyState()
+                  else if (_wallets.any((w) => w is Map && w['isBusy'] == true))
+                    _buildBusyState(
+                      Map<String, dynamic>.from(
+                        _wallets.firstWhere(
+                          (w) => w is Map && w['isBusy'] == true,
+                        ),
+                      ),
+                    )
                   else
-                    ..._wallets.map((w) => _buildWalletCard(w)),
+                    ..._wallets.map(
+                      (w) => _buildWalletCard(Map<String, dynamic>.from(w)),
+                    ),
 
                   const SizedBox(height: 40),
 
@@ -200,7 +214,7 @@ class _DepositScreenState extends State<DepositScreen> {
             width: 20,
             height: 20,
             decoration: BoxDecoration(
-              color: _primary.withOpacity(0.1),
+              color: _primary.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Center(
@@ -236,7 +250,7 @@ class _DepositScreenState extends State<DepositScreen> {
             size: 48,
             color: Theme.of(
               context,
-            ).colorScheme.onSurfaceVariant.withOpacity(0.1),
+            ).colorScheme.onSurfaceVariant.withValues(alpha: 0.1),
           ),
           const SizedBox(height: 16),
           Text('No gateways available', style: TextStyle(color: _textDim)),
@@ -245,9 +259,89 @@ class _DepositScreenState extends State<DepositScreen> {
     );
   }
 
+  Widget _buildBusyState(Map<String, dynamic> data) {
+    final availableAt = data['availableAt'] != null
+        ? DateTime.parse(data['availableAt'].toString())
+        : DateTime.now().add(const Duration(minutes: 5));
+
+    return Container(
+      padding: const EdgeInsets.all(32),
+      decoration: BoxDecoration(
+        color: _bgCard,
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: Colors.orange.withValues(alpha: 0.2)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.orange.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.hourglass_empty_rounded,
+              color: Colors.orange,
+              size: 32,
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'All Gateways Busy',
+            style: GoogleFonts.outfit(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: _onSurface,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Currently all our deposit gateways are occupied. Please wait for a few minutes and try again.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: _textDim, fontSize: 13, height: 1.5),
+          ),
+          const SizedBox(height: 32),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            decoration: BoxDecoration(
+              color: _bgDark,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: _border),
+            ),
+            child: Column(
+              children: [
+                Text(
+                  'NEXT AVAILABLE IN',
+                  style: GoogleFonts.inter(
+                    color: _textDim,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                LiveTimerWidget(
+                  expiresAt: availableAt,
+                  onExpired: () => _fetchData(),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildWalletCard(Map<String, dynamic> wallet) {
     final expiresAt = wallet['expiresAt'] != null
-        ? DateTime.parse(wallet['expiresAt'])
+        ? DateTime.parse(wallet['expiresAt'].toString())
         : DateTime.now().add(const Duration(minutes: 30));
 
     return Container(
@@ -259,7 +353,7 @@ class _DepositScreenState extends State<DepositScreen> {
         border: Border.all(color: _border),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: Colors.black.withValues(alpha: 0.2),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -281,7 +375,7 @@ class _DepositScreenState extends State<DepositScreen> {
                   letterSpacing: 1.5,
                 ),
               ),
-              _CopyButton(address: wallet['address']),
+              _CopyButton(address: wallet['address']?.toString() ?? ''),
             ],
           ),
           const SizedBox(height: 24),
@@ -289,7 +383,7 @@ class _DepositScreenState extends State<DepositScreen> {
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(borderRadius: BorderRadius.circular(16)),
             child: QrImageView(
-              data: '${wallet['address']}$_qrSeed',
+              data: '${wallet['address'] ?? ''}$_qrSeed',
               version: QrVersions.auto,
               size: 200.0,
               gapless: false,
@@ -305,7 +399,7 @@ class _DepositScreenState extends State<DepositScreen> {
           ),
           const SizedBox(height: 24),
           Text(
-            wallet['address'],
+            wallet['address']?.toString() ?? '',
             textAlign: TextAlign.center,
             style: GoogleFonts.outfit(fontSize: 14, letterSpacing: 0.5),
           ),
@@ -348,9 +442,9 @@ class _CopyButtonState extends State<_CopyButton> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: primary.withOpacity(0.1),
+          color: primary.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: primary.withOpacity(0.2)),
+          border: Border.all(color: primary.withValues(alpha: 0.2)),
         ),
         child: Row(
           children: [

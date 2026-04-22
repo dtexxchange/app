@@ -355,7 +355,9 @@ class _AuthScreenState extends State<AuthScreen> {
           decoration: InputDecoration(
             hintText: '000000',
             hintStyle: TextStyle(
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.2),
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurface.withValues(alpha: 0.2),
               letterSpacing: 12,
               fontSize: 28,
             ),
@@ -432,14 +434,16 @@ class _PrimaryButton extends StatelessWidget {
             ElevatedButton.styleFrom(
               backgroundColor: theme.primaryColor,
               foregroundColor: Colors.black,
-              disabledBackgroundColor: theme.primaryColor.withOpacity(0.4),
+              disabledBackgroundColor: theme.primaryColor.withValues(
+                alpha: 0.4,
+              ),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
               elevation: 0,
             ).copyWith(
               overlayColor: MaterialStateProperty.all(
-                Colors.black.withOpacity(0.1),
+                Colors.black.withValues(alpha: 0.1),
               ),
             ),
         child: isLoading

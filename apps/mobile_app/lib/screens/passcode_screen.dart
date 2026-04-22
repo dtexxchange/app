@@ -193,13 +193,16 @@ class _PasscodeScreenState extends State<PasscodeScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface),
+          icon: Icon(
+            Icons.arrow_back,
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           'Security Passcode',
           style: GoogleFonts.outfit(
-            fontWeight: FontWeight.bold, 
+            fontWeight: FontWeight.bold,
             fontSize: 18 * widthScale,
             color: Theme.of(context).colorScheme.onSurface,
           ),
@@ -227,7 +230,7 @@ class _PasscodeScreenState extends State<PasscodeScreen> {
                         _getStepDescription(),
                         textAlign: TextAlign.center,
                         style: GoogleFonts.inter(
-                          color: _textDim, 
+                          color: _textDim,
                           fontSize: 14 * widthScale,
                         ),
                       ),
@@ -257,7 +260,7 @@ class _PasscodeScreenState extends State<PasscodeScreen> {
             shape: BoxShape.circle,
             color: isFilled ? _primary : Colors.transparent,
             border: Border.all(
-              color: isFilled ? _primary : _textDim.withOpacity(0.5),
+              color: isFilled ? _primary : _textDim.withValues(alpha: 0.5),
               width: 2,
             ),
           ),
@@ -305,7 +308,9 @@ class _PasscodeScreenState extends State<PasscodeScreen> {
   Widget _buildKeyboardRow(List<String> numbers, double widthScale) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: numbers.map((n) => _buildKeyboardButton(n, widthScale)).toList(),
+      children: numbers
+          .map((n) => _buildKeyboardButton(n, widthScale))
+          .toList(),
     );
   }
 

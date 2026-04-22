@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../main.dart' show themeService;
@@ -62,7 +63,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
           slivers: [
             SliverAppBar(
               pinned: true,
-              backgroundColor: theme.scaffoldBackgroundColor.withOpacity(0.9),
+              backgroundColor: theme.scaffoldBackgroundColor.withValues(
+                alpha: 0.9,
+              ),
               elevation: 0,
               titleSpacing: 24,
               title: Text(
@@ -181,6 +184,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Column(
         children: [
           _InfoRow(
+            icon: Icons.tag,
+            label: 'User ID',
+            value: _user?['readableId']?.toString() ?? '–',
+            showCopy: true,
+          ),
+          Divider(height: 1, color: theme.dividerColor),
+          _InfoRow(
             icon: Icons.person_outline,
             label: (_user?['firstName'] != null || _user?['lastName'] != null)
                 ? 'Full Name'
@@ -298,11 +308,14 @@ class _InfoRow extends StatelessWidget {
   final String label;
   final String value;
   final Color? valueColor;
+  final bool showCopy;
+
   const _InfoRow({
     required this.icon,
     required this.label,
     required this.value,
     this.valueColor,
+    this.showCopy = false,
   });
 
   @override
@@ -323,15 +336,89 @@ class _InfoRow extends StatelessWidget {
               ),
             ),
           ),
-          Text(
-            value,
-            style: TextStyle(
-              color: valueColor ?? theme.colorScheme.onSurface,
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-            ),
+          Row(
+            children: [
+              Text(
+                value,
+                style: TextStyle(
+                  color: valueColor ?? theme.colorScheme.onSurface,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              if (showCopy && value != '–') ...[
+                const SizedBox(width: 8),
+                _CopyButton(label: label, value: value),
+              ],
+            ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _CopyButton extends StatefulWidget {
+  final String label;
+  final String value;
+  const _CopyButton({required this.label, required this.value});
+
+  @override
+  State<_CopyButton> createState() => _CopyButtonState();
+}
+
+class _CopyButtonState extends State<_CopyButton> {
+  bool _copied = false;
+
+  void _handleCopy() {
+    final primary = Theme.of(context).primaryColor;
+    Clipboard.setData(ClipboardData(text: widget.value));
+    setState(() => _copied = true);
+
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          '${widget.label} Copied',
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        duration: const Duration(seconds: 1),
+        behavior: SnackBarBehavior.floating,
+        width: 160,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: primary,
+      ),
+    );
+
+    Future.delayed(const Duration(seconds: 2), () {
+      if (mounted) setState(() => _copied = false);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = Theme.of(context).primaryColor;
+    return GestureDetector(
+      onTap: _handleCopy,
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          color: _copied ? primary.withOpacity(0.15) : Colors.transparent,
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Icon(
+          _copied ? Icons.check_rounded : Icons.copy_rounded,
+          size: 16,
+          color: _copied
+              ? primary
+              : Theme.of(context).colorScheme.onSurface.withOpacity(0.25),
+        ),
       ),
     );
   }

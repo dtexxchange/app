@@ -39,7 +39,8 @@ class _ExchangePasscodeScreenState extends State<ExchangePasscodeScreen> {
 
   Future<void> _submitTransaction() async {
     setState(() => _isLoading = true);
-    final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+    final args =
+        ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
     final amount = args['amount'] as double;
     final bankDetails = args['bankDetails'] as Map<String, dynamic>;
     final save = args['saveNewAccount'] as bool;
@@ -49,8 +50,8 @@ class _ExchangePasscodeScreenState extends State<ExchangePasscodeScreen> {
       // 1. Get Public Key if needed
       String pubKey = "";
       if (CryptoService.enableE2EE) {
-          final keyRes = await _api.getRequest('/wallet/admin/public-key');
-          pubKey = jsonDecode(keyRes.body)['publicKey'];
+        final keyRes = await _api.getRequest('/wallet/admin/public-key');
+        pubKey = jsonDecode(keyRes.body)['publicKey'];
       }
 
       // 2. Encrypt
@@ -58,12 +59,12 @@ class _ExchangePasscodeScreenState extends State<ExchangePasscodeScreen> {
 
       // 3. Save Bank Account if requested
       if (save) {
-          await _api.postRequest('/bank-accounts', {
-            'name': bankDetails['name'],
-            'bankName': bankDetails['bank'],
-            'accountNo': bankDetails['account'],
-            'ifsc': bankDetails['ifsc'],
-          });
+        await _api.postRequest('/bank-accounts', {
+          'name': bankDetails['name'],
+          'bankName': bankDetails['bank'],
+          'accountNo': bankDetails['account'],
+          'ifsc': bankDetails['ifsc'],
+        });
       }
 
       // 4. Submit Exchange
@@ -75,10 +76,11 @@ class _ExchangePasscodeScreenState extends State<ExchangePasscodeScreen> {
 
       if (res.statusCode == 200 || res.statusCode == 201) {
         if (mounted) {
-          Navigator.pushReplacementNamed(context, '/success', arguments: {
-              'amount': amount,
-              'type': 'EXCHANGE',
-          });
+          Navigator.pushReplacementNamed(
+            context,
+            '/success',
+            arguments: {'amount': amount, 'type': 'EXCHANGE'},
+          );
         }
       } else {
         final msg = jsonDecode(res.body)['message'] ?? 'Transaction Failed';
@@ -92,9 +94,9 @@ class _ExchangePasscodeScreenState extends State<ExchangePasscodeScreen> {
   }
 
   void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: _danger),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message), backgroundColor: _danger));
     setState(() => _passcode.clear());
   }
 
@@ -102,7 +104,7 @@ class _ExchangePasscodeScreenState extends State<ExchangePasscodeScreen> {
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final isShort = size.height < 700;
-    
+
     return Scaffold(
       backgroundColor: _bgDark,
       appBar: AppBar(backgroundColor: Colors.transparent, elevation: 0),
@@ -110,41 +112,57 @@ class _ExchangePasscodeScreenState extends State<ExchangePasscodeScreen> {
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
           child: Container(
-            constraints: BoxConstraints(minHeight: size.height - MediaQuery.of(context).padding.top - kToolbarHeight - MediaQuery.of(context).padding.bottom),
+            constraints: BoxConstraints(
+              minHeight:
+                  size.height -
+                  MediaQuery.of(context).padding.top -
+                  kToolbarHeight -
+                  MediaQuery.of(context).padding.bottom,
+            ),
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Column(
               children: [
                 SizedBox(height: isShort ? 20 : 40),
                 Container(
                   padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(color: _primary.withOpacity(0.1), shape: BoxShape.circle),
-                  child: Icon(Icons.shield_outlined, color: _primary, size: isShort ? 32 : 40),
+                  decoration: BoxDecoration(
+                    color: _primary.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.shield_outlined,
+                    color: _primary,
+                    size: isShort ? 32 : 40,
+                  ),
                 ),
                 const SizedBox(height: 24),
                 Text(
-                  'Authorization', 
+                  'Authorization',
                   style: GoogleFonts.outfit(
-                    fontSize: isShort ? 20 : 24, 
-                    fontWeight: FontWeight.bold, 
-                    color: Theme.of(context).colorScheme.onSurface
-                  )
+                    fontSize: isShort ? 20 : 24,
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Enter your 6-digit security passcode\nto authorize this exchange.', 
-                  textAlign: TextAlign.center, 
-                  style: TextStyle(color: _textDim, fontSize: isShort ? 12 : 13)
+                  'Enter your 6-digit security passcode\nto authorize this exchange.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: _textDim,
+                    fontSize: isShort ? 12 : 13,
+                  ),
                 ),
                 SizedBox(height: isShort ? 32 : 48),
                 _buildDots(),
                 SizedBox(height: isShort ? 40 : 60),
                 if (_isLoading)
-                   Padding(
-                     padding: const EdgeInsets.symmetric(vertical: 40),
-                     child: CircularProgressIndicator(color: _primary),
-                   )
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 40),
+                    child: CircularProgressIndicator(color: _primary),
+                  )
                 else
-                   _buildKeyboard(context),
+                  _buildKeyboard(context),
                 const SizedBox(height: 32),
               ],
             ),
@@ -166,7 +184,10 @@ class _ExchangePasscodeScreenState extends State<ExchangePasscodeScreen> {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: isFilled ? _primary : Colors.transparent,
-            border: Border.all(color: isFilled ? _primary : _textDim.withOpacity(0.3), width: 2),
+            border: Border.all(
+              color: isFilled ? _primary : _textDim.withValues(alpha: 0.3),
+              width: 2,
+            ),
           ),
         );
       }),
@@ -197,8 +218,11 @@ class _ExchangePasscodeScreenState extends State<ExchangePasscodeScreen> {
                 width: keySize + 30,
                 child: Center(
                   child: IconButton(
-                    onPressed: _onBackspace, 
-                    icon: Icon(Icons.backspace_outlined, color: Theme.of(context).colorScheme.onSurface)
+                    onPressed: _onBackspace,
+                    icon: Icon(
+                      Icons.backspace_outlined,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
                   ),
                 ),
               ),
@@ -211,26 +235,34 @@ class _ExchangePasscodeScreenState extends State<ExchangePasscodeScreen> {
 
   Widget _keyRow(List<String> keys, double keySize) => Row(
     mainAxisAlignment: MainAxisAlignment.center,
-    children: keys.map((k) => Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 15),
-      child: _key(k, keySize),
-    )).toList()
+    children: keys
+        .map(
+          (k) => Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 15),
+            child: _key(k, keySize),
+          ),
+        )
+        .toList(),
   );
 
   Widget _key(String val, double size) => GestureDetector(
     onTap: () => _onNumberTap(val),
     child: Container(
-      width: size, height: size,
-      decoration: BoxDecoration(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.05), shape: BoxShape.circle),
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.05),
+        shape: BoxShape.circle,
+      ),
       child: Center(
         child: Text(
-          val, 
+          val,
           style: GoogleFonts.outfit(
-            fontSize: size * 0.35, 
-            fontWeight: FontWeight.bold, 
-            color: Theme.of(context).colorScheme.onSurface
-          )
-        )
+            fontSize: size * 0.35,
+            fontWeight: FontWeight.bold,
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
+        ),
       ),
     ),
   );

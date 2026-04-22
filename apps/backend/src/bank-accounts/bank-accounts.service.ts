@@ -31,6 +31,13 @@ export class BankAccountsService {
     });
   }
 
+  async findAllArchived(userId: string) {
+    return this.prisma.bankAccount.findMany({
+      where: { userId, isDeleted: true },
+      orderBy: { updatedAt: 'desc' },
+    });
+  }
+
   async update(userId: string, id: string, data: Partial<{ name: string; bankName: string; accountNo: string; ifsc: string }>) {
     const account = await this.prisma.bankAccount.findFirst({ where: { id, userId, isDeleted: false } });
     if (!account) throw new NotFoundException('Bank account not found');
@@ -66,11 +73,32 @@ export class BankAccountsService {
       await tx.bankAccountLog.create({
         data: {
           bankAccountId: id,
-          action: 'DELETE',
+          action: 'ARCHIVE',
         },
       });
 
       return deleted;
+    });
+  }
+
+  async restore(userId: string, id: string) {
+    const account = await this.prisma.bankAccount.findFirst({ where: { id, userId, isDeleted: true } });
+    if (!account) throw new NotFoundException('Archived bank account not found');
+
+    return this.prisma.$transaction(async (tx) => {
+      const restored = await tx.bankAccount.update({
+        where: { id },
+        data: { isDeleted: false },
+      });
+
+      await tx.bankAccountLog.create({
+        data: {
+          bankAccountId: id,
+          action: 'RESTORE',
+        },
+      });
+
+      return restored;
     });
   }
 

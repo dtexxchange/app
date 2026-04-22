@@ -44,7 +44,14 @@ const Overview: React.FC = () => {
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [conversionRate, setConversionRate] = useState<number | null>(null);
     const [wallets, setWallets] = useState<
-        { id: string; address: string; network: string; expiresAt?: string }[]
+        {
+            id: string;
+            address: string;
+            network: string;
+            expiresAt?: string;
+            isBusy?: boolean;
+            availableAt?: string;
+        }[]
     >([]);
     const [timeLeft, setTimeLeft] = useState(1800);
     const [savedAccounts, setSavedAccounts] = useState<SavedAccount[]>([]);
@@ -86,12 +93,17 @@ const Overview: React.FC = () => {
 
             const { data: wIdData } = await api.get("/settings/wallets");
             setWallets(wIdData);
-            if (wIdData.length > 0 && wIdData[0].expiresAt) {
-                const expiresAt = new Date(wIdData[0].expiresAt);
-                const diff = Math.floor(
-                    (expiresAt.getTime() - Date.now()) / 1000,
-                );
-                setTimeLeft(diff > 0 ? diff : 0);
+            if (wIdData.length > 0) {
+                const targetTime = wIdData[0].isBusy
+                    ? wIdData[0].availableAt
+                    : wIdData[0].expiresAt;
+                if (targetTime) {
+                    const expiresAt = new Date(targetTime);
+                    const diff = Math.floor(
+                        (expiresAt.getTime() - Date.now()) / 1000,
+                    );
+                    setTimeLeft(diff > 0 ? diff : 0);
+                }
             }
 
             const { data: txs } = await api.get("/wallet/transactions?limit=5");
@@ -483,7 +495,7 @@ const Overview: React.FC = () => {
                                                 )}
                                             </div>
                                             <span className="font-bold text-white group-hover:text-accent-blue transition-colors">
-                                                TX-{tx.id.substring(0, 6)}
+                                                {tx.id.substring(0, 6)}
                                             </span>
                                         </div>
                                     </td>
@@ -539,55 +551,83 @@ const Overview: React.FC = () => {
                             </div>
 
                             <div className="space-y-6 max-h-[60vh] overflow-y-auto custom-scrollbar pr-2">
-                                {wallets.map((wallet) => (
-                                    <div
-                                        key={wallet.id}
-                                        className="bg-bg-dark border border-white/5 p-6 rounded-3xl flex flex-col items-center"
-                                    >
-                                        <div className="bg-white p-3 rounded-2xl mb-4 shadow-2xl shadow-white/10">
-                                            <QRCodeSVG
-                                                value={wallet.address}
-                                                size={140}
-                                            />
-                                        </div>
-                                        <p className="text-[10px] font-black text-text-dim uppercase tracking-widest mb-2">
-                                            {wallet.network} Gateway
-                                        </p>
-                                        <div className="bg-white/5 p-3 rounded-xl w-full flex items-center gap-3 border border-white/5 group">
-                                            <code className="text-xs text-primary truncate flex-1 font-mono text-center">
-                                                {wallet.address}
-                                            </code>
-                                            <button
-                                                onClick={() => {
-                                                    navigator.clipboard.writeText(
-                                                        wallet.address,
-                                                    );
-                                                    setAlert({
-                                                        title: "Success",
-                                                        message:
-                                                            "Address copied.",
-                                                        type: "info",
-                                                    });
-                                                }}
-                                                className="p-2 bg-white/5 rounded-lg text-text-dim hover:text-white transition-colors"
-                                            >
-                                                <Copy size={16} />
-                                            </button>
-                                        </div>
-                                        <div className="mt-6 flex flex-col items-center gap-2">
-                                            <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary/5 border border-primary/10">
-                                                <Clock
-                                                    size={14}
-                                                    className="text-primary"
-                                                />
-                                                <span className="text-[10px] font-black text-primary uppercase tracking-widest">
-                                                    Refreshing in:{" "}
+                                {wallets.map((wallet) =>
+                                    wallet.isBusy ? (
+                                        <div
+                                            key="busy"
+                                            className="bg-bg-dark border border-orange-500/20 p-8 rounded-3xl flex flex-col items-center text-center"
+                                        >
+                                            <div className="w-16 h-16 bg-orange-500/10 rounded-full flex items-center justify-center text-orange-500 mb-6 border border-orange-500/20">
+                                                <Clock size={32} />
+                                            </div>
+                                            <h3 className="text-xl font-bold text-white mb-2">
+                                                All Gateways Busy
+                                            </h3>
+                                            <p className="text-xs text-text-dim mb-8 leading-relaxed">
+                                                Currently all our deposit
+                                                gateways are occupied. Please
+                                                wait for a few minutes and try
+                                                again.
+                                            </p>
+                                            <div className="bg-white/5 px-6 py-3 rounded-2xl border border-white/5">
+                                                <p className="text-[10px] font-black text-text-dim uppercase tracking-widest mb-1">
+                                                    Next Available In
+                                                </p>
+                                                <p className="text-2xl font-outfit font-bold text-primary">
                                                     {formatTime(timeLeft)}
-                                                </span>
+                                                </p>
                                             </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    ) : (
+                                        <div
+                                            key={wallet.id}
+                                            className="bg-bg-dark border border-white/5 p-6 rounded-3xl flex flex-col items-center"
+                                        >
+                                            <div className="bg-white p-3 rounded-2xl mb-4 shadow-2xl shadow-white/10">
+                                                <QRCodeSVG
+                                                    value={wallet.address}
+                                                    size={140}
+                                                />
+                                            </div>
+                                            <p className="text-[10px] font-black text-text-dim uppercase tracking-widest mb-2">
+                                                {wallet.network} Gateway
+                                            </p>
+                                            <div className="bg-white/5 p-3 rounded-xl w-full flex items-center gap-3 border border-white/5 group">
+                                                <code className="text-xs text-primary truncate flex-1 font-mono text-center">
+                                                    {wallet.address}
+                                                </code>
+                                                <button
+                                                    onClick={() => {
+                                                        navigator.clipboard.writeText(
+                                                            wallet.address,
+                                                        );
+                                                        setAlert({
+                                                            title: "Success",
+                                                            message:
+                                                                "Address copied.",
+                                                            type: "info",
+                                                        });
+                                                    }}
+                                                    className="p-2 bg-white/5 rounded-lg text-text-dim hover:text-white transition-colors"
+                                                >
+                                                    <Copy size={16} />
+                                                </button>
+                                            </div>
+                                            <div className="mt-6 flex flex-col items-center gap-2">
+                                                <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary/5 border border-primary/10">
+                                                    <Clock
+                                                        size={14}
+                                                        className="text-primary"
+                                                    />
+                                                    <span className="text-[10px] font-black text-primary uppercase tracking-widest">
+                                                        Refreshing in:{" "}
+                                                        {formatTime(timeLeft)}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ),
+                                )}
                                 {wallets.length === 0 && (
                                     <div className="text-center text-text-dim p-4">
                                         No deposit gateways available.

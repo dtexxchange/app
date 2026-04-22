@@ -11,8 +11,18 @@ export class WalletService {
   public static readonly ENABLE_E2EE = false;
   constructor(private prisma: PrismaService) {}
 
-  private includeLogsAndUser = {
-    user: { select: { email: true, firstName: true, lastName: true } },
+  private transactionSelect = {
+    id: true,
+    readableId: true,
+    userId: true,
+    type: true,
+    amount: true,
+    status: true,
+    bankDetails: true,
+    conversionRate: true,
+    createdAt: true,
+    updatedAt: true,
+    user: { select: { email: true, firstName: true, lastName: true, readableId: true } },
     logs: { orderBy: { createdAt: 'asc' as const } },
   };
 
@@ -140,7 +150,7 @@ export class WalletService {
     const baseArgs: Parameters<typeof this.prisma.transaction.findMany>[0] = {
       where: whereClause,
       orderBy: { createdAt: 'desc' },
-      include: this.includeLogsAndUser,
+      select: this.transactionSelect,
     };
     if (limit !== undefined) {
       baseArgs.take = limit;
@@ -160,7 +170,7 @@ export class WalletService {
   async getTransaction(transactionId: string, userId: string, role: string) {
     const tx = await this.prisma.transaction.findUnique({
       where: { id: transactionId },
-      include: this.includeLogsAndUser,
+      select: this.transactionSelect,
     });
     if (!tx) throw new NotFoundException('Transaction not found');
     if (role !== 'ADMIN' && tx.userId !== userId)
@@ -255,7 +265,7 @@ export class WalletService {
       return tx.transaction.update({
         where: { id: transactionId },
         data: { status },
-        include: this.includeLogsAndUser,
+        select: this.transactionSelect,
       });
     });
   }

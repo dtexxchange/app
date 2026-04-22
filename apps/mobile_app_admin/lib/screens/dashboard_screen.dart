@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -8,6 +9,12 @@ import 'package:intl/intl.dart';
 import '../main.dart' show themeService;
 import '../services/api_service.dart';
 import '../widgets/transaction_detail_sheet.dart';
+import '../widgets/transactions_tab.dart';
+import '../widgets/transaction_filter_sheet.dart';
+import '../widgets/users_tab.dart';
+import '../widgets/user_filter_sheet.dart';
+import '../widgets/settings_tab.dart';
+import '../widgets/action_button.dart';
 import 'assignments_screen.dart';
 import 'user_detail_screen.dart';
 import 'wallets_screen.dart';
@@ -26,7 +33,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Color get _primary => Theme.of(context).primaryColor;
   Color get _textDim => Theme.of(context).colorScheme.onSurfaceVariant;
   Color get _border => Theme.of(context).dividerColor;
-  Color get _onSurface => Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF0F172A);
+  Color get _onSurface => Theme.of(context).brightness == Brightness.dark
+      ? Colors.white
+      : const Color(0xFF0F172A);
   static const Color _blue = Color(0xFF3B82F6);
   static const Color _danger = Color(0xFFF87171);
 
@@ -41,10 +50,31 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String _txStatus = '';
   String _txType = '';
   String _userSearch = '';
+  bool _isUserSearching = false;
+  String _selectedUserRole = 'All';
+  
+  // Transaction search and filters
+  String _transactionSearch = '';
+  bool _isTransactionSearching = false;
+  String _selectedTransactionType = 'All';
+  String _selectedTransactionStatus = 'All';
+  DateTime? _transactionStartDate;
+  DateTime? _transactionEndDate;
+  String _transactionSortBy = 'date';
 
   double? _conversionRate;
   List<dynamic> _rateHistory = [];
   final _rateController = TextEditingController();
+  final _searchCtrl = TextEditingController();
+  Timer? _debounce;
+
+  @override
+  void dispose() {
+    _rateController.dispose();
+    _searchCtrl.dispose();
+    _debounce?.cancel();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -121,8 +151,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
-  Future<void> _fetchAll() async {
-    setState(() => _isLoading = true);
+  Future<void> _fetchAll({bool showLoader = true}) async {
+    if (showLoader) setState(() => _isLoading = true);
     try {
       final txParams = <String>[];
       if (_txStatus.isNotEmpty) txParams.add('status=$_txStatus');
@@ -145,8 +175,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
       _fetchRateHistory();
     } catch (e) {
       debugPrint(e.toString());
+    } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  List<dynamic> get _filteredUsers {
+    if (_selectedUserRole == 'All') return _users;
+    return _users.where((u) => u['role'] == _selectedUserRole).toList();
   }
 
   Future<void> _updateTxStatus(
@@ -277,6 +313,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
               label: 'Users',
             ),
             BottomNavigationBarItem(
+              icon: const Icon(Icons.receipt_long_outlined),
+              activeIcon: const Icon(Icons.receipt_long),
+              label: 'Transactions',
+            ),
+            BottomNavigationBarItem(
               icon: Icon(Icons.currency_exchange_outlined),
               activeIcon: Icon(Icons.currency_exchange),
               label: 'Exchange',
@@ -293,9 +334,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildTopBar(double widthScale) {
+    final isUserTab = _tabIndex == 1;
+    final isTransactionTab = _tabIndex == 2;
+
     return Container(
       decoration: BoxDecoration(
-        color: _bgDark.withOpacity(0.9),
+        color: _bgDark.withValues(alpha: 0.95),
         border: Border(bottom: BorderSide(color: _border)),
       ),
       child: SafeArea(
@@ -303,82 +347,147 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: Padding(
           padding: EdgeInsets.fromLTRB(
             24 * widthScale,
-            16,
+            8,
             24 * widthScale,
-            16,
+            12,
           ),
           child: Row(
             children: [
-              Container(
-                width: 36 * widthScale,
-                height: 36 * widthScale,
-                decoration: BoxDecoration(
-                  color: _primary.withOpacity(0.10),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: _primary.withOpacity(0.20)),
-                ),
-                child: Icon(
-                  Icons.diamond_outlined,
-                  color: _primary,
-                  size: 18 * widthScale,
-                ),
-              ),
-              const SizedBox(width: 12),
-              RichText(
-                text: TextSpan(
-                  style: GoogleFonts.outfit(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: _onSurface,
-                  ),
-                  children: [
-                    const TextSpan(text: 'USDT'),
-                    TextSpan(
-                      text: '.EX',
-                      style: TextStyle(color: _onSurface.withOpacity(0.4)),
+              if ((_isUserSearching && isUserTab) || (_isTransactionSearching && isTransactionTab))
+                IconButton(
+                  icon: const Icon(Icons.arrow_back, size: 20),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  onPressed: () => setState(() {
+                    if (isUserTab) {
+                      _isUserSearching = false;
+                      _userSearch = '';
+                    } else {
+                      _isTransactionSearching = false;
+                      _transactionSearch = '';
+                    }
+                    _searchCtrl.clear();
+                    _fetchAll(showLoader: false);
+                  }),
+                )
+              else
+                _buildBranding(widthScale),
+
+              if ((_isUserSearching && isUserTab) || (_isTransactionSearching && isTransactionTab)) ...[
+                const SizedBox(width: 12),
+                Expanded(
+                  child: TextField(
+                    controller: _searchCtrl,
+                    autofocus: true,
+                    onChanged: (v) {
+                      if (_debounce?.isActive ?? false) _debounce?.cancel();
+                      _debounce = Timer(const Duration(milliseconds: 500), () {
+                        setState(() {
+                          if (isUserTab) {
+                            _userSearch = v;
+                          } else {
+                            _transactionSearch = v;
+                          }
+                        });
+                        _fetchAll(showLoader: false);
+                      });
+                    },
+                    style: GoogleFonts.outfit(
+                      fontSize: 16,
+                      color: _onSurface,
+                      fontWeight: FontWeight.w500,
                     ),
+                    decoration: InputDecoration(
+                      hintText: isUserTab ? 'Search users...' : 'Search transactions...',
+                      hintStyle: TextStyle(
+                        color: _textDim.withValues(alpha: 0.5),
+                        fontSize: 15,
+                      ),
+                      border: InputBorder.none,
+                    ),
+                  ),
+                ),
+              ] else
+                const Spacer(),
+
+              if (isUserTab) ...[
+                if (!_isUserSearching)
+                  IconButton(
+                    icon: Icon(Icons.search, color: _textDim, size: 22),
+                    onPressed: () => setState(() => _isUserSearching = true),
+                  ),
+                Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    IconButton(
+                      icon: Icon(Icons.more_vert, color: _textDim, size: 22),
+                      onPressed: _showUserFilterSheet,
+                    ),
+                    if (_userSearch.isNotEmpty || _selectedUserRole != 'All')
+                      Positioned(
+                        right: 8,
+                        top: 8,
+                        child: Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            color: _primary,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: _bgDark, width: 1.5),
+                          ),
+                        ),
+                      ),
                   ],
                 ),
-              ),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
+              ] else if (isTransactionTab) ...[
+                if (!_isTransactionSearching)
+                  IconButton(
+                    icon: Icon(Icons.search, color: _textDim, size: 22),
+                    onPressed: () => setState(() => _isTransactionSearching = true),
+                  ),
+                Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    IconButton(
+                      icon: Icon(Icons.filter_list, color: _textDim, size: 22),
+                      onPressed: _showTransactionFilterSheet,
+                    ),
+                    if (_transactionSearch.isNotEmpty || 
+                        _selectedTransactionType != 'All' || 
+                        _selectedTransactionStatus != 'All')
+                      Positioned(
+                        right: 8,
+                        top: 8,
+                        child: Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            color: _primary,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: _bgDark, width: 1.5),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
-                decoration: BoxDecoration(
-                  color: _primary.withOpacity(0.08),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: _primary.withOpacity(0.20)),
-                ),
-                child: Text(
-                  'ADMIN',
-                  style: GoogleFonts.inter(
-                    color: _primary,
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.5,
+              ] else
+                GestureDetector(
+                  onTap: () async {
+                    await _api.logout();
+                    if (mounted)
+                      Navigator.pushReplacementNamed(context, '/login');
+                  },
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: _bgCard,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: _border),
+                    ),
+                    child: const Icon(Icons.logout, color: _danger, size: 18),
                   ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              GestureDetector(
-                onTap: () async {
-                  await _api.logout();
-                  if (mounted)
-                    Navigator.pushReplacementNamed(context, '/login');
-                },
-                child: Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: _danger.withOpacity(0.08),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: _danger.withOpacity(0.2)),
-                  ),
-                  child: const Icon(Icons.logout, color: _danger, size: 18),
-                ),
-              ),
             ],
           ),
         ),
@@ -386,6 +495,72 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  Widget _buildBranding(double widthScale) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 40 * widthScale,
+          height: 40 * widthScale,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [_primary, _primary.withValues(alpha: 0.8)],
+            ),
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: _primary.withValues(alpha: 0.2),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Icon(
+            Icons.diamond_outlined,
+            color: Colors.black,
+            size: 20 * widthScale,
+          ),
+        ),
+        const SizedBox(width: 14),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            RichText(
+              text: TextSpan(
+                style: GoogleFonts.outfit(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w900,
+                  color: _onSurface,
+                  letterSpacing: -0.5,
+                ),
+                children: [
+                  const TextSpan(text: 'USDT'),
+                  TextSpan(
+                    text: '.EX',
+                    style: TextStyle(
+                      color: _primary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Text(
+              'ADMINISTRATOR',
+              style: GoogleFonts.inter(
+                color: _textDim,
+                fontSize: 9,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 2,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  
   Widget _buildTabContent(double widthScale) {
     switch (_tabIndex) {
       case 0:
@@ -393,8 +568,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
       case 1:
         return _buildUsers(widthScale);
       case 2:
-        return _buildExchange(widthScale);
+        return _buildTransactions(widthScale);
       case 3:
+        return _buildExchange(widthScale);
+      case 4:
         return _buildSettings(widthScale);
       default:
         return const SizedBox();
@@ -432,7 +609,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
-                      color: _blue.withOpacity(0.1),
+                      color: _blue.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(14),
                     ),
                     child: const Icon(Icons.currency_exchange, color: _blue),
@@ -463,7 +640,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: _danger.withOpacity(0.1),
+                        color: _danger.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: const Text(
@@ -562,345 +739,188 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  // ─── TRANSACTIONS TAB ───────────────────────────────────────────────────────────
+  Widget _buildTransactions(double widthScale) {
+    return TransactionsTab(
+      transactions: _transactions,
+      searchQuery: _transactionSearch,
+      selectedType: _selectedTransactionType,
+      selectedStatus: _selectedTransactionStatus,
+      startDate: _transactionStartDate,
+      endDate: _transactionEndDate,
+      sortBy: _transactionSortBy,
+      onSearchChanged: (value) {
+        setState(() {
+          _transactionSearch = value;
+        });
+        _fetchAll(showLoader: false);
+      },
+      onTypeChanged: (value) {
+        setState(() {
+          _selectedTransactionType = value;
+        });
+        _fetchAll(showLoader: false);
+      },
+      onStatusChanged: (value) {
+        setState(() {
+          _selectedTransactionStatus = value;
+        });
+        _fetchAll(showLoader: false);
+      },
+      onStartDateChanged: (value) {
+        setState(() {
+          _transactionStartDate = value;
+        });
+        _fetchAll(showLoader: false);
+      },
+      onEndDateChanged: (value) {
+        setState(() {
+          _transactionEndDate = value;
+        });
+        _fetchAll(showLoader: false);
+      },
+      onSortChanged: (value) {
+        setState(() {
+          _transactionSortBy = value;
+        });
+        _fetchAll(showLoader: false);
+      },
+      onShowFilterSheet: _showTransactionFilterSheet,
+      onTransactionAction: (transactionId, action) {
+        switch (action) {
+          case 'detail':
+            final transaction = _transactions.firstWhere((tx) => tx['id'] == transactionId);
+            _showTransactionDetail(transaction);
+            break;
+          case 'approve':
+            _updateTxStatus(transactionId, 'COMPLETED');
+            break;
+          case 'reject':
+            _updateTxStatus(transactionId, 'REJECTED');
+            break;
+        }
+      },
+    );
+  }
+
+  void _showTransactionFilterSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: _bgCard,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+      ),
+      builder: (ctx) => TransactionFilterSheet(
+        selectedType: _selectedTransactionType,
+        selectedStatus: _selectedTransactionStatus,
+        startDate: _transactionStartDate,
+        endDate: _transactionEndDate,
+        sortBy: _transactionSortBy,
+        onTypeChanged: (value) {
+          setState(() {
+            _selectedTransactionType = value;
+          });
+        },
+        onStatusChanged: (value) {
+          setState(() {
+            _selectedTransactionStatus = value;
+          });
+        },
+        onStartDateChanged: (value) {
+          setState(() {
+            _transactionStartDate = value;
+          });
+        },
+        onEndDateChanged: (value) {
+          setState(() {
+            _transactionEndDate = value;
+          });
+        },
+        onSortChanged: (value) {
+          setState(() {
+            _transactionSortBy = value;
+          });
+        },
+        onReset: () {
+          setState(() {
+            _transactionSearch = '';
+            _searchCtrl.clear();
+            _selectedTransactionType = 'All';
+            _selectedTransactionStatus = 'All';
+            _transactionStartDate = null;
+            _transactionEndDate = null;
+            _transactionSortBy = 'date';
+          });
+          _fetchAll(showLoader: false);
+        },
+        onApply: () {
+          Navigator.pop(ctx);
+          _fetchAll(showLoader: false);
+        },
+      ),
+    );
+  }
+
   // ─── SETTINGS TAB ─────────────────────────────────────────────────────────────
   Widget _buildSettings(double widthScale) {
-    return ListView(
-      padding: const EdgeInsets.all(24),
-      children: [
-        Text(
-          'PLATFORM CONFIGURATION',
-          style: GoogleFonts.inter(
-            color: _textDim,
-            fontSize: 10,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 2,
+    return SettingsTab(
+      conversionRate: _conversionRate,
+      hasMobileKey: _hasMobileKey,
+      onSaveRate: (rate) {
+        // This would need to be implemented if we want to save rate from settings
+        // For now, rate is saved from exchange tab
+      },
+      onImportKey: (type, key) {
+        // Handle key import - this is already implemented in existing methods
+      },
+      onGenerateKeys: _generateKeysOnMobile,
+      onToggleTheme: themeService.toggleTheme,
+      onNavigateToWallets: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const WalletsScreen()),
+        );
+      },
+      onNavigateToAssignments: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const AssignmentsScreen(),
           ),
-        ),
-        const SizedBox(height: 16),
-        Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: _bgCard,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: _border),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: _primary.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Icon(
-                      Icons.account_balance_wallet_outlined,
-                      color: _primary,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Settlement Gateways',
-                          style: GoogleFonts.outfit(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          'Manage active deposit addresses',
-                          style: TextStyle(color: _textDim, fontSize: 13),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const WalletsScreen()),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _primary,
-                    foregroundColor: Colors.black,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Text(
-                    'Manage Gateways',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-        Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: _bgCard,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: _border),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: _blue.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: const Icon(Icons.history_toggle_off, color: _blue),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Live QR Assignments',
-                          style: GoogleFonts.outfit(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          'See who currently has a wallet assigned',
-                          style: TextStyle(color: _textDim, fontSize: 13),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const AssignmentsScreen(),
-                      ),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _blue,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Text(
-                    'View Assignments',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
+        );
+      },
+    );
+  }
 
-        const SizedBox(height: 16),
-        Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Theme.of(context).dividerColor),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).primaryColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Icon(
-                      Icons.palette_outlined,
-                      color: Theme.of(context).primaryColor,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Appearance',
-                          style: GoogleFonts.outfit(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Theme.of(context).colorScheme.onSurface,
-                          ),
-                        ),
-                        Text(
-                          'Toggle between Light and Dark mode',
-                          style: TextStyle(
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.onSurfaceVariant,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Switch(
-                    value: Theme.of(context).brightness == Brightness.dark,
-                    activeColor: Theme.of(context).primaryColor,
-                    onChanged: (v) => themeService.toggleTheme(),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-
-        const SizedBox(height: 32),
-        Text(
-          'SECURITY & INFRASTRUCTURE',
-          style: GoogleFonts.inter(
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-            fontSize: 10,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 2,
-          ),
-        ),
-        const SizedBox(height: 24),
-
-        Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: _bgCard,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: _hasMobileKey
-                  ? _primary.withOpacity(0.2)
-                  : _danger.withOpacity(0.2),
-            ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: (_hasMobileKey ? _primary : _danger).withOpacity(
-                        0.1,
-                      ),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Icon(
-                      _hasMobileKey
-                          ? Icons.shield_outlined
-                          : Icons.shield_moon_outlined,
-                      color: _hasMobileKey ? _primary : _danger,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _hasMobileKey
-                              ? 'Active Security'
-                              : 'Insecure Terminal',
-                          style: GoogleFonts.outfit(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          _hasMobileKey
-                              ? 'E2EE Decryption Enabled'
-                              : 'Private Key Missing',
-                          style: TextStyle(color: _textDim, fontSize: 13),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              Text(
-                'End-to-End Encryption ensures exchange details are only visible to authorized administrators. You must possess the matching Private Key for the current Public Key.',
-                style: TextStyle(color: _textDim, fontSize: 12, height: 1.5),
-              ),
-              const SizedBox(height: 24),
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: _showImportKeyModal,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white.withOpacity(0.05),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          side: BorderSide(
-                            color: Colors.white.withOpacity(0.1),
-                          ),
-                        ),
-                      ),
-                      child: const Text('Import PEM'),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: _hasMobileKey ? null : _generateKeysOnMobile,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _primary,
-                        foregroundColor: Colors.black,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: const Text(
-                        'Setup New Keys',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ],
+  void _showUserFilterSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: _bgCard,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+      ),
+      builder: (ctx) => UserFilterSheet(
+        selectedRole: _selectedUserRole,
+        onRoleChanged: (value) {
+          setState(() {
+            _selectedUserRole = value;
+          });
+        },
+        onReset: () {
+          setState(() {
+            _userSearch = '';
+            _searchCtrl.clear();
+            _selectedUserRole = 'All';
+          });
+          _fetchAll(showLoader: false);
+        },
+        onApply: () {
+          Navigator.pop(ctx);
+          _fetchAll(showLoader: false);
+        },
+      ),
     );
   }
 
@@ -943,7 +963,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               style: const TextStyle(fontSize: 12, fontFamily: 'monospace'),
               decoration: InputDecoration(
                 hintText: '-----BEGIN PRIVATE KEY-----\n...',
-                hintStyle: TextStyle(color: _textDim.withOpacity(0.3)),
+                hintStyle: TextStyle(color: _textDim.withValues(alpha: 0.3)),
                 filled: true,
                 fillColor: _bgDark,
                 border: OutlineInputBorder(
@@ -1279,7 +1299,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         overflow: TextOverflow.ellipsis,
                       ),
                       Text(
-                        'TX-${tx['id']?.toString().substring(0, 8).toUpperCase() ?? 'UNKNOWN'} • ${DateFormat('MMM dd, hh:mm a').format(DateTime.tryParse(tx['createdAt']?.toString() ?? '') ?? DateTime.now())}',
+                        DateFormat('MMM dd, hh:mm a').format(
+                          DateTime.tryParse(
+                                tx['createdAt']?.toString() ?? '',
+                              ) ??
+                              DateTime.now(),
+                        ),
                         style: TextStyle(
                           color: _textDim,
                           fontSize: 11 * widthScale,
@@ -1343,7 +1368,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               Row(
                 children: [
                   Expanded(
-                    child: _ActionBtn(
+                    child: ActionButton(
                       label: 'Approve',
                       icon: Icons.check_circle_outline,
                       color: _primary,
@@ -1353,7 +1378,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: _ActionBtn(
+                    child: ActionButton(
                       label: 'Reject',
                       icon: Icons.cancel_outlined,
                       color: _danger,
@@ -1387,255 +1412,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   // ─── USERS TAB ────────────────────────────────────────────────────────────────
   Widget _buildUsers(double widthScale) {
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(24, 8, 24, 100),
-      physics: const AlwaysScrollableScrollPhysics(),
-      children: [
-        // Header + Add button
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                'User Directory',
-                style: GoogleFonts.outfit(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            GestureDetector(
-              onTap: _showAddUserSheet,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 10,
-                ),
-                decoration: BoxDecoration(
-                  color: _primary,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: _primary.withOpacity(0.3),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.add, color: Colors.black, size: 18),
-                    const SizedBox(width: 6),
-                    const Text(
-                      'Whitelist',
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-
-        // Search
-        TextField(
-          onChanged: (v) {
-            setState(() => _userSearch = v);
-            _fetchAll();
-          },
-          style: const TextStyle(fontSize: 14),
-          decoration: InputDecoration(
-            hintText: 'Search users by name or email...',
-            hintStyle: TextStyle(color: _textDim, fontSize: 14),
-            prefixIcon: Icon(Icons.search, color: _textDim, size: 20),
-            filled: true,
-            fillColor: Colors.white.withOpacity(0.03),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.white.withOpacity(0.10)),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: _primary),
-            ),
-            contentPadding: const EdgeInsets.symmetric(vertical: 14),
-          ),
-        ),
-        const SizedBox(height: 16),
-
-        if (_users.isEmpty)
-          _emptyState('No users found', Icons.people_outline)
-        else
-          ..._users.map((u) => _buildUserCard(u, widthScale)),
-      ],
-    );
-  }
-
-  Widget _buildUserCard(Map<String, dynamic> u, double widthScale) {
-    final isAdmin = u['role'] == 'ADMIN';
-    final initial =
-        (u['firstName']?.toString() ?? u['email']?.toString() ?? '?')
-            .substring(0, 1)
-            .toUpperCase();
-    final joined = DateTime.tryParse(u['createdAt']?.toString() ?? '');
-
-    return GestureDetector(
-      onTap: () => Navigator.push(
+    return UsersTab(
+      users: _users,
+      searchQuery: _userSearch,
+      selectedRole: _selectedUserRole,
+      onSearchChanged: (value) {
+        setState(() {
+          _userSearch = value;
+        });
+        _fetchAll(showLoader: false);
+      },
+      onRoleChanged: (value) {
+        setState(() {
+          _selectedUserRole = value;
+        });
+        _fetchAll(showLoader: false);
+      },
+      onShowFilterSheet: _showUserFilterSheet,
+      onShowAddUserSheet: _showAddUserSheet,
+      onUserTap: (user) => Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => UserDetailScreen(userId: u['id'], allUsers: _users),
+          builder: (_) => UserDetailScreen(userId: user['id'], allUsers: _users),
         ),
       ).then((_) => _fetchAll()),
-      child: Container(
-        margin: EdgeInsets.only(bottom: 10 * widthScale),
-        padding: EdgeInsets.all(16 * widthScale),
-        decoration: BoxDecoration(
-          color: _bgCard,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: _border),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 44 * widthScale,
-              height: 44 * widthScale,
-              decoration: BoxDecoration(
-                color: (isAdmin ? _primary : _blue).withOpacity(0.10),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Center(
-                child: Text(
-                  initial,
-                  style: TextStyle(
-                    color: isAdmin ? _primary : _blue,
-                    fontSize: 18 * widthScale,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-            SizedBox(width: 14 * widthScale),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    (u['firstName'] != null || u['lastName'] != null)
-                        ? '${u['firstName'] ?? ''} ${u['lastName'] ?? ''}'
-                              .trim()
-                        : u['email'],
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14 * widthScale,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  SizedBox(height: 4 * widthScale),
-                  Wrap(
-                    spacing: 8 * widthScale,
-                    runSpacing: 4 * widthScale,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: [
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 7 * widthScale,
-                          vertical: 2 * widthScale,
-                        ),
-                        decoration: BoxDecoration(
-                          color: (isAdmin
-                                  ? _primary
-                                  : Theme.of(context).colorScheme.onSurface)
-                              .withOpacity(0.08),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          u['role'],
-                          style: TextStyle(
-                            color: isAdmin
-                                ? _primary
-                                : Theme.of(context).colorScheme.onSurface,
-                            fontSize: 9 * widthScale,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ),
-                      if (u['status'] != null)
-                        Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 7 * widthScale,
-                            vertical: 2 * widthScale,
-                          ),
-                          decoration: BoxDecoration(
-                            color:
-                                (u['status'] == 'APPROVED'
-                                        ? _primary
-                                        : u['status'] == 'PENDING_APPROVAL'
-                                        ? _blue
-                                        : _danger)
-                                    .withOpacity(0.08),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            (u['status'] as String).replaceAll('_', ' '),
-                            style: TextStyle(
-                              color: u['status'] == 'APPROVED'
-                                  ? _primary
-                                  : u['status'] == 'PENDING_APPROVAL'
-                                  ? _blue
-                                  : _danger,
-                              fontSize: 9 * widthScale,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                        ),
-                      if (joined != null)
-                        Text(
-                          DateFormat('MMM dd, yyyy').format(joined),
-                          style: TextStyle(
-                            color: _textDim,
-                            fontSize: 10 * widthScale,
-                          ),
-                        ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(width: 12 * widthScale),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    NumberFormat('#,##0.00').format(u['balance'] ?? 0),
-                    style: GoogleFonts.outfit(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15 * widthScale,
-                    ),
-                  ),
-                ),
-                Text(
-                  'USDT',
-                  style: TextStyle(
-                    color: _primary,
-                    fontSize: 10 * widthScale,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -1882,53 +1682,6 @@ class _StatCard extends StatelessWidget {
   }
 }
 
-class _ActionBtn extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final Color color;
-  final bool filled;
-  final VoidCallback onPressed;
-  const _ActionBtn({
-    required this.label,
-    required this.icon,
-    required this.color,
-    required this.onPressed,
-    this.filled = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onPressed,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
-        decoration: BoxDecoration(
-          color: color.withOpacity(filled ? 0.20 : 0.06),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: color.withOpacity(0.25)),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 14, color: color),
-            const SizedBox(width: 5),
-            Flexible(
-              child: Text(
-                label,
-                style: TextStyle(
-                  color: color,
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
 
 class _DropFilter extends StatelessWidget {
   final String label;
@@ -1962,14 +1715,16 @@ class _DropFilter extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                  Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(2),
                   ),
+                ),
                 const SizedBox(height: 8),
                 ...options.entries.map(
                   (e) => ListTile(
@@ -2002,7 +1757,7 @@ class _DropFilter extends StatelessWidget {
           color: _bgCard,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: value.isNotEmpty ? _primary.withOpacity(0.4) : _border,
+            color: value.isNotEmpty ? _primary.withValues(alpha: 0.4) : _border,
           ),
         ),
         child: Row(

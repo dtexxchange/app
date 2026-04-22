@@ -31,6 +31,7 @@ enum TransactionStatus {
 
 model User {
   id            String         @id @default(uuid())
+  readableId    BigInt         @unique @default(autoincrement())
   email         String         @unique
   firstName     String?
   lastName      String?
@@ -52,6 +53,7 @@ model User {
 
 model Transaction {
   id             String            @id @default(uuid())
+  readableId     BigInt            @unique @default(autoincrement())
   userId         String
   user           User              @relation(fields: [userId], references: [id])
   type           TransactionType
