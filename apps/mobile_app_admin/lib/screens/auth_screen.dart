@@ -125,7 +125,7 @@ class _AuthScreenState extends State<AuthScreen> {
               height: 280,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: _primary.withOpacity(0.12),
+                color: _primary.withValues(alpha: 0.12),
               ),
             ),
           ),
@@ -137,7 +137,7 @@ class _AuthScreenState extends State<AuthScreen> {
               height: 260,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFF3B82F6).withOpacity(0.12),
+                color: const Color(0xFF3B82F6).withValues(alpha: 0.12),
               ),
             ),
           ),
@@ -161,12 +161,14 @@ class _AuthScreenState extends State<AuthScreen> {
                         width: 80,
                         height: 80,
                         decoration: BoxDecoration(
-                          color: _primary.withOpacity(0.10),
+                          color: _primary.withValues(alpha: 0.10),
                           borderRadius: BorderRadius.circular(24),
-                          border: Border.all(color: _primary.withOpacity(0.20)),
+                          border: Border.all(
+                            color: _primary.withValues(alpha: 0.20),
+                          ),
                           boxShadow: [
                             BoxShadow(
-                              color: _primary.withOpacity(0.15),
+                              color: _primary.withValues(alpha: 0.15),
                               blurRadius: 30,
                             ),
                           ],
@@ -208,7 +210,7 @@ class _AuthScreenState extends State<AuthScreen> {
                         decoration: BoxDecoration(
                           color: Theme.of(
                             context,
-                          ).colorScheme.onSurface.withOpacity(0.02),
+                          ).colorScheme.onSurface.withValues(alpha: 0.02),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
                             color: Theme.of(context).dividerColor,
@@ -269,7 +271,7 @@ class _AuthScreenState extends State<AuthScreen> {
             filled: true,
             fillColor: Theme.of(
               context,
-            ).colorScheme.onSurface.withOpacity(0.03),
+            ).colorScheme.onSurface.withValues(alpha: 0.03),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(color: Theme.of(context).dividerColor),
@@ -325,7 +327,7 @@ class _AuthScreenState extends State<AuthScreen> {
             filled: true,
             fillColor: Theme.of(
               context,
-            ).colorScheme.onSurface.withOpacity(0.03),
+            ).colorScheme.onSurface.withValues(alpha: 0.03),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(color: Theme.of(context).dividerColor),

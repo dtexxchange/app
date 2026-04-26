@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+
 import 'user_card.dart';
-import 'user_filter_sheet.dart';
 
 class UsersTab extends StatefulWidget {
   final List<dynamic> users;
@@ -37,7 +37,10 @@ class _UsersTabState extends State<UsersTab> {
 
   @override
   Widget build(BuildContext context) {
-    final widthScale = (MediaQuery.of(context).size.width / 375.0).clamp(0.85, 1.2);
+    final widthScale = (MediaQuery.of(context).size.width / 375.0).clamp(
+      0.85,
+      1.2,
+    );
     final filtered = _filteredUsers;
 
     return ListView(
@@ -68,7 +71,9 @@ class _UsersTabState extends State<UsersTab> {
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: Theme.of(context).primaryColor.withValues(alpha: 0.3),
+                      color: Theme.of(
+                        context,
+                      ).primaryColor.withValues(alpha: 0.3),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
@@ -104,7 +109,9 @@ class _UsersTabState extends State<UsersTab> {
                     ? Icons.search_off_rounded
                     : Icons.people_outline,
                 size: 64,
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.05),
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: 0.05),
               ),
               const SizedBox(height: 16),
               Text(
@@ -123,18 +130,20 @@ class _UsersTabState extends State<UsersTab> {
                     widget.onRoleChanged('All');
                   },
                   child: Text(
-                    'Clear all filters', 
-                    style: TextStyle(color: Theme.of(context).primaryColor)
+                    'Clear all filters',
+                    style: TextStyle(color: Theme.of(context).primaryColor),
                   ),
                 ),
             ],
           )
         else
-          ...filtered.map((u) => UserCard(
-            user: u,
-            widthScale: widthScale,
-            onTap: () => widget.onUserTap(u),
-          )),
+          ...filtered.map(
+            (u) => UserCard(
+              user: u,
+              widthScale: widthScale,
+              onTap: () => widget.onUserTap(u),
+            ),
+          ),
       ],
     );
   }

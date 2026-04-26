@@ -45,7 +45,7 @@ class UserCard extends StatelessWidget {
               width: 44 * widthScale,
               height: 44 * widthScale,
               decoration: BoxDecoration(
-                color: (isAdmin ? _primary : _blue).withOpacity(0.10),
+                color: (isAdmin ? _primary : _blue).withValues(alpha: 0.10),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Center(
@@ -91,7 +91,7 @@ class UserCard extends StatelessWidget {
                               (isAdmin
                                       ? _primary
                                       : Theme.of(context).colorScheme.onSurface)
-                                  .withOpacity(0.08),
+                                  .withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
@@ -119,7 +119,7 @@ class UserCard extends StatelessWidget {
                                         : user['status'] == 'PENDING_APPROVAL'
                                         ? _blue
                                         : _danger)
-                                    .withOpacity(0.08),
+                                    .withValues(alpha: 0.08),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
@@ -140,7 +140,9 @@ class UserCard extends StatelessWidget {
                         Text(
                           DateFormat('MMM dd, yyyy').format(joined),
                           style: TextStyle(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
                             fontSize: 10 * widthScale,
                           ),
                         ),

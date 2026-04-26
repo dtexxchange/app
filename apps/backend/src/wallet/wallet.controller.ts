@@ -49,12 +49,29 @@ export class WalletController {
     );
   }
 
+  @Post('withdraw')
+  async withdraw(
+    @Request() req,
+    @Body('amount') amount: number,
+    @Body('bankDetails') bankDetails: string,
+    @Body('passcode') passcode: string,
+  ) {
+    return this.walletService.withdraw(
+      req.user.userId,
+      amount,
+      bankDetails,
+      req.user.email,
+      passcode,
+    );
+  }
+
   @Get('transactions')
   async getTransactions(
     @Request() req,
     @Query('status') status?: TransactionStatus,
     @Query('type') type?: string,
     @Query('userId') reqUserId?: string,
+    @Query('relatedUserId') relatedUserId?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ) {
@@ -64,6 +81,7 @@ export class WalletController {
       status,
       type,
       reqUserId,
+      relatedUserId,
       page ? parseInt(page, 10) : undefined,
       limit ? parseInt(limit, 10) : undefined,
     );
@@ -83,9 +101,10 @@ export class WalletController {
   async updateStatus(
     @Param('id') id: string,
     @Body('status') status: TransactionStatus,
+    @Body('utr') utr: string,
     @Request() req,
   ) {
-    return this.walletService.updateStatus(id, status, req.user.email);
+    return this.walletService.updateStatus(id, status, req.user.email, utr);
   }
 
   @Post('admin/public-key')

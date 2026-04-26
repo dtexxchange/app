@@ -21,6 +21,7 @@ enum TransactionType {
   DEPOSIT
   EXCHANGE
   REFERRAL_COMMISSION
+  WITHDRAWAL
 }
 
 enum TransactionStatus {
@@ -46,9 +47,12 @@ model User {
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   transactions  Transaction[]
+  relatedTransactions Transaction[] @relation("RelatedUserTransactions")
   otps          Otp[]
   bankAccounts  BankAccount[]
   walletAssignments WalletAssignment[]
+  notifications Notification[]
+  deviceTokens  DeviceToken[]
 }
 
 model Transaction {
@@ -59,8 +63,12 @@ model Transaction {
   type           TransactionType
   amount         Float
   status         TransactionStatus @default(PENDING)
+  fee            Float?            // Fee charged for withdrawal
   bankDetails    String?           // Stores E2EE encrypted JSON string
   conversionRate Float?            // Rate used at time of transaction
+  utr            String?           // Unique Transaction Reference
+  relatedUserId  String?           // Used for referral commissions to track source user
+  relatedUser    User?             @relation("RelatedUserTransactions", fields: [relatedUserId], references: [id])
   createdAt      DateTime          @default(now())
   updatedAt      DateTime          @updatedAt
   logs           TransactionLog[]
@@ -96,9 +104,10 @@ model AdminPublicKey {
 }
 
 model GlobalSettings {
-  id            String   @id @default("global_settings")
-  usdtToInrRate Float?
-  updatedAt     DateTime @updatedAt
+  id               String   @id @default("global_settings")
+  usdtToInrRate    Float?
+  withdrawalFee    Float?   @default(0)
+  updatedAt        DateTime @updatedAt
 }
 
 model GlobalWallet {
@@ -115,6 +124,13 @@ model GlobalWallet {
 model ConversionRateHistory {
   id         String   @id @default(uuid())
   rate       Float
+  adminEmail String
+  createdAt  DateTime @default(now())
+}
+
+model WithdrawalFeeHistory {
+  id         String   @id @default(uuid())
+  fee        Float
   adminEmail String
   createdAt  DateTime @default(now())
 }
@@ -157,3 +173,44 @@ model WalletAssignment {
 
   @@index([userId])
 }
+
+model DeviceToken {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  token     String   @unique
+  platform  String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Notification {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  title       String
+  body        String
+  type        String   // e.g., TRANSACTION_NEW, TRANSACTION_STATUS, QR_ASSIGNMENT
+  relatedId   String?  // transactionId or walletId
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+}
+
+enum NewsStatus {
+  PUBLISHED
+  ARCHIVED
+}
+
+model News {
+  id          String     @id @default(uuid())
+  title       String
+  description String
+  link        String?
+  status      NewsStatus @default(PUBLISHED)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+

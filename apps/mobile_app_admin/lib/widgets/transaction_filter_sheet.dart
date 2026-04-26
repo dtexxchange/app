@@ -54,10 +54,8 @@ class _TransactionFilterSheetState extends State<TransactionFilterSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final _bgCard = Theme.of(context).cardColor;
-    final _primary = Theme.of(context).primaryColor;
-    final _textDim = Theme.of(context).colorScheme.onSurfaceVariant;
-    final _border = Theme.of(context).dividerColor;
+    final primary = Theme.of(context).primaryColor;
+    final border = Theme.of(context).dividerColor;
 
     return Container(
       padding: EdgeInsets.fromLTRB(
@@ -75,7 +73,7 @@ class _TransactionFilterSheetState extends State<TransactionFilterSheet> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: _border,
+                color: border,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -107,16 +105,6 @@ class _TransactionFilterSheetState extends State<TransactionFilterSheet> {
             ],
           ),
           const SizedBox(height: 24),
-          _buildFilterLabel('Transaction Type'),
-          _buildFilterOptions(
-            ['All', 'DEPOSIT', 'EXCHANGE', 'REFERRAL'],
-            _selectedType,
-            (val) {
-              setState(() => _selectedType = val);
-              widget.onTypeChanged(val);
-            },
-          ),
-          const SizedBox(height: 24),
           _buildFilterLabel('Status'),
           _buildFilterOptions(
             ['All', 'PENDING', 'COMPLETED', 'REJECTED'],
@@ -131,43 +119,33 @@ class _TransactionFilterSheetState extends State<TransactionFilterSheet> {
           Row(
             children: [
               Expanded(
-                child: _buildDateField(
-                  'Start Date',
-                  _startDate,
-                  (date) {
-                    setState(() => _startDate = date);
-                    widget.onStartDateChanged(date);
-                  },
-                ),
+                child: _buildDateField('Start Date', _startDate, (date) {
+                  setState(() => _startDate = date);
+                  widget.onStartDateChanged(date);
+                }),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: _buildDateField(
-                  'End Date',
-                  _endDate,
-                  (date) {
-                    setState(() => _endDate = date);
-                    widget.onEndDateChanged(date);
-                  },
-                ),
+                child: _buildDateField('End Date', _endDate, (date) {
+                  setState(() => _endDate = date);
+                  widget.onEndDateChanged(date);
+                }),
               ),
             ],
           ),
           const SizedBox(height: 24),
           _buildFilterLabel('Sort By'),
-          _buildFilterOptions(
-            ['Date', 'Amount', 'Type', 'Status'],
-            _sortBy,
-            (val) {
-              setState(() => _sortBy = val);
-              widget.onSortChanged(val);
-            },
-          ),
+          _buildFilterOptions(['Date', 'Amount', 'Type', 'Status'], _sortBy, (
+            val,
+          ) {
+            setState(() => _sortBy = val);
+            widget.onSortChanged(val);
+          }),
           const SizedBox(height: 32),
           ElevatedButton(
             onPressed: widget.onApply,
             style: ElevatedButton.styleFrom(
-              backgroundColor: _primary,
+              backgroundColor: primary,
               foregroundColor: Colors.black,
               padding: const EdgeInsets.symmetric(vertical: 18),
               elevation: 0,
@@ -216,14 +194,22 @@ class _TransactionFilterSheetState extends State<TransactionFilterSheet> {
             duration: const Duration(milliseconds: 200),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
-              color: isActive ? Theme.of(context).primaryColor : Theme.of(context).cardColor,
+              color: isActive
+                  ? Theme.of(context).primaryColor
+                  : Theme.of(context).cardColor,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: isActive ? Theme.of(context).primaryColor : Theme.of(context).dividerColor),
+              border: Border.all(
+                color: isActive
+                    ? Theme.of(context).primaryColor
+                    : Theme.of(context).dividerColor,
+              ),
             ),
             child: Text(
               opt,
               style: TextStyle(
-                color: isActive ? Colors.black : Theme.of(context).colorScheme.onSurfaceVariant,
+                color: isActive
+                    ? Colors.black
+                    : Theme.of(context).colorScheme.onSurfaceVariant,
                 fontSize: 12,
                 fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
               ),
@@ -234,7 +220,11 @@ class _TransactionFilterSheetState extends State<TransactionFilterSheet> {
     );
   }
 
-  Widget _buildDateField(String label, DateTime? date, Function(DateTime?) onChanged) {
+  Widget _buildDateField(
+    String label,
+    DateTime? date,
+    Function(DateTime?) onChanged,
+  ) {
     return GestureDetector(
       onTap: () async {
         final picked = await showDatePicker(

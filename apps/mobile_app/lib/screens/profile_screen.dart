@@ -117,12 +117,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
           width: 90,
           height: 90,
           decoration: BoxDecoration(
-            color: primary.withOpacity(0.10),
+            color: primary.withValues(alpha: 0.10),
             shape: BoxShape.circle,
-            border: Border.all(color: primary.withOpacity(0.20), width: 2),
+            border: Border.all(
+              color: primary.withValues(alpha: 0.20),
+              width: 2,
+            ),
             boxShadow: [
               BoxShadow(
-                color: primary.withOpacity(0.15),
+                color: primary.withValues(alpha: 0.15),
                 blurRadius: 30,
                 spreadRadius: 2,
               ),
@@ -155,9 +158,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           decoration: BoxDecoration(
-            color: primary.withOpacity(0.08),
+            color: primary.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: primary.withOpacity(0.20)),
+            border: Border.all(color: primary.withValues(alpha: 0.20)),
           ),
           child: Text(
             'USER WORKSPACE',
@@ -260,6 +263,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           Divider(height: 1, color: theme.dividerColor),
           _ActionRow(
+            icon: Icons.outbound_outlined,
+            label: 'Withdraw Funds',
+            onTap: () => Navigator.pushNamed(context, '/withdraw'),
+          ),
+          Divider(height: 1, color: theme.dividerColor),
+          _ActionRow(
             icon: Icons.account_balance_outlined,
             label: 'Saved Bank Accounts',
             onTap: () => Navigator.pushNamed(context, '/bank-accounts'),
@@ -290,8 +299,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             style: OutlinedButton.styleFrom(
               foregroundColor: danger,
-              side: BorderSide(color: danger.withOpacity(0.30)),
-              backgroundColor: danger.withOpacity(0.06),
+              side: BorderSide(color: danger.withValues(alpha: 0.30)),
+              backgroundColor: danger.withValues(alpha: 0.06),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(14),
               ),
@@ -409,7 +418,7 @@ class _CopyButtonState extends State<_CopyButton> {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.all(4),
         decoration: BoxDecoration(
-          color: _copied ? primary.withOpacity(0.15) : Colors.transparent,
+          color: _copied ? primary.withValues(alpha: 0.15) : Colors.transparent,
           borderRadius: BorderRadius.circular(6),
         ),
         child: Icon(
@@ -417,7 +426,7 @@ class _CopyButtonState extends State<_CopyButton> {
           size: 16,
           color: _copied
               ? primary
-              : Theme.of(context).colorScheme.onSurface.withOpacity(0.25),
+              : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.25),
         ),
       ),
     );

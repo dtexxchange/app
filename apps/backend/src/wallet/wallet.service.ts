@@ -5,11 +5,15 @@ import {
 } from '@nestjs/common';
 import { TransactionStatus, TransactionType } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class WalletService {
   public static readonly ENABLE_E2EE = false;
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private notificationsService: NotificationsService,
+  ) {}
 
   private transactionSelect = {
     id: true,
@@ -20,9 +24,11 @@ export class WalletService {
     status: true,
     bankDetails: true,
     conversionRate: true,
+    utr: true,
     createdAt: true,
     updatedAt: true,
     user: { select: { email: true, firstName: true, lastName: true, readableId: true } },
+    relatedUser: { select: { email: true, firstName: true, lastName: true, readableId: true } },
     logs: { orderBy: { createdAt: 'asc' as const } },
   };
 
@@ -106,7 +112,7 @@ export class WalletService {
     if (user.balance < amount)
       throw new BadRequestException('Insufficient balance');
 
-    return this.prisma.$transaction(async (tx) => {
+    const result = await this.prisma.$transaction(async (tx) => {
       await tx.user.update({
         where: { id: userId },
         data: { balance: { decrement: roundedAmount } },
@@ -130,6 +136,83 @@ export class WalletService {
       );
       return transaction;
     });
+
+    await this.notificationsService.notifyAdmins(
+      'New Exchange Request',
+      `A new exchange request of ${roundedAmount} USDT has been submitted.`,
+      'TRANSACTION_NEW',
+      result.id,
+    );
+
+    return result;
+  }
+
+  // ─── Withdraw ─────────────────────────────────────────────────────────────────
+  async withdraw(
+    userId: string,
+    amount: number,
+    encryptedBankDetails: string,
+    userEmail: string,
+    passcode: string,
+  ) {
+    const roundedAmount = Math.round(amount * 100) / 100;
+    if (roundedAmount <= 0) throw new BadRequestException('Invalid amount');
+
+    const settings = await this.prisma.globalSettings.findUnique({
+      where: { id: 'global_settings' },
+    });
+    if (!settings || settings.usdtToInrRate === null || settings.usdtToInrRate === undefined) {
+      throw new BadRequestException('Conversion rate not set by admin. Withdrawals are currently disabled.');
+    }
+
+    const withdrawalFee = settings.withdrawalFee || 0;
+
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundException('User not found');
+
+    if (user.passcode && user.passcode !== passcode) {
+      throw new BadRequestException('Invalid passcode for authorization');
+    }
+
+    if (user.balance < roundedAmount) throw new BadRequestException('Insufficient balance');
+
+    const result = await this.prisma.$transaction(async (tx) => {
+      await tx.user.update({
+        where: { id: userId },
+        data: { balance: { decrement: roundedAmount } },
+      });
+
+      const transaction = await tx.transaction.create({
+        data: {
+          userId,
+          type: TransactionType.WITHDRAWAL,
+          amount: roundedAmount,
+          fee: withdrawalFee,
+          status: TransactionStatus.PENDING,
+          bankDetails: encryptedBankDetails,
+          conversionRate: settings.usdtToInrRate,
+        },
+      });
+
+      await this.writeLog(
+        tx,
+        transaction.id,
+        TransactionStatus.PENDING,
+        userEmail,
+        'Withdrawal request submitted',
+      );
+
+      return transaction;
+    });
+
+    await this.notificationsService.notifyAdmins(
+      'New Withdrawal Request',
+      `A new withdrawal request of ${roundedAmount} USDT has been submitted.`,
+      'TRANSACTION_NEW',
+      result.id,
+    );
+
+    return result;
   }
 
   // ─── Get all transactions ─────────────────────────────────────────────────────
@@ -139,23 +222,25 @@ export class WalletService {
     status?: TransactionStatus,
     type?: string,
     reqUserId?: string,
+    relatedUserId?: string,
     page?: number,
     limit?: number,
   ) {
     const whereClause: any = {};
     if (status) whereClause.status = status;
     if (type) whereClause.type = type as TransactionType;
+    if (relatedUserId) whereClause.relatedUserId = relatedUserId;
+
+    const effectiveLimit = limit ?? 20;
 
     // Build args imperatively to avoid union-spread incompatibility with Prisma's strict overloads
     const baseArgs: Parameters<typeof this.prisma.transaction.findMany>[0] = {
       where: whereClause,
       orderBy: { createdAt: 'desc' },
       select: this.transactionSelect,
+      take: effectiveLimit,
+      skip: page !== undefined ? (page - 1) * effectiveLimit : 0,
     };
-    if (limit !== undefined) {
-      baseArgs.take = limit;
-      baseArgs.skip = page !== undefined ? (page - 1) * limit : 0;
-    }
 
     if (role === 'ADMIN') {
       if (reqUserId) (baseArgs.where as any).userId = reqUserId;
@@ -183,6 +268,7 @@ export class WalletService {
     transactionId: string,
     status: TransactionStatus,
     adminEmail: string,
+    utr?: string,
   ) {
     const transaction = await this.prisma.transaction.findUnique({
       where: { id: transactionId },
@@ -193,7 +279,11 @@ export class WalletService {
       throw new BadRequestException('Transaction already processed');
     }
 
-    return this.prisma.$transaction(async (tx) => {
+    if (status === TransactionStatus.COMPLETED && !utr) {
+      throw new BadRequestException('UTR is mandatory for completing transactions');
+    }
+
+    const result = await this.prisma.$transaction(async (tx) => {
       const roundedAmount = Math.round(transaction.amount * 100) / 100;
       if (status === TransactionStatus.COMPLETED) {
         if (transaction.type === TransactionType.DEPOSIT) {
@@ -207,7 +297,7 @@ export class WalletService {
         if (transaction.type === TransactionType.EXCHANGE) {
           const user = await tx.user.findUnique({
             where: { id: transaction.userId },
-            select: { referredById: true, email: true, firstName: true, lastName: true },
+            select: { id: true, referredById: true, email: true, firstName: true, lastName: true },
           });
 
           if (user?.referredById) {
@@ -221,6 +311,7 @@ export class WalletService {
               const commTx = await tx.transaction.create({
                 data: {
                   userId: user.referredById,
+                  relatedUserId: user.id, // Store who triggered this
                   type: TransactionType.REFERRAL_COMMISSION,
                   amount: commission,
                   status: TransactionStatus.COMPLETED,
@@ -243,7 +334,10 @@ export class WalletService {
         }
         // ---------------------------------
       } else if (status === TransactionStatus.REJECTED) {
-        if (transaction.type === TransactionType.EXCHANGE) {
+        if (
+          transaction.type === TransactionType.EXCHANGE ||
+          transaction.type === TransactionType.WITHDRAWAL
+        ) {
           await tx.user.update({
             where: { id: transaction.userId },
             data: { balance: { increment: roundedAmount } },
@@ -255,19 +349,35 @@ export class WalletService {
         status === TransactionStatus.COMPLETED
           ? transaction.type === TransactionType.DEPOSIT
             ? 'Deposit approved and funds credited'
-            : 'Exchange approved and processed'
-          : transaction.type === TransactionType.EXCHANGE
-            ? 'Exchange rejected and balance refunded'
+            : transaction.type === TransactionType.WITHDRAWAL
+              ? 'Withdrawal approved and processed'
+              : 'Exchange approved and processed'
+          : transaction.type === TransactionType.EXCHANGE ||
+              transaction.type === TransactionType.WITHDRAWAL
+            ? `${transaction.type === TransactionType.WITHDRAWAL ? 'Withdrawal' : 'Exchange'} rejected and balance refunded`
             : 'Deposit rejected';
 
       await this.writeLog(tx, transactionId, status, adminEmail, note);
 
       return tx.transaction.update({
         where: { id: transactionId },
-        data: { status },
+        data: { status, utr },
         select: this.transactionSelect,
       });
     });
+
+    // Notify User
+    const statusStr = status === TransactionStatus.COMPLETED ? 'Completed' : 'Rejected';
+    const txTypeStr = result.type.charAt(0) + result.type.slice(1).toLowerCase();
+    await this.notificationsService.createNotification(
+      result.userId,
+      `Transaction ${statusStr}`,
+      `Your ${txTypeStr} transaction of ${result.amount} USDT has been ${status.toLowerCase()}.`,
+      'TRANSACTION_STATUS',
+      result.id,
+    );
+
+    return result;
   }
 
   // ─── Keys ─────────────────────────────────────────────────────────────────────

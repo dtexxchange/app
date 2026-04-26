@@ -7,6 +7,8 @@ import { PrismaModule } from './prisma/prisma.module';
 import { SettingsModule } from './settings/settings.module';
 import { UsersModule } from './users/users.module';
 import { WalletModule } from './wallet/wallet.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { NewsModule } from './news/news.module';
 
 @Module({
   imports: [
@@ -18,6 +20,8 @@ import { WalletModule } from './wallet/wallet.module';
     WalletModule,
     SettingsModule,
     BankAccountsModule,
+    NotificationsModule,
+    NewsModule,
   ],
 })
 export class AppModule {}

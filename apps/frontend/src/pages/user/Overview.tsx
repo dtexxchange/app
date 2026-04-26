@@ -14,6 +14,7 @@ import {
     Wallet,
     XCircle,
     ShieldAlert,
+    Newspaper,
 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import React, { useCallback, useEffect, useState } from "react";
@@ -55,6 +56,8 @@ const Overview: React.FC = () => {
     >([]);
     const [timeLeft, setTimeLeft] = useState(1800);
     const [savedAccounts, setSavedAccounts] = useState<SavedAccount[]>([]);
+    const [newsList, setNewsList] = useState<any[]>([]);
+    const [currentNewsPage, setCurrentNewsPage] = useState(0);
 
     // UI States
     const [isDepositOpen, setIsDepositOpen] = useState(false);
@@ -111,6 +114,9 @@ const Overview: React.FC = () => {
 
             const { data: accounts } = await api.get("/bank-accounts");
             setSavedAccounts(accounts);
+
+            const { data: newsData } = await api.get("/news");
+            setNewsList(newsData);
         } catch (e) {
             console.error(e);
         }
@@ -119,6 +125,14 @@ const Overview: React.FC = () => {
     useEffect(() => {
         fetchData();
     }, [fetchData]);
+
+    useEffect(() => {
+        if (newsList.length <= 1) return;
+        const interval = setInterval(() => {
+            setCurrentNewsPage((prev) => (prev + 1) % newsList.length);
+        }, 3000);
+        return () => clearInterval(interval);
+    }, [newsList]);
 
     useEffect(() => {
         if (!isDepositOpen) return;
@@ -290,6 +304,57 @@ const Overview: React.FC = () => {
                     Monitor your assets and manage your liquidity.
                 </p>
             </header>
+
+            {newsList.length > 0 && (
+                <div className="glass p-6 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6">
+                    <div className="flex items-start gap-4 flex-1 min-w-0 w-full">
+                        <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20 shadow-[0_0_20px_rgba(0,255,157,0.1)] shrink-0 mt-1">
+                            <Newspaper size={24} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <h4 className="text-white font-outfit font-bold text-lg mb-1 truncate">
+                                {newsList[currentNewsPage].title}
+                            </h4>
+                            <p className="text-text-dim font-medium text-sm line-clamp-2 leading-relaxed">
+                                {newsList[currentNewsPage].description}
+                            </p>
+                            {newsList[currentNewsPage].link && (
+                                <a 
+                                    href={newsList[currentNewsPage].link}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline mt-2"
+                                >
+                                    Learn More &rarr;
+                                </a>
+                            )}
+                        </div>
+                    </div>
+
+                    {newsList.length > 1 && (
+                        <div className="flex items-center gap-3 self-end md:self-center shrink-0">
+                            <div className="text-[10px] bg-white/5 border border-white/10 px-3 py-1.5 rounded-full font-bold text-text-dim flex items-center gap-1.5">
+                                <span className="text-white font-black">{currentNewsPage + 1}</span>
+                                <span>/</span>
+                                <span>{newsList.length}</span>
+                            </div>
+                            <div className="flex gap-1">
+                                {newsList.map((_, idx) => (
+                                    <button
+                                        key={idx}
+                                        onClick={() => setCurrentNewsPage(idx)}
+                                        className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                                            idx === currentNewsPage 
+                                                ? "bg-primary w-4" 
+                                                : "bg-white/20 hover:bg-white/40"
+                                        }`}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
             {!hasPasscode && (
                 <div className="glass p-6 border-red-500/20 bg-red-500/5 flex items-center justify-between">
                     <div className="flex items-center gap-4">

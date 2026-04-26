@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+
 import 'transaction_card.dart';
-import 'transaction_filter_sheet.dart';
 
 class TransactionsTab extends StatefulWidget {
   final List<dynamic> transactions;
@@ -61,9 +60,12 @@ class _TransactionsTabState extends State<TransactionsTab> {
 
   @override
   Widget build(BuildContext context) {
-    final transactionTabs = ['All', 'Deposits', 'Exchanges', 'Referral'];
-    final widthScale = (MediaQuery.of(context).size.width / 375.0).clamp(0.85, 1.2);
-    
+    final transactionTabs = ['All', 'Deposits', 'Exchanges', 'Withdrawals', 'Referral'];
+    final widthScale = (MediaQuery.of(context).size.width / 375.0).clamp(
+      0.85,
+      1.2,
+    );
+
     return GestureDetector(
       onHorizontalDragEnd: (details) {
         if (details.primaryVelocity! > 0) {
@@ -117,23 +119,26 @@ class _TransactionsTabState extends State<TransactionsTab> {
                   },
                   child: Container(
                     margin: const EdgeInsets.only(right: 8),
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
-                      color: isSelected 
-                          ? Theme.of(context).primaryColor 
+                      color: isSelected
+                          ? Theme.of(context).primaryColor
                           : Theme.of(context).cardColor,
                       borderRadius: BorderRadius.circular(25),
                       border: Border.all(
-                        color: isSelected 
-                            ? Theme.of(context).primaryColor 
+                        color: isSelected
+                            ? Theme.of(context).primaryColor
                             : Theme.of(context).dividerColor,
                       ),
                     ),
                     child: Text(
                       transactionTabs[index],
                       style: TextStyle(
-                        color: isSelected 
-                            ? Colors.black 
+                        color: isSelected
+                            ? Colors.black
                             : Theme.of(context).colorScheme.onSurfaceVariant,
                         fontWeight: FontWeight.bold,
                       ),
@@ -156,6 +161,7 @@ class _TransactionsTabState extends State<TransactionsTab> {
                 _buildTransactionList('all', widthScale),
                 _buildTransactionList('deposit', widthScale),
                 _buildTransactionList('exchange', widthScale),
+                _buildTransactionList('withdrawal', widthScale),
                 _buildTransactionList('referral', widthScale),
               ],
             ),
@@ -166,9 +172,9 @@ class _TransactionsTabState extends State<TransactionsTab> {
   }
 
   Widget _buildTransactionList(String type, double widthScale) {
-    List<dynamic> _filteredTransactions() {
+    List<dynamic> filteredTransactions() {
       List<dynamic> filtered = List.from(widget.transactions);
-      
+
       // Filter by tab type first
       if (type != 'all') {
         final tabType = type.toLowerCase();
@@ -177,54 +183,66 @@ class _TransactionsTabState extends State<TransactionsTab> {
           return txType.contains(tabType);
         }).toList();
       }
-      
+
       // Filter by type (from filter sheet)
       if (widget.selectedType != 'All') {
-        final txType = widget.selectedType.toLowerCase();
         filtered = filtered.where((tx) {
           final txType = tx['type']?.toString().toLowerCase() ?? '';
           return txType.contains(txType);
         }).toList();
       }
-      
+
       // Filter by search
       if (widget.searchQuery.isNotEmpty) {
         final searchLower = widget.searchQuery.toLowerCase();
         filtered = filtered.where((tx) {
-          final userName = '${tx['user']?['firstName'] ?? ''} ${tx['user']?['lastName'] ?? ''}'.toLowerCase();
-          final userEmail = tx['user']?['email']?.toString().toLowerCase() ?? '';
+          final userName =
+              '${tx['user']?['firstName'] ?? ''} ${tx['user']?['lastName'] ?? ''}'
+                  .toLowerCase();
+          final userEmail =
+              tx['user']?['email']?.toString().toLowerCase() ?? '';
           final txId = tx['id']?.toString().toLowerCase() ?? '';
-          
-          return userName.contains(searchLower) || 
-                 userEmail.contains(searchLower) || 
-                 txId.contains(searchLower);
+
+          return userName.contains(searchLower) ||
+              userEmail.contains(searchLower) ||
+              txId.contains(searchLower);
         }).toList();
       }
-      
+
       // Filter by status
       if (widget.selectedStatus != 'All') {
-        filtered = filtered.where((tx) => tx['status'] == widget.selectedStatus).toList();
+        filtered = filtered
+            .where((tx) => tx['status'] == widget.selectedStatus)
+            .toList();
       }
-      
+
       // Filter by date range
       if (widget.startDate != null || widget.endDate != null) {
         filtered = filtered.where((tx) {
           final txDate = DateTime.tryParse(tx['createdAt']?.toString() ?? '');
           if (txDate == null) return false;
-          
-          if (widget.startDate != null && txDate!.isBefore(widget.startDate!)) return false;
-          if (widget.endDate != null && txDate!.isAfter(widget.endDate!)) return false;
-          
+
+          if (widget.startDate != null && txDate.isBefore(widget.startDate!)) {
+            return false;
+          }
+          if (widget.endDate != null && txDate.isAfter(widget.endDate!)) {
+            return false;
+          }
+
           return true;
         }).toList();
       }
-      
+
       // Apply sorting
       filtered.sort((a, b) {
         switch (widget.sortBy) {
           case 'date':
-            final dateA = DateTime.tryParse(a['createdAt']?.toString() ?? '') ?? DateTime.now();
-            final dateB = DateTime.tryParse(b['createdAt']?.toString() ?? '') ?? DateTime.now();
+            final dateA =
+                DateTime.tryParse(a['createdAt']?.toString() ?? '') ??
+                DateTime.now();
+            final dateB =
+                DateTime.tryParse(b['createdAt']?.toString() ?? '') ??
+                DateTime.now();
             return dateB.compareTo(dateA);
           case 'amount':
             final amountA = (a['amount'] as num?) ?? 0;
@@ -242,11 +260,11 @@ class _TransactionsTabState extends State<TransactionsTab> {
             return 0;
         }
       });
-      
+
       return filtered;
     }
 
-    final filtered = _filteredTransactions();
+    final filtered = filteredTransactions();
 
     if (filtered.isEmpty) {
       return _emptyState('No transactions found', Icons.receipt_long);
@@ -254,13 +272,17 @@ class _TransactionsTabState extends State<TransactionsTab> {
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 100),
-      children: filtered.map((tx) => TransactionCard(
-        transaction: tx,
-        widthScale: widthScale,
-        onTap: () => widget.onTransactionAction(tx['id'], 'detail'),
-        onApprove: () => widget.onTransactionAction(tx['id'], 'approve'),
-        onReject: () => widget.onTransactionAction(tx['id'], 'reject'),
-      )).toList(),
+      children: filtered
+          .map(
+            (tx) => TransactionCard(
+              transaction: tx,
+              widthScale: widthScale,
+              onTap: () => widget.onTransactionAction(tx['id'], 'detail'),
+              onApprove: () => widget.onTransactionAction(tx['id'], 'approve'),
+              onReject: () => widget.onTransactionAction(tx['id'], 'reject'),
+            ),
+          )
+          .toList(),
     );
   }
 
@@ -270,7 +292,7 @@ class _TransactionsTabState extends State<TransactionsTab> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 48, color: Colors.white.withOpacity(0.08)),
+          Icon(icon, size: 48, color: Colors.white.withValues(alpha: 0.08)),
           const SizedBox(height: 16),
           Text(
             label,

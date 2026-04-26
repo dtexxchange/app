@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../services/api_service.dart';
+import 'referral_commission_screen.dart';
 
 class ReferralScreen extends StatefulWidget {
   const ReferralScreen({super.key});
@@ -149,7 +150,10 @@ class _ReferralScreenState extends State<ReferralScreen> {
       padding: EdgeInsets.all(32 * widthScale),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [_primary.withOpacity(0.15), _blue.withOpacity(0.05)],
+          colors: [
+            _primary.withValues(alpha: 0.15),
+            _blue.withValues(alpha: 0.05),
+          ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -181,7 +185,9 @@ class _ReferralScreenState extends State<ReferralScreen> {
               vertical: 12 * widthScale,
             ),
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.05),
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurface.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: _primary.withValues(alpha: 0.3)),
             ),
@@ -218,7 +224,9 @@ class _ReferralScreenState extends State<ReferralScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.02),
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurface.withValues(alpha: 0.02),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: _border),
             ),
@@ -252,7 +260,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
                         decoration: BoxDecoration(
                           color: Theme.of(
                             context,
-                          ).colorScheme.onSurface.withOpacity(0.05),
+                          ).colorScheme.onSurface.withValues(alpha: 0.05),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Icon(
@@ -298,72 +306,83 @@ class _ReferralScreenState extends State<ReferralScreen> {
   Widget _buildReferralItem(dynamic user) {
     bool isApproved = user['status'] == 'APPROVED';
 
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: _bgCard,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: _border),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: _blue.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: const Icon(Icons.person, color: _blue, size: 20),
+    return InkWell(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ReferralCommissionScreen(referredUser: user),
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  (user['firstName'] != null || user['lastName'] != null)
-                      ? '${user['firstName'] ?? ''} ${user['lastName'] ?? ''}'
-                            .trim()
-                      : user['email'],
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15,
-                  ),
-                ),
-                Text(
-                  'Joined ${_formatDate(user['createdAt'])}',
-                  style: const TextStyle(
-                    color: Color(0xFF94A3B8),
-                    fontSize: 11,
-                  ),
-                ),
-              ],
+        );
+      },
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: _bgCard,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: _border),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: _blue.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: const Icon(Icons.person, color: _blue, size: 20),
             ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: isApproved
-                  ? _primary.withOpacity(0.05)
-                  : Colors.orange.withOpacity(0.05),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    (user['firstName'] != null || user['lastName'] != null)
+                        ? '${user['firstName'] ?? ''} ${user['lastName'] ?? ''}'
+                              .trim()
+                        : user['email'],
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
+                  ),
+                  Text(
+                    'Joined ${_formatDate(user['createdAt'])}',
+                    style: const TextStyle(
+                      color: Color(0xFF94A3B8),
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
                 color: isApproved
-                    ? _primary.withValues(alpha: 0.2)
-                    : Colors.orange.withValues(alpha: 0.2),
+                    ? _primary.withValues(alpha: 0.05)
+                    : Colors.orange.withValues(alpha: 0.05),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: isApproved
+                      ? _primary.withValues(alpha: 0.2)
+                      : Colors.orange.withValues(alpha: 0.2),
+                ),
+              ),
+              child: Text(
+                isApproved ? 'APPROVED' : 'PENDING',
+                style: TextStyle(
+                  color: isApproved ? _primary : Colors.orange,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
-            child: Text(
-              isApproved ? 'APPROVED' : 'PENDING',
-              style: TextStyle(
-                color: isApproved ? _primary : Colors.orange,
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

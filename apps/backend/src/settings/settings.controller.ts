@@ -93,4 +93,24 @@ export class SettingsController {
   async updateConversionRate(@Body('rate') rate: number, @Req() req: any) {
     return this.settingsService.updateConversionRate(rate, req.user.email);
   }
+
+  @Get('withdrawal-fee')
+  @UseGuards(JwtAuthGuard)
+  async getWithdrawalFee() {
+    return this.settingsService.getWithdrawalFee();
+  }
+
+  @Get('withdrawal-fee/history')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  async getWithdrawalFeeHistory() {
+    return this.settingsService.getWithdrawalFeeHistory();
+  }
+
+  @Patch('withdrawal-fee')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  async updateWithdrawalFee(@Body('fee') fee: number, @Req() req: any) {
+    return this.settingsService.updateWithdrawalFee(fee, req.user.email);
+  }
 }

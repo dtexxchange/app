@@ -30,10 +30,8 @@ class _UserFilterSheetState extends State<UserFilterSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final _bgCard = Theme.of(context).cardColor;
-    final _primary = Theme.of(context).primaryColor;
-    final _textDim = Theme.of(context).colorScheme.onSurfaceVariant;
-    final _border = Theme.of(context).dividerColor;
+    final primary = Theme.of(context).primaryColor;
+    final border = Theme.of(context).dividerColor;
 
     return Container(
       padding: EdgeInsets.fromLTRB(
@@ -51,7 +49,7 @@ class _UserFilterSheetState extends State<UserFilterSheet> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: _border,
+                color: border,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -83,19 +81,15 @@ class _UserFilterSheetState extends State<UserFilterSheet> {
           ),
           const SizedBox(height: 24),
           _buildFilterLabel('System Role'),
-          _buildFilterOptions(
-            ['All', 'USER', 'ADMIN'],
-            _selectedRole,
-            (val) {
-              setState(() => _selectedRole = val);
-              widget.onRoleChanged(val);
-            },
-          ),
+          _buildFilterOptions(['All', 'USER', 'ADMIN'], _selectedRole, (val) {
+            setState(() => _selectedRole = val);
+            widget.onRoleChanged(val);
+          }),
           const SizedBox(height: 32),
           ElevatedButton(
             onPressed: widget.onApply,
             style: ElevatedButton.styleFrom(
-              backgroundColor: _primary,
+              backgroundColor: primary,
               foregroundColor: Colors.black,
               padding: const EdgeInsets.symmetric(vertical: 18),
               elevation: 0,
@@ -144,14 +138,22 @@ class _UserFilterSheetState extends State<UserFilterSheet> {
             duration: const Duration(milliseconds: 200),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
-              color: isActive ? Theme.of(context).primaryColor : Theme.of(context).cardColor,
+              color: isActive
+                  ? Theme.of(context).primaryColor
+                  : Theme.of(context).cardColor,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: isActive ? Theme.of(context).primaryColor : Theme.of(context).dividerColor),
+              border: Border.all(
+                color: isActive
+                    ? Theme.of(context).primaryColor
+                    : Theme.of(context).dividerColor,
+              ),
             ),
             child: Text(
               opt,
               style: TextStyle(
-                color: isActive ? Colors.black : Theme.of(context).colorScheme.onSurfaceVariant,
+                color: isActive
+                    ? Colors.black
+                    : Theme.of(context).colorScheme.onSurfaceVariant,
                 fontSize: 12,
                 fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
               ),

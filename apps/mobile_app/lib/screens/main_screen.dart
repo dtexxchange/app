@@ -66,7 +66,7 @@ class _MainScreenState extends State<MainScreen> {
         ),
         child: NavigationBar(
           backgroundColor: _bgDark,
-          indicatorColor: _primary.withOpacity(0.15),
+          indicatorColor: _primary.withValues(alpha: 0.15),
           selectedIndex: _currentIndex,
           onDestinationSelected: _onTabSelected,
           labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,

@@ -7,6 +7,8 @@ import {
     Users,
     Wallet,
     QrCode,
+    Banknote,
+    Newspaper,
 } from "lucide-react";
 import React from "react";
 import { NavLink, Outlet } from "react-router-dom";
@@ -29,6 +31,12 @@ const AdminLayout: React.FC = () => {
             icon: <ArrowRightLeft size={20} />,
             label: "Exchange Rate",
         },
+        {
+            path: "/withdrawal-fee",
+            icon: <Banknote size={20} />,
+            label: "Withdrawal Fee",
+        },
+        { path: "/news", icon: <Newspaper size={20} />, label: "News & Bulletins" },
         { path: "/settings", icon: <Settings size={20} />, label: "Settings" },
     ];
 

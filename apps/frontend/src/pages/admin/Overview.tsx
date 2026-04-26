@@ -5,6 +5,7 @@ import {
     ArrowDownLeft,
     ArrowUpRight,
     CheckCircle2,
+    DollarSign,
     History,
     KeyIcon,
     Search,
@@ -116,7 +117,7 @@ const Overview: React.FC = () => {
         try {
             const { data } = await api.get(`/wallet/transactions/${tx.id}`);
             setSelectedTx(data);
-            if (data.type === "EXCHANGE" && data.bankDetails) {
+            if ((data.type === "EXCHANGE" || data.type === "WITHDRAWAL") && data.bankDetails) {
                 attemptDecryption(data.bankDetails);
             }
         } catch (e) {
@@ -266,7 +267,13 @@ const Overview: React.FC = () => {
                                     </td>
                                     <td className="px-8 py-6">
                                         <div
-                                            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border ${tx.type === "DEPOSIT" ? "border-primary/20 text-primary bg-primary/5" : "border-accent-blue/20 text-accent-blue bg-accent-blue/5"}`}
+                                            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border ${
+                                                tx.type === "DEPOSIT" 
+                                                    ? "border-primary/20 text-primary bg-primary/5" 
+                                                    : tx.type === "WITHDRAWAL"
+                                                        ? "border-orange-500/20 text-orange-500 bg-orange-500/5"
+                                                        : "border-accent-blue/20 text-accent-blue bg-accent-blue/5"
+                                            }`}
                                         >
                                             {tx.type === "DEPOSIT" ? (
                                                 <ArrowDownLeft size={12} />
@@ -428,7 +435,7 @@ const Overview: React.FC = () => {
                                                     size={16}
                                                     className="text-primary"
                                                 />{" "}
-                                                Decrypted Bank PII
+                                                {selectedTx.type === "WITHDRAWAL" ? "Withdrawal Destination" : "Decrypted Bank PII"}
                                             </h3>
                                             {decryptedBankDetails ? (
                                                 <div className="space-y-4">
@@ -480,6 +487,32 @@ const Overview: React.FC = () => {
                                                     </p>
                                                 </div>
                                             )}
+                                        </div>
+                                    )}
+
+                                    {selectedTx.type === "WITHDRAWAL" && (
+                                        <div className="glass p-8">
+                                            <h3 className="text-sm font-bold text-white uppercase tracking-widest mb-6 flex items-center gap-2">
+                                                <DollarSign
+                                                    size={16}
+                                                    className="text-orange-500"
+                                                />{" "}
+                                                Withdrawal Fee Summary
+                                            </h3>
+                                            <div className="space-y-4">
+                                                <div className="flex justify-between items-center py-3 border-b border-white/5">
+                                                    <span className="text-[10px] font-bold text-text-dim uppercase">Gross Amount</span>
+                                                    <span className="font-bold text-white">{formatAmount(selectedTx.amount)} USDT</span>
+                                                </div>
+                                                <div className="flex justify-between items-center py-3 border-b border-white/5">
+                                                    <span className="text-[10px] font-bold text-text-dim uppercase">Platform Fee</span>
+                                                    <span className="font-bold text-red-500">-{formatAmount(selectedTx.fee || 0)} USDT</span>
+                                                </div>
+                                                <div className="flex justify-between items-center py-3 last:border-0">
+                                                    <span className="text-[10px] font-bold text-text-dim uppercase">Net Settlement</span>
+                                                    <span className="font-bold text-primary text-lg">{formatAmount(selectedTx.amount - (selectedTx.fee || 0))} USDT</span>
+                                                </div>
+                                            </div>
                                         </div>
                                     )}
 

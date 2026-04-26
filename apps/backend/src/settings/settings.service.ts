@@ -2,12 +2,14 @@ import { Injectable, OnModuleInit } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import { EmailService } from '../email/email.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class SettingsService implements OnModuleInit {
   constructor(
     private prisma: PrismaService,
     private emailService: EmailService,
+    private notificationsService: NotificationsService,
   ) {}
 
   async onModuleInit() {
@@ -105,7 +107,6 @@ export class SettingsService implements OnModuleInit {
         });
 
         for (const admin of admins) {
-          // We can call this outside if we want, but inside is fine for consistency
           this.emailService.sendAssignmentAlert(
             admin.email,
             assignmentRecord.user.email,
@@ -114,6 +115,13 @@ export class SettingsService implements OnModuleInit {
               `${assignmentRecord.wallet.network} Gateway`,
           );
         }
+
+        await this.notificationsService.notifyAdmins(
+          'QR Assignment Alert',
+          `User ${assignmentRecord.user.email} has viewed the deposit QR code.`,
+          'QR_ASSIGNMENT',
+          assignmentRecord.id,
+        );
 
         return {
           ...assignmentRecord.wallet,
@@ -211,6 +219,38 @@ export class SettingsService implements OnModuleInit {
 
   async getConversionRateHistory() {
     return this.prisma.conversionRateHistory.findMany({
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async getWithdrawalFee() {
+    const settings = await this.prisma.globalSettings.findUnique({
+      where: { id: 'global_settings' },
+    });
+    return { withdrawalFee: settings?.withdrawalFee };
+  }
+
+  async updateWithdrawalFee(fee: number, adminEmail: string) {
+    const roundedFee = Math.round(fee * 100) / 100;
+    return this.prisma.$transaction(async (tx) => {
+      const settings = await tx.globalSettings.update({
+        where: { id: 'global_settings' },
+        data: { withdrawalFee: roundedFee },
+      });
+
+      await tx.withdrawalFeeHistory.create({
+        data: {
+          fee: roundedFee,
+          adminEmail: adminEmail,
+        },
+      });
+
+      return settings;
+    });
+  }
+
+  async getWithdrawalFeeHistory() {
+    return this.prisma.withdrawalFeeHistory.findMany({
       orderBy: { createdAt: 'desc' },
     });
   }

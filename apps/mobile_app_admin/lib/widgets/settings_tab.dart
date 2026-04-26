@@ -10,6 +10,8 @@ class SettingsTab extends StatelessWidget {
   final Function() onToggleTheme;
   final Function() onNavigateToWallets;
   final Function() onNavigateToAssignments;
+  final Function() onNavigateToWithdrawalFee;
+  final Function() onNavigateToNews;
 
   const SettingsTab({
     super.key,
@@ -21,17 +23,17 @@ class SettingsTab extends StatelessWidget {
     required this.onToggleTheme,
     required this.onNavigateToWallets,
     required this.onNavigateToAssignments,
+    required this.onNavigateToWithdrawalFee,
+    required this.onNavigateToNews,
   });
 
   @override
   Widget build(BuildContext context) {
-    final widthScale = (MediaQuery.of(context).size.width / 375.0).clamp(0.85, 1.2);
-    final _bgCard = Theme.of(context).cardColor;
-    final _border = Theme.of(context).dividerColor;
-    final _textDim = Theme.of(context).colorScheme.onSurfaceVariant;
-    final _primary = Theme.of(context).primaryColor;
-    const _blue = Color(0xFF3B82F6);
-    const _danger = Color(0xFFF87171);
+    final widthScale = (MediaQuery.of(context).size.width / 375.0).clamp(
+      0.85,
+      1.2,
+    );
+    final textDim = Theme.of(context).colorScheme.onSurfaceVariant;
 
     return ListView(
       padding: const EdgeInsets.all(24),
@@ -39,7 +41,7 @@ class SettingsTab extends StatelessWidget {
         Text(
           'PLATFORM CONFIGURATION',
           style: GoogleFonts.inter(
-            color: _textDim,
+            color: textDim,
             fontSize: 10,
             fontWeight: FontWeight.bold,
             letterSpacing: 2,
@@ -50,12 +52,16 @@ class SettingsTab extends StatelessWidget {
         const SizedBox(height: 16),
         _buildAssignmentsCard(context, widthScale),
         const SizedBox(height: 16),
+        _buildWithdrawalFeeCard(context, widthScale),
+        const SizedBox(height: 16),
+        _buildNewsCard(context, widthScale),
+        const SizedBox(height: 16),
         _buildAppearanceCard(context, widthScale),
         const SizedBox(height: 32),
         Text(
           'SECURITY & INFRASTRUCTURE',
           style: GoogleFonts.inter(
-            color: _textDim,
+            color: textDim,
             fontSize: 10,
             fontWeight: FontWeight.bold,
             letterSpacing: 2,
@@ -68,7 +74,7 @@ class SettingsTab extends StatelessWidget {
   }
 
   Widget _buildWalletsCard(BuildContext context, double widthScale) {
-    final _primary = Theme.of(context).primaryColor;
+    final primary = Theme.of(context).primaryColor;
 
     return Container(
       padding: const EdgeInsets.all(24),
@@ -86,12 +92,12 @@ class SettingsTab extends StatelessWidget {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: _primary.withValues(alpha: 0.1),
+                  color: primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Icon(
                   Icons.account_balance_wallet_outlined,
-                  color: _primary,
+                  color: primary,
                 ),
               ),
               const SizedBox(width: 16),
@@ -124,7 +130,7 @@ class SettingsTab extends StatelessWidget {
             child: ElevatedButton(
               onPressed: onNavigateToWallets,
               style: ElevatedButton.styleFrom(
-                backgroundColor: _primary,
+                backgroundColor: primary,
                 foregroundColor: Colors.black,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
@@ -132,7 +138,7 @@ class SettingsTab extends StatelessWidget {
                 ),
               ),
               child: const Text(
-                'Manage Gateways',
+                'Manage Wallets',
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
             ),
@@ -143,7 +149,7 @@ class SettingsTab extends StatelessWidget {
   }
 
   Widget _buildAssignmentsCard(BuildContext context, double widthScale) {
-    final _blue = const Color(0xFF3B82F6);
+    final blue = const Color(0xFF3B82F6);
 
     return Container(
       padding: const EdgeInsets.all(24),
@@ -161,10 +167,10 @@ class SettingsTab extends StatelessWidget {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: _blue.withValues(alpha: 0.1),
+                  color: blue.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: Icon(Icons.history_toggle_off, color: _blue),
+                child: Icon(Icons.history_toggle_off, color: blue),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -196,7 +202,7 @@ class SettingsTab extends StatelessWidget {
             child: ElevatedButton(
               onPressed: onNavigateToAssignments,
               style: ElevatedButton.styleFrom(
-                backgroundColor: _blue,
+                backgroundColor: blue,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
@@ -261,7 +267,7 @@ class SettingsTab extends StatelessWidget {
           ),
           Switch(
             value: Theme.of(context).brightness == Brightness.dark,
-            activeColor: Theme.of(context).primaryColor,
+            activeThumbColor: Theme.of(context).primaryColor,
             onChanged: (_) => onToggleTheme(),
           ),
         ],
@@ -270,8 +276,8 @@ class SettingsTab extends StatelessWidget {
   }
 
   Widget _buildSecurityCard(BuildContext context, double widthScale) {
-    final _primary = Theme.of(context).primaryColor;
-    final _danger = const Color(0xFFF87171);
+    final primary = Theme.of(context).primaryColor;
+    final danger = const Color(0xFFF87171);
 
     return Container(
       padding: const EdgeInsets.all(24),
@@ -280,8 +286,8 @@ class SettingsTab extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: hasMobileKey
-              ? _primary.withValues(alpha: 0.2)
-              : _danger.withValues(alpha: 0.2),
+              ? primary.withValues(alpha: 0.2)
+              : danger.withValues(alpha: 0.2),
         ),
       ),
       child: Column(
@@ -293,14 +299,16 @@ class SettingsTab extends StatelessWidget {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: (hasMobileKey ? _primary : _danger).withOpacity(0.1),
+                  color: (hasMobileKey ? primary : danger).withValues(
+                    alpha: 0.1,
+                  ),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Icon(
                   hasMobileKey
                       ? Icons.shield_outlined
                       : Icons.shield_moon_outlined,
-                  color: hasMobileKey ? _primary : _danger,
+                  color: hasMobileKey ? primary : danger,
                 ),
               ),
               const SizedBox(width: 16),
@@ -309,9 +317,7 @@ class SettingsTab extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      hasMobileKey
-                          ? 'Active Security'
-                          : 'Insecure Terminal',
+                      hasMobileKey ? 'Active Security' : 'Insecure Terminal',
                       style: GoogleFonts.outfit(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -347,7 +353,7 @@ class SettingsTab extends StatelessWidget {
                 child: ElevatedButton(
                   onPressed: () => onImportKey('private', 'key'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white.withOpacity(0.05),
+                    backgroundColor: Colors.white.withValues(alpha: 0.05),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
@@ -365,7 +371,7 @@ class SettingsTab extends StatelessWidget {
                 child: ElevatedButton(
                   onPressed: hasMobileKey ? null : onGenerateKeys,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: _primary,
+                    backgroundColor: primary,
                     foregroundColor: Colors.black,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
@@ -384,4 +390,149 @@ class SettingsTab extends StatelessWidget {
       ),
     );
   }
+
+  Widget _buildWithdrawalFeeCard(BuildContext context, double widthScale) {
+    final orange = const Color(0xFFF59E0B);
+
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Theme.of(context).dividerColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: orange.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(Icons.money_off_csred_outlined, color: orange),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Withdrawal Fee',
+                      style: GoogleFonts.outfit(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      'Set charge for user withdrawals',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: onNavigateToWithdrawalFee,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: orange,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text(
+                'Manage Fee',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNewsCard(BuildContext context, double widthScale) {
+    final teal = const Color(0xFF14B8A6);
+
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Theme.of(context).dividerColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: teal.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(Icons.newspaper_outlined, color: teal),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'News & Updates',
+                      style: GoogleFonts.outfit(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      'Manage news for user app homepage',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: onNavigateToNews,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: teal,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text(
+                'Manage News',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
+

@@ -6,10 +6,13 @@ import 'screens/deposit_screen.dart';
 import 'screens/exchange_passcode_screen.dart';
 import 'screens/exchange_screen.dart';
 import 'screens/main_screen.dart';
+import 'screens/notifications_screen.dart';
 import 'screens/passcode_screen.dart';
 import 'screens/success_screen.dart';
 import 'screens/transactions_screen.dart';
+import 'screens/withdrawal_screen.dart';
 import 'services/api_service.dart';
+import 'services/notification_service.dart';
 import 'services/theme_service.dart';
 import 'theme/app_theme.dart';
 
@@ -18,7 +21,9 @@ final RouteObserver<ModalRoute<void>> routeObserver =
     RouteObserver<ModalRoute<void>>();
 final ThemeService themeService = ThemeService();
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await NotificationService().init();
   runApp(const MainApp());
 }
 
@@ -50,6 +55,8 @@ class MainApp extends StatelessWidget {
             '/exchange-passcode': (context) => const ExchangePasscodeScreen(),
             '/success': (context) => const SuccessScreen(),
             '/deposit': (context) => const DepositScreen(),
+            '/withdraw': (context) => const WithdrawalScreen(),
+            '/notifications': (context) => const NotificationsScreen(),
           },
         );
       },

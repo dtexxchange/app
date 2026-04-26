@@ -208,7 +208,7 @@ class _SignupScreenState extends State<SignupScreen> {
             filled: true,
             fillColor: Theme.of(
               context,
-            ).colorScheme.onSurface.withOpacity(0.03),
+            ).colorScheme.onSurface.withValues(alpha: 0.03),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(color: Theme.of(context).dividerColor),

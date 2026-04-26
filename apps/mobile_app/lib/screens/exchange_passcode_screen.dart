@@ -41,6 +41,7 @@ class _ExchangePasscodeScreenState extends State<ExchangePasscodeScreen> {
     setState(() => _isLoading = true);
     final args =
         ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+    final type = args['type'] as String? ?? 'exchange';
     final amount = args['amount'] as double;
     final bankDetails = args['bankDetails'] as Map<String, dynamic>;
     final save = args['saveNewAccount'] as bool;
@@ -67,8 +68,9 @@ class _ExchangePasscodeScreenState extends State<ExchangePasscodeScreen> {
         });
       }
 
-      // 4. Submit Exchange
-      final res = await _api.postRequest('/wallet/exchange', {
+      // 4. Submit Transaction
+      final endpoint = type == 'withdrawal' ? '/wallet/withdraw' : '/wallet/exchange';
+      final res = await _api.postRequest(endpoint, {
         'amount': amount,
         'bankDetails': encrypted,
         'passcode': passcodeStr,
@@ -79,7 +81,10 @@ class _ExchangePasscodeScreenState extends State<ExchangePasscodeScreen> {
           Navigator.pushReplacementNamed(
             context,
             '/success',
-            arguments: {'amount': amount, 'type': 'EXCHANGE'},
+            arguments: {
+              'amount': amount,
+              'type': type == 'withdrawal' ? 'WITHDRAWAL' : 'EXCHANGE'
+            },
           );
         }
       } else {
@@ -146,7 +151,7 @@ class _ExchangePasscodeScreenState extends State<ExchangePasscodeScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Enter your 6-digit security passcode\nto authorize this exchange.',
+                  'Enter your 6-digit security passcode\nto authorize this transaction.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: _textDim,
@@ -251,7 +256,7 @@ class _ExchangePasscodeScreenState extends State<ExchangePasscodeScreen> {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.05),
+        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05),
         shape: BoxShape.circle,
       ),
       child: Center(

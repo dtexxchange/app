@@ -7,17 +7,19 @@ class ArchivedBankAccountsScreen extends StatefulWidget {
   const ArchivedBankAccountsScreen({super.key});
 
   @override
-  State<ArchivedBankAccountsScreen> createState() => _ArchivedBankAccountsScreenState();
+  State<ArchivedBankAccountsScreen> createState() =>
+      _ArchivedBankAccountsScreenState();
 }
 
-class _ArchivedBankAccountsScreenState extends State<ArchivedBankAccountsScreen> {
+class _ArchivedBankAccountsScreenState
+    extends State<ArchivedBankAccountsScreen> {
   // ─── Design Tokens ──────────────────────────────────────────────────────────
   Color get _bgDark => Theme.of(context).scaffoldBackgroundColor;
   Color get _bgCard => Theme.of(context).cardColor;
   Color get _primary => Theme.of(context).primaryColor;
   Color get _textDim => Theme.of(context).colorScheme.onSurfaceVariant;
   Color get _border => Theme.of(context).dividerColor;
-  
+
   final _api = ApiService();
   List<dynamic> _accounts = [];
   bool _isLoading = true;
@@ -49,9 +51,9 @@ class _ArchivedBankAccountsScreenState extends State<ArchivedBankAccountsScreen>
       final res = await _api.postRequest('/bank-accounts/$id/restore', {});
       if ((res.statusCode == 201 || res.statusCode == 200) && mounted) {
         _fetchArchivedAccounts();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Account restored')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Account restored')));
       }
     } catch (e) {
       debugPrint(e.toString());
@@ -91,12 +93,17 @@ class _ArchivedBankAccountsScreenState extends State<ArchivedBankAccountsScreen>
           Icon(
             Icons.archive_outlined,
             size: 64,
-            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.05),
+            color: Theme.of(
+              context,
+            ).colorScheme.onSurface.withValues(alpha: 0.05),
           ),
           const SizedBox(height: 16),
           Text(
             'No archived accounts found',
-            style: GoogleFonts.inter(color: _textDim, fontWeight: FontWeight.w500),
+            style: GoogleFonts.inter(
+              color: _textDim,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ],
       ),
@@ -129,12 +136,16 @@ class _ArchivedBankAccountsScreenState extends State<ArchivedBankAccountsScreen>
               ),
               Container(
                 decoration: BoxDecoration(
-                  color: _primary.withOpacity(0.1),
+                  color: _primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: IconButton(
                   onPressed: () => _restoreAccount(acc['id']),
-                  icon: Icon(Icons.unarchive_outlined, color: _primary, size: 20),
+                  icon: Icon(
+                    Icons.unarchive_outlined,
+                    color: _primary,
+                    size: 20,
+                  ),
                   constraints: const BoxConstraints(),
                   padding: const EdgeInsets.all(8),
                   tooltip: 'Restore Account',
@@ -148,7 +159,9 @@ class _ArchivedBankAccountsScreenState extends State<ArchivedBankAccountsScreen>
             style: GoogleFonts.outfit(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurface.withValues(alpha: 0.5),
             ),
           ),
           const SizedBox(height: 4),
@@ -164,7 +177,7 @@ class _ArchivedBankAccountsScreenState extends State<ArchivedBankAccountsScreen>
           Text(
             'ARCHIVED',
             style: GoogleFonts.inter(
-              color: Colors.orange.withOpacity(0.7),
+              color: Colors.orange.withValues(alpha: 0.7),
               fontSize: 10,
               fontWeight: FontWeight.bold,
               letterSpacing: 1.5,

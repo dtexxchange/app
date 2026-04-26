@@ -22,6 +22,8 @@ import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Wallets from "./pages/admin/Wallets";
+import WithdrawalFee from "./pages/admin/WithdrawalFee";
+import AdminNews from "./pages/admin/News";
 
 const ProtectedRoute: React.FC<{
     children: React.ReactNode;
@@ -67,6 +69,7 @@ const App: React.FC = () => {
                         }
                     >
                         <Route path="/admin" element={<AdminOverview />} />
+                        <Route path="/news" element={<AdminNews />} />
                         <Route path="/users" element={<Users />} />
                         <Route
                             path="/exchange-rate"
@@ -75,6 +78,10 @@ const App: React.FC = () => {
                         <Route path="/settings" element={<Settings />} />
                         <Route path="/wallets" element={<Wallets />} />
                         <Route path="/assignments" element={<Assignments />} />
+                        <Route
+                            path="/withdrawal-fee"
+                            element={<WithdrawalFee />}
+                        />
                     </Route>
 
                     {/* User Routes */}

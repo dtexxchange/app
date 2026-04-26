@@ -436,7 +436,7 @@ class _AssignmentsScreenState extends State<AssignmentsScreen> {
                                 size: 64,
                                 color: Theme.of(
                                   context,
-                                ).colorScheme.onSurface.withOpacity(0.05),
+                                ).colorScheme.onSurface.withValues(alpha: 0.05),
                               ),
                               const SizedBox(height: 16),
                               Text(
@@ -607,7 +607,9 @@ class _AssignmentsScreenState extends State<AssignmentsScreen> {
                 ),
                 Text(
                   a['createdAt'] != null
-                      ? DateFormat('MMM d, HH:mm').format(DateTime.parse(a['createdAt']))
+                      ? DateFormat(
+                          'MMM d, hh:mm a',
+                        ).format(DateTime.parse(a['createdAt']))
                       : 'UNKNOWN',
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.onSurface,

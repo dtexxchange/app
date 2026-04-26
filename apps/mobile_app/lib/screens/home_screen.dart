@@ -4,10 +4,11 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../main.dart' show routeObserver;
 import '../services/api_service.dart';
-import '../widgets/transaction_detail_sheet.dart';
+import 'transaction_detail_screen.dart';
 
 // ─── Shared Sheet Components ─────────────────────────────────────────────────
 class CustomBottomSheet extends StatelessWidget {
@@ -48,7 +49,7 @@ class CustomBottomSheet extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: Theme.of(
                     context,
-                  ).colorScheme.onSurface.withOpacity(0.15),
+                  ).colorScheme.onSurface.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -95,11 +96,15 @@ class AmountField extends StatelessWidget {
           fontWeight: FontWeight.w700,
         ),
         filled: true,
-        fillColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.03),
+        fillColor: Theme.of(
+          context,
+        ).colorScheme.onSurface.withValues(alpha: 0.03),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
-            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.10),
+            color: Theme.of(
+              context,
+            ).colorScheme.onSurface.withValues(alpha: 0.10),
           ),
         ),
         focusedBorder: OutlineInputBorder(
@@ -131,11 +136,15 @@ class SheetField extends StatelessWidget {
         hintText: hint,
         hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 14),
         filled: true,
-        fillColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.03),
+        fillColor: Theme.of(
+          context,
+        ).colorScheme.onSurface.withValues(alpha: 0.03),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
-            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.10),
+            color: Theme.of(
+              context,
+            ).colorScheme.onSurface.withValues(alpha: 0.10),
           ),
         ),
         focusedBorder: OutlineInputBorder(
@@ -280,11 +289,15 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
 
   double _balance = 0;
   List<dynamic> _transactions = [];
+  List<dynamic> _newsList = [];
   bool _isLoading = true;
   bool _hasPasscode = true;
   final _api = ApiService();
 
   double? _conversionRate;
+  PageController? _newsPageController;
+  Timer? _newsTimer;
+  int _currentNewsPage = 0;
 
   @override
   void initState() {
@@ -307,6 +320,8 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
   @override
   void dispose() {
     routeObserver.unsubscribe(this);
+    _newsTimer?.cancel();
+    _newsPageController?.dispose();
     super.dispose();
   }
 
@@ -317,6 +332,16 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
     try {
       // Parallel fetch for speed
       await Future.wait([
+        _api.getRequest('/news').then((newsRes) {
+          if (newsRes.statusCode == 200) {
+            if (mounted) {
+              setState(() {
+                _newsList = jsonDecode(newsRes.body);
+              });
+              _setupNewsAutoScroll();
+            }
+          }
+        }),
         _api.getRequest('/settings/conversion-rate').then((rateRes) {
           if (rateRes.statusCode == 200) {
             final data = jsonDecode(rateRes.body);
@@ -353,6 +378,233 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
     }
   }
 
+  void _setupNewsAutoScroll() {
+    _newsTimer?.cancel();
+    if (_newsList.length <= 1) return;
+
+    _newsPageController ??= PageController(initialPage: _currentNewsPage);
+
+    _newsTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
+      if (_newsPageController != null && _newsPageController!.hasClients) {
+        final nextPage = (_currentNewsPage + 1) % _newsList.length;
+        _newsPageController!.animateToPage(
+          nextPage,
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
+  }
+
+  Widget _buildNewsSection(BuildContext context) {
+    if (_newsList.isEmpty) return const SizedBox();
+
+    final size = MediaQuery.of(context).size;
+    final widthScale = (size.width / 375.0).clamp(0.85, 1.2);
+
+    if (_newsList.length == 1) {
+      final news = _newsList.first;
+      final hasLink = news['link'] != null && (news['link'] as String).isNotEmpty;
+
+      return Container(
+        margin: const EdgeInsets.only(bottom: 24),
+        decoration: BoxDecoration(
+          color: _bgCard,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: _border),
+        ),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(24),
+          onTap: hasLink
+              ? () async {
+                  final url = Uri.parse(news['link']);
+                  if (await canLaunchUrl(url)) {
+                    await launchUrl(
+                      url,
+                      mode: LaunchMode.externalApplication,
+                    );
+                  }
+                }
+              : null,
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.campaign, color: _primary, size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        news['title'] ?? '',
+                        style: GoogleFonts.outfit(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: _onSurface,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  news['description'] ?? '',
+                  style: TextStyle(
+                    color: _textDim,
+                    fontSize: 13,
+                    height: 1.4,
+                  ),
+                  maxLines: 4,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                if (hasLink) ...[
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Icon(Icons.open_in_new, color: _primary, size: 12),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Tap to learn more',
+                        style: TextStyle(
+                          color: _primary,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    _newsPageController ??= PageController(initialPage: _currentNewsPage);
+
+    return Container(
+      height: 140 * widthScale,
+      margin: const EdgeInsets.only(bottom: 24),
+      decoration: BoxDecoration(
+        color: _bgCard,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: _border),
+      ),
+      child: Stack(
+        children: [
+          PageView.builder(
+            controller: _newsPageController,
+            itemCount: _newsList.length,
+            onPageChanged: (page) {
+              setState(() {
+                _currentNewsPage = page;
+              });
+            },
+            itemBuilder: (context, index) {
+              final news = _newsList[index];
+              final hasLink =
+                  news['link'] != null && (news['link'] as String).isNotEmpty;
+
+              return InkWell(
+                borderRadius: BorderRadius.circular(24),
+                onTap: hasLink
+                    ? () async {
+                        final url = Uri.parse(news['link']);
+                        if (await canLaunchUrl(url)) {
+                          await launchUrl(
+                            url,
+                            mode: LaunchMode.externalApplication,
+                          );
+                        }
+                      }
+                    : null,
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(20, 20, 20, 20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.campaign, color: _primary, size: 20),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              news['title'] ?? '',
+                              style: GoogleFonts.outfit(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: _onSurface,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        news['description'] ?? '',
+                        style: TextStyle(
+                          color: _textDim,
+                          fontSize: 13,
+                          height: 1.4,
+                        ),
+                        maxLines: 4,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      if (hasLink) ...[
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Icon(Icons.open_in_new, color: _primary, size: 12),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Tap to learn more',
+                              style: TextStyle(
+                                color: _primary,
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+          if (_newsList.length > 1)
+            Positioned(
+              bottom: 12,
+              right: 16,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '${_currentNewsPage + 1}/${_newsList.length}',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
   // ─── Build ──────────────────────────────────────────────────────────────────
 
   // Removed _showExchangeSheet - Use dedicated /exchange screen
@@ -386,6 +638,7 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
                     sliver: SliverList(
                       delegate: SliverChildListDelegate([
                         if (!_hasPasscode) _buildPasscodeWarning(context),
+                        _buildNewsSection(context),
                         _buildBalanceCard(context),
                         const SizedBox(height: 24),
                         _buildRateCard(context),
@@ -526,9 +779,9 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
             width: isSmall ? 32 : 36,
             height: isSmall ? 32 : 36,
             decoration: BoxDecoration(
-              color: _primary.withOpacity(0.10),
+              color: _primary.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: _primary.withOpacity(0.20)),
+              border: Border.all(color: _primary.withValues(alpha: 0.20)),
             ),
             child: Icon(
               Icons.diamond_outlined,
@@ -555,6 +808,24 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
           ),
           const Spacer(),
           GestureDetector(
+            onTap: () => Navigator.pushNamed(context, '/notifications'),
+            child: Container(
+              width: isSmall ? 32 : 36,
+              height: isSmall ? 32 : 36,
+              decoration: BoxDecoration(
+                color: _primary.withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: _primary.withValues(alpha: 0.20)),
+              ),
+              child: Icon(
+                Icons.notifications_outlined,
+                color: _primary,
+                size: isSmall ? 16 : 18,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          GestureDetector(
             onTap: () async {
               await _api.logout();
               if (mounted) Navigator.pushReplacementNamed(context, '/login');
@@ -563,7 +834,7 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
               width: isSmall ? 32 : 36,
               height: isSmall ? 32 : 36,
               decoration: BoxDecoration(
-                color: _danger.withOpacity(0.08),
+                color: _danger.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: _danger.withValues(alpha: 0.2)),
               ),
@@ -616,9 +887,9 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
                 width: isSmall ? 40 : 48,
                 height: isSmall ? 40 : 48,
                 decoration: BoxDecoration(
-                  color: _primary.withOpacity(0.10),
+                  color: _primary.withValues(alpha: 0.10),
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: _primary.withOpacity(0.20)),
+                  border: Border.all(color: _primary.withValues(alpha: 0.20)),
                 ),
                 child: Icon(
                   Icons.account_balance_wallet_outlined,
@@ -810,19 +1081,19 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
     final isSmall = MediaQuery.of(context).size.width < 360;
 
     Color statusColor = _textDim;
-    Color statusBg = _textDim.withOpacity(0.08);
+    Color statusBg = _textDim.withValues(alpha: 0.08);
     IconData statusIcon = Icons.help_outline;
     if (status == 'COMPLETED') {
       statusColor = _primary;
-      statusBg = _primary.withOpacity(0.08);
+      statusBg = _primary.withValues(alpha: 0.08);
       statusIcon = Icons.check_circle_outline;
     } else if (status == 'PENDING') {
       statusColor = _blue;
-      statusBg = _blue.withOpacity(0.08);
+      statusBg = _blue.withValues(alpha: 0.08);
       statusIcon = Icons.access_time;
     } else if (status == 'REJECTED') {
       statusColor = const Color(0xFFF87171);
-      statusBg = const Color(0xFFF87171).withOpacity(0.08);
+      statusBg = const Color(0xFFF87171).withValues(alpha: 0.08);
       statusIcon = Icons.cancel_outlined;
     }
 
@@ -844,8 +1115,8 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
               height: isSmall ? 40 : 44,
               decoration: BoxDecoration(
                 color: isDeposit
-                    ? _primary.withOpacity(0.10)
-                    : _blue.withOpacity(0.10),
+                    ? _primary.withValues(alpha: 0.10)
+                    : _blue.withValues(alpha: 0.10),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
@@ -926,14 +1197,9 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
   }
 
   void _showTransactionDetail(Map<String, dynamic> tx) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: _bgCard,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (context) => TransactionDetailSheet(tx: tx),
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => TransactionDetailScreen(tx: tx)),
     ).then((_) => _fetchData());
   }
 }

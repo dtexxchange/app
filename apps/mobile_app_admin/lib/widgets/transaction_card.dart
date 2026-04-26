@@ -26,36 +26,36 @@ class TransactionCard extends StatelessWidget {
     final status = transaction['status'] as String;
     final isPending = status == 'PENDING';
 
-    final _bgCard = Theme.of(context).cardColor;
-    final _border = Theme.of(context).dividerColor;
-    final _textDim = Theme.of(context).colorScheme.onSurfaceVariant;
-    final _primary = Theme.of(context).primaryColor;
-    const _blue = Color(0xFF3B82F6);
-    const _danger = Color(0xFFF87171);
+    final bgCard = Theme.of(context).cardColor;
+    final border = Theme.of(context).dividerColor;
+    final textDim = Theme.of(context).colorScheme.onSurfaceVariant;
+    final primary = Theme.of(context).primaryColor;
+    const blue = Color(0xFF3B82F6);
+    const danger = Color(0xFFF87171);
 
     Color statusColor;
     IconData statusIcon;
     if (status == 'COMPLETED') {
-      statusColor = _primary;
+      statusColor = primary;
       statusIcon = Icons.check_circle_outline;
     } else if (status == 'PENDING') {
-      statusColor = _blue;
+      statusColor = blue;
       statusIcon = Icons.access_time;
     } else {
-      statusColor = _danger;
+      statusColor = danger;
       statusIcon = Icons.cancel_outlined;
     }
 
     Color typeColor;
     IconData typeIcon;
     String typeLabel;
-    
+
     if (isDeposit) {
-      typeColor = _primary;
+      typeColor = primary;
       typeIcon = Icons.arrow_downward;
       typeLabel = 'Deposit';
     } else if (isExchange) {
-      typeColor = _blue;
+      typeColor = blue;
       typeIcon = Icons.swap_horiz;
       typeLabel = 'Exchange';
     } else {
@@ -70,9 +70,9 @@ class TransactionCard extends StatelessWidget {
         margin: EdgeInsets.only(bottom: 12 * widthScale),
         padding: EdgeInsets.all(16 * widthScale),
         decoration: BoxDecoration(
-          color: _bgCard,
+          color: bgCard,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: _border),
+          border: Border.all(color: border),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -83,7 +83,7 @@ class TransactionCard extends StatelessWidget {
                   width: 44 * widthScale,
                   height: 44 * widthScale,
                   decoration: BoxDecoration(
-                    color: typeColor.withOpacity(0.10),
+                    color: typeColor.withValues(alpha: 0.10),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
@@ -105,7 +105,7 @@ class TransactionCard extends StatelessWidget {
                               vertical: 2 * widthScale,
                             ),
                             decoration: BoxDecoration(
-                              color: typeColor.withOpacity(0.08),
+                              color: typeColor.withValues(alpha: 0.08),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
@@ -143,7 +143,7 @@ class TransactionCard extends StatelessWidget {
                               DateTime.now(),
                         ),
                         style: TextStyle(
-                          color: _textDim,
+                          color: textDim,
                           fontSize: 11 * widthScale,
                         ),
                       ),
@@ -157,7 +157,7 @@ class TransactionCard extends StatelessWidget {
                       '${NumberFormat('#,##0.00').format(transaction['amount'] as num)} USDT',
                       style: GoogleFonts.outfit(
                         color: isDeposit
-                            ? _primary
+                            ? primary
                             : Theme.of(context).colorScheme.onSurface,
                         fontWeight: FontWeight.bold,
                         fontSize: 15 * widthScale,
@@ -170,7 +170,7 @@ class TransactionCard extends StatelessWidget {
                         vertical: 4 * widthScale,
                       ),
                       decoration: BoxDecoration(
-                        color: statusColor.withOpacity(0.08),
+                        color: statusColor.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Row(
@@ -200,7 +200,7 @@ class TransactionCard extends StatelessWidget {
             ),
             if (isPending) ...[
               SizedBox(height: 12 * widthScale),
-              Container(height: 1, color: _border),
+              Container(height: 1, color: border),
               SizedBox(height: 12 * widthScale),
               Row(
                 children: [
@@ -208,7 +208,7 @@ class TransactionCard extends StatelessWidget {
                     child: _ActionBtn(
                       label: 'Approve',
                       icon: Icons.check_circle_outline,
-                      color: _primary,
+                      color: primary,
                       filled: true,
                       onPressed: onApprove,
                     ),
@@ -218,7 +218,7 @@ class TransactionCard extends StatelessWidget {
                     child: _ActionBtn(
                       label: 'Reject',
                       icon: Icons.cancel_outlined,
-                      color: _danger,
+                      color: danger,
                       onPressed: onReject,
                     ),
                   ),
@@ -253,9 +253,9 @@ class _ActionBtn extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
         decoration: BoxDecoration(
-          color: color.withOpacity(filled ? 0.20 : 0.06),
+          color: color.withValues(alpha: filled ? 0.20 : 0.06),
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: color.withOpacity(0.25)),
+          border: Border.all(color: color.withValues(alpha: 0.25)),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,

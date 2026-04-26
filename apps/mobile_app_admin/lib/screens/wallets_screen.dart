@@ -631,7 +631,7 @@ class _WalletsScreenState extends State<WalletsScreen> {
                                 size: 64,
                                 color: Theme.of(
                                   context,
-                                ).colorScheme.onSurface.withOpacity(0.05),
+                                ).colorScheme.onSurface.withValues(alpha: 0.05),
                               ),
                               const SizedBox(height: 16),
                               Text(
@@ -696,11 +696,13 @@ class _WalletsScreenState extends State<WalletsScreen> {
         color: _bgCard,
         borderRadius: BorderRadius.circular(28),
         border: Border.all(
-          color: isActive ? _border : Colors.redAccent.withOpacity(0.08),
+          color: isActive ? _border : Colors.redAccent.withValues(alpha: 0.08),
         ),
         boxShadow: [
           BoxShadow(
-            color: (isActive ? _primary : Colors.redAccent).withOpacity(0.02),
+            color: (isActive ? _primary : Colors.redAccent).withValues(
+              alpha: 0.02,
+            ),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -732,7 +734,7 @@ class _WalletsScreenState extends State<WalletsScreen> {
                               decoration: BoxDecoration(
                                 color: Theme.of(
                                   context,
-                                ).colorScheme.onSurface.withOpacity(0.05),
+                                ).colorScheme.onSurface.withValues(alpha: 0.05),
                                 borderRadius: BorderRadius.circular(8),
                                 border: Border.all(
                                   color: Theme.of(context).colorScheme.onSurface
@@ -821,7 +823,7 @@ class _WalletsScreenState extends State<WalletsScreen> {
                                     SizedBox(width: 4 * widthScale),
                                     Text(
                                       DateFormat(
-                                        'MMM d, HH:mm',
+                                        'MMM d, hh:mm a',
                                       ).format(DateTime.parse(w['createdAt'])),
                                       style: GoogleFonts.inter(
                                         color: _textDim,

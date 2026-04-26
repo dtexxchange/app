@@ -222,7 +222,7 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
                         vertical: 16,
                       ),
                       decoration: BoxDecoration(
-                        color: _danger.withOpacity(0.08),
+                        color: _danger.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
                           color: _danger.withValues(alpha: 0.2),
@@ -233,7 +233,7 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
                           Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: _danger.withOpacity(0.15),
+                              color: _danger.withValues(alpha: 0.15),
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
@@ -289,7 +289,9 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
                           : _proceedToPasscode,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: _primary,
-                        disabledBackgroundColor: Colors.white.withOpacity(0.05),
+                        disabledBackgroundColor: Colors.white.withValues(
+                          alpha: 0.05,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
@@ -305,7 +307,7 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
                                       _balance)
                               ? Theme.of(
                                   context,
-                                ).colorScheme.onSurface.withOpacity(0.24)
+                                ).colorScheme.onSurface.withValues(alpha: 0.24)
                               : Theme.of(context).colorScheme.surface,
                           fontWeight: FontWeight.bold,
                           fontSize: (isSmall ? 14 : 16) * widthScale,
@@ -446,14 +448,14 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
         const SizedBox(height: 16),
         _buildInputField(
           controller: _inrCtrl,
-          label: 'You Pay (INR)',
+          label: 'Amount (INR)',
           suffix: 'INR',
           onChanged: _onInrChanged,
         ),
         const SizedBox(height: 16),
         _buildInputField(
           controller: _amountCtrl,
-          label: 'You Receive (USDT)',
+          label: 'Amount (USDT)',
           suffix: 'USDT',
           onChanged: _onUsdtChanged,
           readOnly: true,
@@ -611,7 +613,7 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
                 hintStyle: TextStyle(
                   color: Theme.of(
                     context,
-                  ).colorScheme.onSurface.withOpacity(0.24),
+                  ).colorScheme.onSurface.withValues(alpha: 0.24),
                 ),
                 icon: Icon(Icons.search, color: _textDim, size: 18),
               ),
@@ -628,7 +630,9 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
                 margin: const EdgeInsets.only(bottom: 12),
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: isSelected ? _primary.withOpacity(0.05) : _bgCard,
+                  color: isSelected
+                      ? _primary.withValues(alpha: 0.05)
+                      : _bgCard,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
                     color: isSelected
@@ -718,7 +722,9 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
           border: InputBorder.none,
           hintText: hint,
           hintStyle: TextStyle(
-            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.24),
+            color: Theme.of(
+              context,
+            ).colorScheme.onSurface.withValues(alpha: 0.24),
           ),
         ),
       ),

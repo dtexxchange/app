@@ -6,7 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
 import '../services/api_service.dart';
-import '../widgets/transaction_detail_sheet.dart';
+import 'transaction_detail_screen.dart';
 
 class LiveTimerWidget extends StatefulWidget {
   final DateTime expiresAt;
@@ -18,7 +18,7 @@ class LiveTimerWidget extends StatefulWidget {
 
 class _LiveTimerWidgetState extends State<LiveTimerWidget> {
   // ─── Design Tokens (Dynamic) ──────────────────────────────────────────────────
-  Color get _primary => Theme.of(context).primaryColor;
+  Color get primary => Theme.of(context).primaryColor;
   Color get _danger => const Color(0xFFF87171);
 
   Timer? _timer;
@@ -75,7 +75,7 @@ class _LiveTimerWidgetState extends State<LiveTimerWidget> {
     if (_timeLeft <= 0) return _danger;
     if (_timeLeft < 60) return Colors.redAccent;
     if (_timeLeft < 300) return Colors.orangeAccent;
-    return _primary;
+    return primary;
   }
 
   @override
@@ -102,8 +102,8 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
   // ─── Design Tokens (Dynamic) ──────────────────────────────────────────────────
   Color get _bgDark => Theme.of(context).scaffoldBackgroundColor;
   Color get _bgCard => Theme.of(context).cardColor;
-  Color get _primary => Theme.of(context).primaryColor;
-  Color get _textDim => Theme.of(context).colorScheme.onSurfaceVariant;
+  Color get primary => Theme.of(context).primaryColor;
+  Color get textDim => Theme.of(context).colorScheme.onSurfaceVariant;
   Color get _border => Theme.of(context).dividerColor;
   static const Color _blue = Color(0xFF3B82F6);
   static const Color _danger = Color(0xFFF87171);
@@ -142,7 +142,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
       backgroundColor: _bgDark,
       body: RefreshIndicator(
         onRefresh: _fetchUser,
-        color: _primary,
+        color: primary,
         backgroundColor: _bgCard,
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -179,9 +179,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
             ),
             if (_isLoading)
               SliverFillRemaining(
-                child: Center(
-                  child: CircularProgressIndicator(color: _primary),
-                ),
+                child: Center(child: CircularProgressIndicator(color: primary)),
               )
             else if (_user == null)
               SliverFillRemaining(
@@ -196,7 +194,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                     const SizedBox(height: 16),
                     Text(
                       'Failed to load user',
-                      style: TextStyle(color: _textDim),
+                      style: TextStyle(color: textDim),
                     ),
                   ],
                 ),
@@ -261,10 +259,10 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
             width: 64 * widthScale,
             height: 64 * widthScale,
             decoration: BoxDecoration(
-              color: (isAdmin ? _primary : _blue).withOpacity(0.12),
+              color: (isAdmin ? primary : _blue).withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(18),
               border: Border.all(
-                color: (isAdmin ? _primary : _blue).withOpacity(0.25),
+                color: (isAdmin ? primary : _blue).withValues(alpha: 0.25),
                 width: 1.5,
               ),
             ),
@@ -272,7 +270,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
               child: Text(
                 initial,
                 style: TextStyle(
-                  color: isAdmin ? _primary : _blue,
+                  color: isAdmin ? primary : _blue,
                   fontSize: 26 * widthScale,
                   fontWeight: FontWeight.bold,
                 ),
@@ -308,7 +306,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
               Text(
                 'BALANCE',
                 style: TextStyle(
-                  color: _textDim,
+                  color: textDim,
                   fontSize: 10 * widthScale,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 1.5 * widthScale,
@@ -328,7 +326,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
               Text(
                 'USDT',
                 style: GoogleFonts.outfit(
-                  color: _primary,
+                  color: primary,
                   fontSize: 12 * widthScale,
                   fontWeight: FontWeight.bold,
                 ),
@@ -383,7 +381,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
             label: 'Role',
             value: user['role'],
             valueColor: user['role'] == 'ADMIN'
-                ? _primary
+                ? primary
                 : Theme.of(context).colorScheme.onSurface,
             widthScale: widthScale,
           ),
@@ -399,7 +397,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                 ? _blue
                 : user['status'] == 'REJECTED'
                 ? _danger
-                : _primary,
+                : primary,
             widthScale: widthScale,
           ),
           if (joined != null) ...[
@@ -426,7 +424,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
             icon: Icon(Icons.check, size: 18 * widthScale),
             onPressed: () => _updateUserStatus('APPROVED'),
             style: ElevatedButton.styleFrom(
-              backgroundColor: _primary,
+              backgroundColor: primary,
               foregroundColor: Colors.black,
               padding: EdgeInsets.symmetric(vertical: 14 * widthScale),
               elevation: 0,
@@ -481,7 +479,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('User marked as ${status.replaceAll('_', ' ')}'),
-              backgroundColor: status == 'APPROVED' ? _primary : _danger,
+              backgroundColor: status == 'APPROVED' ? primary : _danger,
             ),
           );
         }
@@ -500,13 +498,13 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
         icon: Icon(Icons.add, size: 18),
         onPressed: _showManualDepositModal,
         style: ElevatedButton.styleFrom(
-          backgroundColor: _primary.withValues(alpha: 0.1),
-          foregroundColor: _primary,
+          backgroundColor: primary.withValues(alpha: 0.1),
+          foregroundColor: primary,
           padding: const EdgeInsets.symmetric(vertical: 14),
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
-            side: BorderSide(color: _primary.withValues(alpha: 0.3)),
+            side: BorderSide(color: primary.withValues(alpha: 0.3)),
           ),
         ),
         label: Text(
@@ -539,7 +537,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
           children: [
             Row(
               children: [
-                Icon(Icons.account_balance_wallet, color: _primary),
+                Icon(Icons.account_balance_wallet, color: primary),
                 const SizedBox(width: 12),
                 Text(
                   'Credit Account',
@@ -553,7 +551,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
             const SizedBox(height: 8),
             Text(
               'Manually credit USDT balance for this user. This creates a COMPLETED deposit logging.',
-              style: TextStyle(color: _textDim, fontSize: 12),
+              style: TextStyle(color: textDim, fontSize: 12),
             ),
             const SizedBox(height: 24),
             TextField(
@@ -564,7 +562,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               decoration: InputDecoration(
                 labelText: 'Amount (USDT)',
-                labelStyle: TextStyle(color: _textDim, fontSize: 14),
+                labelStyle: TextStyle(color: textDim, fontSize: 14),
                 filled: true,
                 fillColor: _bgDark,
                 border: OutlineInputBorder(
@@ -573,7 +571,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: _primary),
+                  borderSide: BorderSide(color: primary),
                 ),
               ),
             ),
@@ -593,7 +591,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: const Text('Account Credited'),
-                          backgroundColor: _primary,
+                          backgroundColor: primary,
                         ),
                       );
                     }
@@ -604,7 +602,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                 }
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: _primary,
+                backgroundColor: primary,
                 foregroundColor: Colors.black,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
@@ -631,7 +629,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
       children: [
         Row(
           children: [
-            Icon(Icons.receipt_long, color: _primary, size: 20 * widthScale),
+            Icon(Icons.receipt_long, color: primary, size: 20 * widthScale),
             SizedBox(width: 10 * widthScale),
             Text(
               'Transactions (${txs.length})',
@@ -659,7 +657,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                   const SizedBox(height: 16),
                   Text(
                     'No transactions found',
-                    style: TextStyle(color: _textDim, fontSize: 13),
+                    style: TextStyle(color: textDim, fontSize: 13),
                   ),
                 ],
               ),
@@ -678,7 +676,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
     Color statusColor;
     IconData statusIcon;
     if (status == 'COMPLETED') {
-      statusColor = _primary;
+      statusColor = primary;
       statusIcon = Icons.check_circle_outline;
     } else if (status == 'PENDING') {
       statusColor = _blue;
@@ -705,14 +703,14 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
               height: 42,
               decoration: BoxDecoration(
                 color: isDeposit
-                    ? _primary.withOpacity(0.10)
-                    : _blue.withOpacity(0.10),
+                    ? primary.withValues(alpha: 0.10)
+                    : _blue.withValues(alpha: 0.10),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
                 isDeposit ? Icons.arrow_downward : Icons.arrow_upward,
                 size: 18,
-                color: isDeposit ? _primary : _blue,
+                color: isDeposit ? primary : _blue,
               ),
             ),
             const SizedBox(width: 14),
@@ -733,7 +731,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                     DateFormat(
                       'MMM dd, yyyy • hh:mm a',
                     ).format(DateTime.parse(tx['createdAt'])),
-                    style: TextStyle(color: _textDim, fontSize: 11),
+                    style: TextStyle(color: textDim, fontSize: 11),
                   ),
                 ],
               ),
@@ -745,7 +743,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                   '${isDeposit ? '+' : '-'}${NumberFormat('#,##0.00').format(tx['amount'])} USDT',
                   style: GoogleFonts.outfit(
                     color: isDeposit
-                        ? _primary
+                        ? primary
                         : Theme.of(context).colorScheme.onSurface,
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
@@ -758,7 +756,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                     vertical: 3,
                   ),
                   decoration: BoxDecoration(
-                    color: statusColor.withOpacity(0.08),
+                    color: statusColor.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Row(
@@ -787,25 +785,23 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
   }
 
   void _showTransactionDetail(Map<String, dynamic> tx) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: _bgCard,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (context) => TransactionDetailSheet(
-        tx: tx,
-        onStatusUpdate: (s) => _updateTxStatus(tx['id'], s),
-        allUsers: widget.allUsers,
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => TransactionDetailScreen(
+          tx: tx,
+          onStatusUpdate: (s, {utr}) => _updateTxStatus(tx['id'], s, utr: utr),
+          allUsers: widget.allUsers,
+        ),
       ),
     ).then((_) => _fetchUser());
   }
 
-  Future<void> _updateTxStatus(String id, String status) async {
+  Future<void> _updateTxStatus(String id, String status, {String? utr}) async {
     try {
       final res = await _api.patchRequest('/wallet/transactions/$id/status', {
         'status': status,
+        'utr': utr,
       });
       if (res.statusCode == 200 || res.statusCode == 201) {
         _fetchUser();
@@ -837,7 +833,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
       children: [
         Row(
           children: [
-            Icon(Icons.qr_code_2, color: _primary, size: 20 * widthScale),
+            Icon(Icons.qr_code_2, color: primary, size: 20 * widthScale),
             SizedBox(width: 10 * widthScale),
             Text(
               'Active Deposit Gateway',
@@ -854,7 +850,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
           decoration: BoxDecoration(
             color: _bgCard,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: _primary.withValues(alpha: 0.3)),
+            border: Border.all(color: primary.withValues(alpha: 0.3)),
           ),
           child: Column(
             children: [
@@ -871,7 +867,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
               _DetailRow(
                 label: 'ADDRESS',
                 value: wallet['address'],
-                valueColor: _primary,
+                valueColor: primary,
                 widthScale: widthScale,
               ),
               if (expiresAt != null) ...[
@@ -882,7 +878,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                     Text(
                       'EXPIRES IN',
                       style: TextStyle(
-                        color: _textDim,
+                        color: textDim,
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
                       ),
@@ -917,7 +913,7 @@ class _InfoRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final _textDim = Theme.of(context).colorScheme.onSurfaceVariant;
+    final textDim = Theme.of(context).colorScheme.onSurfaceVariant;
 
     return Padding(
       padding: EdgeInsets.symmetric(
@@ -926,12 +922,12 @@ class _InfoRow extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(icon, color: _textDim, size: 20 * widthScale),
+          Icon(icon, color: textDim, size: 20 * widthScale),
           SizedBox(width: 14 * widthScale),
           Expanded(
             child: Text(
               label,
-              style: TextStyle(color: _textDim, fontSize: 13 * widthScale),
+              style: TextStyle(color: textDim, fontSize: 13 * widthScale),
             ),
           ),
           Flexible(
@@ -959,7 +955,7 @@ class _RoleBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final _primary = Theme.of(context).primaryColor;
+    final primary = Theme.of(context).primaryColor;
     final isAdmin = role == 'ADMIN';
     return Container(
       padding: EdgeInsets.symmetric(
@@ -967,18 +963,18 @@ class _RoleBadge extends StatelessWidget {
         vertical: 3 * widthScale,
       ),
       decoration: BoxDecoration(
-        color: (isAdmin ? _primary : Theme.of(context).colorScheme.onSurface)
-            .withOpacity(0.08),
+        color: (isAdmin ? primary : Theme.of(context).colorScheme.onSurface)
+            .withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: (isAdmin ? _primary : Theme.of(context).colorScheme.onSurface)
-              .withOpacity(0.20),
+          color: (isAdmin ? primary : Theme.of(context).colorScheme.onSurface)
+              .withValues(alpha: 0.20),
         ),
       ),
       child: Text(
         role,
         style: TextStyle(
-          color: isAdmin ? _primary : Theme.of(context).colorScheme.onSurface,
+          color: isAdmin ? primary : Theme.of(context).colorScheme.onSurface,
           fontSize: 10 * widthScale,
           fontWeight: FontWeight.bold,
           letterSpacing: 1,
@@ -1002,14 +998,14 @@ class _DetailRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final _textDim = Theme.of(context).colorScheme.onSurfaceVariant;
+    final textDim = Theme.of(context).colorScheme.onSurfaceVariant;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
           label,
           style: TextStyle(
-            color: _textDim,
+            color: textDim,
             fontSize: 10 * widthScale,
             fontWeight: FontWeight.bold,
             letterSpacing: 0.5,

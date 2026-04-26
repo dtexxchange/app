@@ -322,7 +322,9 @@ class _PasscodeScreenState extends State<PasscodeScreen> {
         width: btnSize,
         height: btnSize,
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.05),
+          color: Theme.of(
+            context,
+          ).colorScheme.onSurface.withValues(alpha: 0.05),
           shape: BoxShape.circle,
         ),
         child: Center(
