@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../services/api_service.dart';
 import 'transaction_detail_screen.dart';
+import '../widgets/expandable_amount.dart';
 
 class ReferralCommissionScreen extends StatefulWidget {
   final Map<String, dynamic> referredUser;
@@ -162,8 +163,9 @@ class _ReferralCommissionScreenState extends State<ReferralCommissionScreen> {
             style: TextStyle(color: _textDim, fontSize: 12 * widthScale),
           ),
           SizedBox(height: 24 * widthScale),
-          Text(
-            '${NumberFormat('#,##0.00').format(_totalCommission)} USDT',
+          ExpandableAmount(
+            amount: _totalCommission,
+            suffix: ' USDT',
             style: GoogleFonts.outfit(
               fontSize: 32 * widthScale,
               fontWeight: FontWeight.bold,

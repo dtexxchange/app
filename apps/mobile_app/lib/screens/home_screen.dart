@@ -4,10 +4,11 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../main.dart' show routeObserver;
 import '../services/api_service.dart';
+import '../widgets/news_section.dart';
+import '../widgets/expandable_amount.dart';
 import 'transaction_detail_screen.dart';
 
 // ─── Shared Sheet Components ─────────────────────────────────────────────────
@@ -295,9 +296,6 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
   final _api = ApiService();
 
   double? _conversionRate;
-  PageController? _newsPageController;
-  Timer? _newsTimer;
-  int _currentNewsPage = 0;
 
   @override
   void initState() {
@@ -320,8 +318,6 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
   @override
   void dispose() {
     routeObserver.unsubscribe(this);
-    _newsTimer?.cancel();
-    _newsPageController?.dispose();
     super.dispose();
   }
 
@@ -338,7 +334,6 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
               setState(() {
                 _newsList = jsonDecode(newsRes.body);
               });
-              _setupNewsAutoScroll();
             }
           }
         }),
@@ -378,233 +373,6 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
     }
   }
 
-  void _setupNewsAutoScroll() {
-    _newsTimer?.cancel();
-    if (_newsList.length <= 1) return;
-
-    _newsPageController ??= PageController(initialPage: _currentNewsPage);
-
-    _newsTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
-      if (_newsPageController != null && _newsPageController!.hasClients) {
-        final nextPage = (_currentNewsPage + 1) % _newsList.length;
-        _newsPageController!.animateToPage(
-          nextPage,
-          duration: const Duration(milliseconds: 500),
-          curve: Curves.easeInOut,
-        );
-      }
-    });
-  }
-
-  Widget _buildNewsSection(BuildContext context) {
-    if (_newsList.isEmpty) return const SizedBox();
-
-    final size = MediaQuery.of(context).size;
-    final widthScale = (size.width / 375.0).clamp(0.85, 1.2);
-
-    if (_newsList.length == 1) {
-      final news = _newsList.first;
-      final hasLink = news['link'] != null && (news['link'] as String).isNotEmpty;
-
-      return Container(
-        margin: const EdgeInsets.only(bottom: 24),
-        decoration: BoxDecoration(
-          color: _bgCard,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: _border),
-        ),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(24),
-          onTap: hasLink
-              ? () async {
-                  final url = Uri.parse(news['link']);
-                  if (await canLaunchUrl(url)) {
-                    await launchUrl(
-                      url,
-                      mode: LaunchMode.externalApplication,
-                    );
-                  }
-                }
-              : null,
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  children: [
-                    Icon(Icons.campaign, color: _primary, size: 20),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        news['title'] ?? '',
-                        style: GoogleFonts.outfit(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: _onSurface,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  news['description'] ?? '',
-                  style: TextStyle(
-                    color: _textDim,
-                    fontSize: 13,
-                    height: 1.4,
-                  ),
-                  maxLines: 4,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                if (hasLink) ...[
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Icon(Icons.open_in_new, color: _primary, size: 12),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Tap to learn more',
-                        style: TextStyle(
-                          color: _primary,
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ),
-      );
-    }
-
-    _newsPageController ??= PageController(initialPage: _currentNewsPage);
-
-    return Container(
-      height: 140 * widthScale,
-      margin: const EdgeInsets.only(bottom: 24),
-      decoration: BoxDecoration(
-        color: _bgCard,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: _border),
-      ),
-      child: Stack(
-        children: [
-          PageView.builder(
-            controller: _newsPageController,
-            itemCount: _newsList.length,
-            onPageChanged: (page) {
-              setState(() {
-                _currentNewsPage = page;
-              });
-            },
-            itemBuilder: (context, index) {
-              final news = _newsList[index];
-              final hasLink =
-                  news['link'] != null && (news['link'] as String).isNotEmpty;
-
-              return InkWell(
-                borderRadius: BorderRadius.circular(24),
-                onTap: hasLink
-                    ? () async {
-                        final url = Uri.parse(news['link']);
-                        if (await canLaunchUrl(url)) {
-                          await launchUrl(
-                            url,
-                            mode: LaunchMode.externalApplication,
-                          );
-                        }
-                      }
-                    : null,
-                child: Padding(
-                  padding: EdgeInsets.fromLTRB(20, 20, 20, 20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(Icons.campaign, color: _primary, size: 20),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              news['title'] ?? '',
-                              style: GoogleFonts.outfit(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: _onSurface,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        news['description'] ?? '',
-                        style: TextStyle(
-                          color: _textDim,
-                          fontSize: 13,
-                          height: 1.4,
-                        ),
-                        maxLines: 4,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      if (hasLink) ...[
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            Icon(Icons.open_in_new, color: _primary, size: 12),
-                            const SizedBox(width: 4),
-                            Text(
-                              'Tap to learn more',
-                              style: TextStyle(
-                                color: _primary,
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-          if (_newsList.length > 1)
-            Positioned(
-              bottom: 12,
-              right: 16,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  '${_currentNewsPage + 1}/${_newsList.length}',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
   // ─── Build ──────────────────────────────────────────────────────────────────
 
   // Removed _showExchangeSheet - Use dedicated /exchange screen
@@ -638,7 +406,7 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
                     sliver: SliverList(
                       delegate: SliverChildListDelegate([
                         if (!_hasPasscode) _buildPasscodeWarning(context),
-                        _buildNewsSection(context),
+                        NewsSection(newsList: _newsList),
                         _buildBalanceCard(context),
                         const SizedBox(height: 24),
                         _buildRateCard(context),
@@ -693,7 +461,7 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
                 const SizedBox(height: 4),
                 Text(
                   _conversionRate != null
-                      ? '₹${_conversionRate!.toStringAsFixed(2)}'
+                      ? '₹${_conversionRate!.toStringAsFixed(4).replaceFirst(RegExp(r"\.?0*$"), "")}'
                       : 'Not Set',
                   style: GoogleFonts.outfit(
                     fontSize: 24 * widthScale,
@@ -718,50 +486,89 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
   Widget _buildPasscodeWarning(BuildContext context) {
     final isSmall = MediaQuery.of(context).size.width < 360;
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: EdgeInsets.all(isSmall ? 12 : 16),
+      margin: const EdgeInsets.only(bottom: 24),
+      padding: const EdgeInsets.all(2), // Outer glowing border
       decoration: BoxDecoration(
-        color: _danger.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _danger.withValues(alpha: 0.2)),
+        gradient: LinearGradient(
+          colors: [
+            _danger.withValues(alpha: 0.5),
+            _danger.withValues(alpha: 0.1),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(22),
       ),
-      child: Row(
-        children: [
-          Icon(Icons.warning_amber_rounded, color: _danger, size: 24),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Passcode Required',
-                  style: GoogleFonts.outfit(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                Text(
-                  'Please add a passcode for secure exchanges.',
-                  style: GoogleFonts.inter(color: _textDim, fontSize: 13),
-                ),
-              ],
+      child: Container(
+        padding: EdgeInsets.all(isSmall ? 12 : 18),
+        decoration: BoxDecoration(
+          color: _bgCard,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: _danger.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.security_rounded, color: _danger, size: 22),
             ),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pushNamed(
-              context,
-              '/passcode',
-            ).then((_) => _fetchData()),
-            child: Text(
-              'SET NOW',
-              style: TextStyle(
-                color: _primary,
-                fontWeight: FontWeight.w700,
-                fontSize: 13,
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Secure Your Account',
+                    style: GoogleFonts.outfit(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: _onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Setup a passcode to enable exchanges.',
+                    style: GoogleFonts.inter(
+                      color: _textDim,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
               ),
             ),
-          ),
-        ],
+            const SizedBox(width: 12),
+            Material(
+              color: _danger,
+              borderRadius: BorderRadius.circular(12),
+              child: InkWell(
+                onTap: () => Navigator.pushNamed(
+                  context,
+                  '/passcode',
+                ).then((_) => _fetchData()),
+                borderRadius: BorderRadius.circular(12),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
+                  child: Text(
+                    'FIX',
+                    style: GoogleFonts.outfit(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -778,15 +585,10 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
           Container(
             width: isSmall ? 32 : 36,
             height: isSmall ? 32 : 36,
-            decoration: BoxDecoration(
-              color: _primary.withValues(alpha: 0.10),
+            decoration: BoxDecoration(borderRadius: BorderRadius.circular(10)),
+            child: ClipRRect(
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: _primary.withValues(alpha: 0.20)),
-            ),
-            child: Icon(
-              Icons.diamond_outlined,
-              color: _primary,
-              size: isSmall ? 16 : 18,
+              child: Image.asset('assets/images/logo.png', fit: BoxFit.cover),
             ),
           ),
           const SizedBox(width: 12),
@@ -798,9 +600,9 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
                 color: _onSurface,
               ),
               children: [
-                const TextSpan(text: 'USDT'),
+                const TextSpan(text: 'Jackpot'),
                 TextSpan(
-                  text: '.EX',
+                  text: '.Exchange',
                   style: TextStyle(color: _onSurface.withValues(alpha: 0.4)),
                 ),
               ],
@@ -907,8 +709,8 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
               crossAxisAlignment: CrossAxisAlignment.baseline,
               textBaseline: TextBaseline.alphabetic,
               children: [
-                Text(
-                  NumberFormat('#,##0.00').format(_balance),
+                ExpandableAmount(
+                  amount: _balance,
                   style: GoogleFonts.outfit(
                     fontSize: isSmall ? 32 * widthScale : 42 * widthScale,
                     fontWeight: FontWeight.w700,
@@ -929,7 +731,7 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
           if (_conversionRate != null) ...[
             SizedBox(height: 4 * widthScale),
             Text(
-              '≈ ₹${NumberFormat('#,##0.00').format(_balance * _conversionRate!)}',
+              '≈ ₹${NumberFormat('#,##0.##').format(_balance * _conversionRate!)}',
               style: GoogleFonts.outfit(
                 color: _primary.withValues(alpha: 0.7),
                 fontSize: 14 * widthScale,

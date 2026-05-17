@@ -5,6 +5,8 @@ import {
     Mail,
     ShieldAlert,
     ShieldCheck,
+    Smartphone,
+    Download,
 } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
@@ -148,6 +150,27 @@ const Profile: React.FC = () => {
                                     ? "Change Passcode"
                                     : "Setup Passcode"}
                             </button>
+                        </div>
+                    </section>
+                    <section className="glass p-10 space-y-6">
+                        <div className="flex items-center justify-between">
+                            <div className="space-y-1">
+                                <h4 className="text-lg font-outfit font-bold text-white flex items-center gap-3">
+                                    <Smartphone className="text-primary" />{" "}
+                                    Mobile Application
+                                </h4>
+                                <p className="text-sm text-text-dim">
+                                    Download the official APK for Android
+                                    devices.
+                                </p>
+                            </div>
+                            <a
+                                href="/usdt-exchange.apk"
+                                download
+                                className="px-6 py-3 rounded-xl border border-white/10 bg-white/5 text-white font-black text-[10px] uppercase tracking-widest hover:bg-white/10 transition-all flex items-center gap-2"
+                            >
+                                <Download size={14} /> Download APK
+                            </a>
                         </div>
                     </section>
                 </div>

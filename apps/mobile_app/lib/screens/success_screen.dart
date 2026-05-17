@@ -80,7 +80,7 @@ class _SuccessScreenState extends State<SuccessScreen>
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Your request for \$${amount.toStringAsFixed(2)} USDT has been submitted and is currently being processed.',
+                  'Your request for \$${amount.toStringAsFixed(6).replaceFirst(RegExp(r"\.?0*$"), "")} USDT has been submitted and is currently being processed.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: _textDim,

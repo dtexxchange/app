@@ -10,6 +10,7 @@ import {
     XCircle,
 } from "lucide-react";
 import React, { useCallback, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../../lib/api";
 import { formatAmount } from "../../lib/formatters";
 
@@ -21,6 +22,7 @@ const Users: React.FC = () => {
     const [selectedUser, setSelectedUser] = useState<any>(null);
     const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
     const [depositAmount, setDepositAmount] = useState("");
+    const navigate = useNavigate();
 
     const fetchUsers = useCallback(async () => {
         try {
@@ -566,6 +568,18 @@ const Users: React.FC = () => {
                                                     )}
                                                 </tbody>
                                             </table>
+                                            {selectedUser._count?.transactions > 5 && (
+                                                <div className="p-4 border-t border-white/5 bg-white/1">
+                                                    <button
+                                                        onClick={() => {
+                                                            navigate(`/users/${selectedUser.id}/transactions`);
+                                                        }}
+                                                        className="w-full py-2 text-[10px] font-bold text-primary uppercase tracking-[0.2em] hover:bg-primary/5 rounded-lg transition-all"
+                                                    >
+                                                        View Full Ledger Activity ({selectedUser._count.transactions} Total)
+                                                    </button>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>

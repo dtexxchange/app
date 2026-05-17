@@ -159,11 +159,7 @@ class _AuthScreenState extends State<AuthScreen> {
                         width: 80,
                         height: 80,
                         decoration: BoxDecoration(
-                          color: primary.withValues(alpha: 0.10),
                           borderRadius: BorderRadius.circular(24),
-                          border: Border.all(
-                            color: primary.withValues(alpha: 0.20),
-                          ),
                           boxShadow: [
                             BoxShadow(
                               color: primary.withValues(alpha: 0.15),
@@ -171,10 +167,12 @@ class _AuthScreenState extends State<AuthScreen> {
                             ),
                           ],
                         ),
-                        child: Icon(
-                          Icons.diamond_outlined,
-                          color: primary,
-                          size: 36,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(24),
+                          child: Image.asset(
+                            'assets/images/logo.png',
+                            fit: BoxFit.cover,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 28),

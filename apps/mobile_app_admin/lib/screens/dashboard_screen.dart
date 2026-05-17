@@ -21,6 +21,7 @@ import 'user_detail_screen.dart';
 import 'wallets_screen.dart';
 import 'withdrawal_fee_screen.dart';
 import 'news_screen.dart';
+import 'help_support_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -106,7 +107,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ? (data['usdtToInrRate'] as num).toDouble()
                 : null;
             if (_conversionRate != null) {
-              _rateController.text = _conversionRate!.toStringAsFixed(2);
+              _rateController.text = _conversionRate!
+                  .toStringAsFixed(4)
+                  .replaceFirst(RegExp(r"\.?0*$"), "");
             }
           });
         }
@@ -238,10 +241,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                message,
-                style: TextStyle(color: _textDim, fontSize: 14),
-              ),
+              Text(message, style: TextStyle(color: _textDim, fontSize: 14)),
               if (requireUtr) ...[
                 const SizedBox(height: 20),
                 Text(
@@ -378,7 +378,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
           currentIndex: _tabIndex,
           onTap: (i) {
             setState(() => _tabIndex = i);
-            if (i == 0 || i == 2) _fetchAll(); // Refresh when entering relevant tabs
+            if (i == 0 || i == 2)
+              _fetchAll(); // Refresh when entering relevant tabs
           },
           backgroundColor: _bgDark,
           type: BottomNavigationBarType.fixed,
@@ -509,7 +510,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: _border),
                     ),
-                    child: Icon(Icons.notifications_outlined, color: _primary, size: 20),
+                    child: Icon(
+                      Icons.notifications_outlined,
+                      color: _primary,
+                      size: 20,
+                    ),
                   ),
                 ),
               ],
@@ -609,9 +614,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
           width: 40 * widthScale,
           height: 40 * widthScale,
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [_primary, _primary.withValues(alpha: 0.8)],
-            ),
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
@@ -621,10 +623,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ],
           ),
-          child: Icon(
-            Icons.diamond_outlined,
-            color: Colors.black,
-            size: 20 * widthScale,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Image.asset('assets/images/logo.png', fit: BoxFit.cover),
           ),
         ),
         const SizedBox(width: 14),
@@ -641,9 +642,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   letterSpacing: -0.5,
                 ),
                 children: [
-                  const TextSpan(text: 'USDT'),
+                  const TextSpan(text: 'Jackpot'),
                   TextSpan(
-                    text: '.EX',
+                    text: '.Exchange',
                     style: TextStyle(color: _primary),
                   ),
                 ],
@@ -800,6 +801,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const NewsScreen()),
+            );
+          },
+          onNavigateToHelpSupport: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const HelpSupportScreen()),
             );
           },
         );

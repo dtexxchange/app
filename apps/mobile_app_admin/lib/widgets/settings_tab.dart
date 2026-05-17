@@ -12,6 +12,7 @@ class SettingsTab extends StatelessWidget {
   final Function() onNavigateToAssignments;
   final Function() onNavigateToWithdrawalFee;
   final Function() onNavigateToNews;
+  final Function() onNavigateToHelpSupport;
 
   const SettingsTab({
     super.key,
@@ -25,6 +26,7 @@ class SettingsTab extends StatelessWidget {
     required this.onNavigateToAssignments,
     required this.onNavigateToWithdrawalFee,
     required this.onNavigateToNews,
+    required this.onNavigateToHelpSupport,
   });
 
   @override
@@ -55,6 +57,8 @@ class SettingsTab extends StatelessWidget {
         _buildWithdrawalFeeCard(context, widthScale),
         const SizedBox(height: 16),
         _buildNewsCard(context, widthScale),
+        const SizedBox(height: 16),
+        _buildHelpSupportCard(context, widthScale),
         const SizedBox(height: 16),
         _buildAppearanceCard(context, widthScale),
         const SizedBox(height: 32),
@@ -526,6 +530,78 @@ class SettingsTab extends StatelessWidget {
               ),
               child: const Text(
                 'Manage News',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHelpSupportCard(BuildContext context, double widthScale) {
+    const indigo = Color(0xFF6366F1);
+
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Theme.of(context).dividerColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: indigo.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const Icon(Icons.support_agent, color: indigo),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Help & Support',
+                      style: GoogleFonts.outfit(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      'Set help Telegram account for users',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: onNavigateToHelpSupport,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: indigo,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text(
+                'Manage Support',
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
             ),

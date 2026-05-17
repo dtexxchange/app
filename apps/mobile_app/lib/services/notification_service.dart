@@ -20,12 +20,12 @@ class NotificationService {
       return;
     }
     try {
-      _messaging = FirebaseMessaging.instance;
-      _localNotifications = FlutterLocalNotificationsPlugin();
-      
       // Initialize Firebase (Assuming options will be set up by FlutterFire CLI or google-services.json)
       // If no Firebase project is configured yet, this might fail, so we wrap in try-catch.
       await Firebase.initializeApp();
+      
+      _messaging = FirebaseMessaging.instance;
+      _localNotifications = FlutterLocalNotificationsPlugin();
       
       // Request permissions (important for iOS)
       NotificationSettings settings = await _messaging.requestPermission(

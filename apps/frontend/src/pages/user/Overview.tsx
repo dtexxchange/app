@@ -15,6 +15,8 @@ import {
     XCircle,
     ShieldAlert,
     Newspaper,
+    Smartphone,
+    Download,
 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import React, { useCallback, useEffect, useState } from "react";
@@ -82,6 +84,7 @@ const Overview: React.FC = () => {
         message: string;
         type: "success" | "error" | "info";
     } | null>(null);
+    const [isApkModalOpen, setIsApkModalOpen] = useState(false);
 
     const fetchData = useCallback(async () => {
         try {
@@ -133,6 +136,14 @@ const Overview: React.FC = () => {
         }, 3000);
         return () => clearInterval(interval);
     }, [newsList]);
+
+    useEffect(() => {
+        const hasShownApkModal = localStorage.getItem("apk_modal_shown");
+        if (!hasShownApkModal) {
+            setIsApkModalOpen(true);
+            localStorage.setItem("apk_modal_shown", "true");
+        }
+    }, []);
 
     useEffect(() => {
         if (!isDepositOpen) return;
@@ -698,6 +709,51 @@ const Overview: React.FC = () => {
                                         No deposit gateways available.
                                     </div>
                                 )}
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+
+                {isApkModalOpen && (
+                    <div className="fixed inset-0 z-250 flex items-center justify-center p-6 bg-black/80 backdrop-blur-2xl">
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            className="glass-panel p-10 w-full max-w-sm shadow-2xl border-primary/20 relative"
+                        >
+                            <button 
+                                onClick={() => setIsApkModalOpen(false)}
+                                className="absolute top-6 right-6 text-text-dim hover:text-white transition-colors"
+                            >
+                                <XCircle size={24} />
+                            </button>
+
+                            <div className="flex flex-col items-center text-center">
+                                <div className="w-20 h-20 rounded-3xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary mb-8 shadow-[0_0_40px_rgba(0,255,157,0.15)]">
+                                    <Smartphone size={40} />
+                                </div>
+                                <h2 className="text-3xl font-outfit font-bold text-white mb-3">
+                                    Mobile App Ready
+                                </h2>
+                                <p className="text-text-dim text-sm mb-8 leading-relaxed">
+                                    Take the platform with you. Download our official mobile application for the best experience.
+                                </p>
+                                
+                                <div className="w-full space-y-4">
+                                    <a
+                                        href="/usdt-exchange.apk"
+                                        download
+                                        className="btn-primary w-full flex items-center justify-center gap-3 h-14 text-base"
+                                    >
+                                        <Download size={20} /> Download APK
+                                    </a>
+                                    <button
+                                        onClick={() => setIsApkModalOpen(false)}
+                                        className="w-full py-4 text-text-dim hover:text-white text-xs font-black uppercase tracking-widest transition-all"
+                                    >
+                                        Maybe Later
+                                    </button>
+                                </div>
                             </div>
                         </motion.div>
                     </div>

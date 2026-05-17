@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../services/api_service.dart';
+import '../widgets/expandable_amount.dart';
 
 class WithdrawalScreen extends StatefulWidget {
   const WithdrawalScreen({super.key});
@@ -239,8 +240,9 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
                 style: TextStyle(color: _textDim, fontSize: 12, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
-              Text(
-                '\$${_balance.toStringAsFixed(2)}',
+              ExpandableAmount(
+                amount: _balance,
+                prefix: '\$',
                 style: GoogleFonts.outfit(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
@@ -291,19 +293,20 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
           ),
           child: Column(
             children: [
-              _buildSummaryRow('Withdrawal Fee', '-\$${_withdrawalFee.toStringAsFixed(2)}', isNegative: true),
+              _buildSummaryRow('Withdrawal Fee', '-\$${_withdrawalFee.toStringAsFixed(6).replaceFirst(RegExp(r"\.?0*$"), "")}', isNegative: true),
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 12),
                 child: Divider(height: 1),
               ),
-              _buildSummaryRow('You Will Receive', '\$${netAmount.toStringAsFixed(2)}', isBold: true),
+              _buildSummaryRow('You Will Receive', '\$${netAmount.toStringAsFixed(6).replaceFirst(RegExp(r"\.?0*$"), "")}', isBold: true),
               if (_conversionRate != null) ...[
                 const SizedBox(height: 4),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    Text(
-                      '≈ ₹${inrValue.toStringAsFixed(2)}',
+                    ExpandableAmount(
+                      amount: inrValue,
+                      prefix: '≈ ₹',
                       style: TextStyle(color: _primary, fontWeight: FontWeight.bold, fontSize: 14),
                     ),
                   ],

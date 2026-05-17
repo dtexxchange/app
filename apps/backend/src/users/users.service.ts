@@ -99,9 +99,12 @@ export class UsersService {
     const user = await this.prisma.user.findUnique({
       where: { id },
       include: {
+        _count: {
+          select: { transactions: true },
+        },
         transactions: {
           orderBy: { createdAt: 'desc' },
-          take: 20,
+          take: 5,
           select: {
             id: true,
             readableId: true,

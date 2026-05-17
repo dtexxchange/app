@@ -113,4 +113,17 @@ export class SettingsController {
   async updateWithdrawalFee(@Body('fee') fee: number, @Req() req: any) {
     return this.settingsService.updateWithdrawalFee(fee, req.user.email);
   }
+
+  @Get('help-telegram')
+  @UseGuards(JwtAuthGuard)
+  async getHelpTelegram() {
+    return this.settingsService.getHelpTelegram();
+  }
+
+  @Patch('admin/help-telegram')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  async updateHelpTelegram(@Body('telegram') telegram: string) {
+    return this.settingsService.updateHelpTelegram(telegram);
+  }
 }

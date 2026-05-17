@@ -54,7 +54,7 @@ const UserLayout: React.FC = () => {
                         </div>
                         <div>
                             <h1 className="font-outfit font-bold text-xl text-white">
-                                USDT.EX
+                                Jackpot.Exchange
                             </h1>
                             <p className="text-[10px] font-bold text-accent-blue uppercase tracking-widest mt-1">
                                 User Workspace
@@ -89,16 +89,22 @@ const UserLayout: React.FC = () => {
                 <div className="p-8 border-t border-white/5 bg-white/2">
                     <div className="flex items-center gap-3 mb-6 px-2">
                         <div className="w-10 h-10 rounded-xl bg-accent-blue/10 flex items-center justify-center text-accent-blue font-bold text-sm">
-                            {(user?.firstName?.[0] || user?.email?.[0] || "U").toUpperCase()}
+                            {(
+                                user?.firstName?.[0] ||
+                                user?.email?.[0] ||
+                                "U"
+                            ).toUpperCase()}
                         </div>
                         <div className="flex-1 min-w-0">
                             <p className="text-sm font-bold text-white truncate">
-                                {user?.firstName && user?.lastName 
-                                    ? `${user.firstName} ${user.lastName}` 
+                                {user?.firstName && user?.lastName
+                                    ? `${user.firstName} ${user.lastName}`
                                     : user?.email}
                             </p>
                             <p className="text-[10px] text-text-dim font-bold uppercase tracking-tighter">
-                                {user?.firstName ? user.email : "Verified Member"}
+                                {user?.firstName
+                                    ? user.email
+                                    : "Verified Member"}
                             </p>
                         </div>
                     </div>

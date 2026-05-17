@@ -17,9 +17,12 @@ class ApiService {
           : 'http://localhost:3000';
     }
 
+    // For USB Debugging (Physical Device) or Emulator:
+    // 1. Run this command in your terminal: adb reverse tcp:3000 tcp:3000
+    // 2. The app will then connect to your computer's localhost:3000
     return isProduction
         ? 'https://app-production-0ff2.up.railway.app'
-        : 'http://10.0.2.2:3000'; // Special IP for Android Emulator to reach host
+        : 'http://localhost:3000';
   }
 
   static String get webUrl {

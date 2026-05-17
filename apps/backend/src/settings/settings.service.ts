@@ -106,10 +106,14 @@ export class SettingsService implements OnModuleInit {
           where: { role: Role.ADMIN },
         });
 
+        const userName = (assignmentRecord.user.firstName || assignmentRecord.user.lastName)
+          ? `${assignmentRecord.user.firstName ?? ''} ${assignmentRecord.user.lastName ?? ''}`.trim()
+          : assignmentRecord.user.email;
+
         for (const admin of admins) {
           this.emailService.sendAssignmentAlert(
             admin.email,
-            assignmentRecord.user.email,
+            userName,
             assignmentRecord.wallet.address,
             assignmentRecord.wallet.name ||
               `${assignmentRecord.wallet.network} Gateway`,
@@ -118,7 +122,7 @@ export class SettingsService implements OnModuleInit {
 
         await this.notificationsService.notifyAdmins(
           'QR Assignment Alert',
-          `User ${assignmentRecord.user.email} has viewed the deposit QR code.`,
+          `User ${userName} has viewed the deposit QR code.`,
           'QR_ASSIGNMENT',
           assignmentRecord.id,
         );
@@ -252,6 +256,20 @@ export class SettingsService implements OnModuleInit {
   async getWithdrawalFeeHistory() {
     return this.prisma.withdrawalFeeHistory.findMany({
       orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async getHelpTelegram() {
+    const settings = await this.prisma.globalSettings.findUnique({
+      where: { id: 'global_settings' },
+    });
+    return { helpTelegram: settings?.helpTelegram };
+  }
+
+  async updateHelpTelegram(telegram: string) {
+    return this.prisma.globalSettings.update({
+      where: { id: 'global_settings' },
+      data: { helpTelegram: telegram },
     });
   }
 }

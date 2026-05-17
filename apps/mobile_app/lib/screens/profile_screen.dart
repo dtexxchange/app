@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../main.dart' show themeService;
 import '../services/api_service.dart';
@@ -16,6 +17,7 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   Map<String, dynamic>? _user;
+  String? _helpTelegram;
   bool _isLoading = true;
   final _api = ApiService();
 
@@ -23,6 +25,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void initState() {
     super.initState();
     _fetchProfile();
+    _fetchHelpTelegram();
   }
 
   Future<void> _fetchProfile() async {
@@ -40,6 +43,66 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
     } catch (_) {
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _fetchHelpTelegram() async {
+    try {
+      final res = await _api.getRequest('/settings/help-telegram');
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        if (mounted) {
+          setState(() {
+            _helpTelegram = data['helpTelegram'];
+          });
+        }
+      }
+    } catch (_) {}
+  }
+
+  void _contactSupport() async {
+    if (_helpTelegram == null || _helpTelegram!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Support account not configured yet.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    String url = _helpTelegram!.trim();
+    if (!url.startsWith('http')) {
+      if (url.startsWith('@')) {
+        url = 'https://t.me/${url.substring(1)}';
+      } else {
+        url = 'https://t.me/$url';
+      }
+    }
+
+    final uri = Uri.parse(url);
+    try {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Could not launch Telegram link'),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     }
   }
 
@@ -272,6 +335,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
             icon: Icons.account_balance_outlined,
             label: 'Saved Bank Accounts',
             onTap: () => Navigator.pushNamed(context, '/bank-accounts'),
+          ),
+          Divider(height: 1, color: theme.dividerColor),
+          _ActionRow(
+            icon: Icons.support_agent_outlined,
+            label: 'Support & Help',
+            onTap: _contactSupport,
           ),
         ],
       ),

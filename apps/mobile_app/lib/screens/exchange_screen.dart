@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../services/api_service.dart';
+import '../widgets/expandable_amount.dart';
 
 class ExchangeScreen extends StatefulWidget {
   const ExchangeScreen({super.key});
@@ -90,7 +91,7 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
       return;
     }
     final inr = double.tryParse(val) ?? 0;
-    _amountCtrl.text = (inr / _conversionRate!).toStringAsFixed(2);
+    _amountCtrl.text = (inr / _conversionRate!).toStringAsFixed(6).replaceFirst(RegExp(r"\.?0*$"), "");
     setState(() {});
   }
 
@@ -350,8 +351,9 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Text(
-                    '\$${_balance.toStringAsFixed(2)}',
+                  ExpandableAmount(
+                    amount: _balance,
+                    prefix: '\$',
                     style: GoogleFonts.outfit(
                       fontSize: (isSmall ? 22 : 28) * widthScale,
                       fontWeight: FontWeight.bold,
@@ -393,8 +395,9 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Text(
-                      '₹${(_balance * _conversionRate!).toStringAsFixed(2)}',
+                    ExpandableAmount(
+                      amount: _balance * _conversionRate!,
+                      prefix: '₹',
                       style: GoogleFonts.outfit(
                         color: _primary,
                         fontSize: isSmall ? 15 : 18,
@@ -415,8 +418,9 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Text(
-                      '1 USDT = ₹${_conversionRate!.toStringAsFixed(2)}',
+                    ExpandableAmount(
+                      amount: _conversionRate!,
+                      prefix: '1 USDT = ₹',
                       style: TextStyle(
                         color: Theme.of(
                           context,
@@ -511,28 +515,40 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
           Row(
             children: [
               Expanded(
-                child: TextField(
-                  controller: controller,
-                  onChanged: onChanged,
-                  readOnly: readOnly,
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  style: GoogleFonts.outfit(
-                    color: readOnly
-                        ? Theme.of(
-                            context,
-                          ).colorScheme.onSurface.withValues(alpha: 0.7)
-                        : Theme.of(context).colorScheme.onSurface,
-                    fontSize: 24 * widthScale,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  decoration: const InputDecoration(
-                    border: InputBorder.none,
-                    isDense: true,
-                    contentPadding: EdgeInsets.symmetric(vertical: 8),
-                  ),
-                ),
+                child: readOnly && controller.text.isNotEmpty
+                    ? Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: ExpandableAmount(
+                          amount: double.tryParse(controller.text) ?? 0.0,
+                          style: GoogleFonts.outfit(
+                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                            fontSize: 24 * widthScale,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      )
+                    : TextField(
+                        controller: controller,
+                        onChanged: onChanged,
+                        readOnly: readOnly,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        style: GoogleFonts.outfit(
+                          color: readOnly
+                              ? Theme.of(
+                                  context,
+                                ).colorScheme.onSurface.withValues(alpha: 0.7)
+                              : Theme.of(context).colorScheme.onSurface,
+                          fontSize: 24 * widthScale,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        decoration: const InputDecoration(
+                          border: InputBorder.none,
+                          isDense: true,
+                          contentPadding: EdgeInsets.symmetric(vertical: 8),
+                        ),
+                      ),
               ),
               const SizedBox(width: 8),
               Container(

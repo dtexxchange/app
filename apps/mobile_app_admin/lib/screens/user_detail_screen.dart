@@ -6,7 +6,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
 import '../services/api_service.dart';
+import '../widgets/transaction_card.dart';
+import '../widgets/expandable_amount.dart';
 import 'transaction_detail_screen.dart';
+import 'user_transactions_screen.dart';
 
 class LiveTimerWidget extends StatefulWidget {
   final DateTime expiresAt;
@@ -315,8 +318,8 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
               const SizedBox(height: 4),
               FittedBox(
                 fit: BoxFit.scaleDown,
-                child: Text(
-                  NumberFormat('#,##0.00').format(user['balance'] ?? 0),
+                child: ExpandableAmount(
+                  amount: user['balance'] ?? 0,
                   style: GoogleFonts.outfit(
                     fontSize: 22 * widthScale,
                     fontWeight: FontWeight.bold,
@@ -623,6 +626,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
   // ─── Transactions ─────────────────────────────────────────────────────────────
   Widget _buildTransactionsSection(double widthScale) {
     final txs = _user?['transactions'] as List? ?? [];
+    final totalTxs = _user?['_count']?['transactions'] ?? txs.length;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -632,7 +636,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
             Icon(Icons.receipt_long, color: primary, size: 20 * widthScale),
             SizedBox(width: 10 * widthScale),
             Text(
-              'Transactions (${txs.length})',
+              'Recent Transactions ($totalTxs)',
               style: GoogleFonts.outfit(
                 fontSize: 20 * widthScale,
                 fontWeight: FontWeight.bold,
@@ -663,126 +667,57 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
               ),
             ),
           )
-        else
-          ...txs.map<Widget>((tx) => _buildTxTile(tx as Map<String, dynamic>)),
+        else ...[
+          ...txs.map<Widget>(
+            (tx) => TransactionCard(
+              transaction: tx as Map<String, dynamic>,
+              widthScale: widthScale,
+              onTap: () => _showTransactionDetail(tx),
+            ),
+          ),
+          if (totalTxs > txs.length) ...[
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => UserTransactionsScreen(
+                        userId: widget.userId,
+                        userName: (_user?['firstName'] != null ||
+                                _user?['lastName'] != null)
+                            ? '${_user?['firstName'] ?? ''} ${_user?['lastName'] ?? ''}'
+                                .trim()
+                            : _user?['email'],
+                      ),
+                    ),
+                  ).then((_) => _fetchUser());
+                },
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: primary.withValues(alpha: 0.3)),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: Text(
+                  'View Full Ledger Activity ($totalTxs Total)',
+                  style: TextStyle(
+                    color: primary,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13 * widthScale,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ],
       ],
     );
   }
 
-  Widget _buildTxTile(Map<String, dynamic> tx) {
-    final isDeposit = tx['type'] == 'DEPOSIT';
-    final status = tx['status'] as String;
-
-    Color statusColor;
-    IconData statusIcon;
-    if (status == 'COMPLETED') {
-      statusColor = primary;
-      statusIcon = Icons.check_circle_outline;
-    } else if (status == 'PENDING') {
-      statusColor = _blue;
-      statusIcon = Icons.access_time;
-    } else {
-      statusColor = _danger;
-      statusIcon = Icons.cancel_outlined;
-    }
-
-    return GestureDetector(
-      onTap: () => _showTransactionDetail(tx),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: _bgCard,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: _border),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                color: isDeposit
-                    ? primary.withValues(alpha: 0.10)
-                    : _blue.withValues(alpha: 0.10),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(
-                isDeposit ? Icons.arrow_downward : Icons.arrow_upward,
-                size: 18,
-                color: isDeposit ? primary : _blue,
-              ),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    tx['type'].toString()[0] +
-                        tx['type'].toString().substring(1).toLowerCase(),
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 15,
-                    ),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    DateFormat(
-                      'MMM dd, yyyy • hh:mm a',
-                    ).format(DateTime.parse(tx['createdAt'])),
-                    style: TextStyle(color: textDim, fontSize: 11),
-                  ),
-                ],
-              ),
-            ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  '${isDeposit ? '+' : '-'}${NumberFormat('#,##0.00').format(tx['amount'])} USDT',
-                  style: GoogleFonts.outfit(
-                    color: isDeposit
-                        ? primary
-                        : Theme.of(context).colorScheme.onSurface,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 7,
-                    vertical: 3,
-                  ),
-                  decoration: BoxDecoration(
-                    color: statusColor.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(statusIcon, size: 10, color: statusColor),
-                      const SizedBox(width: 4),
-                      Text(
-                        status,
-                        style: TextStyle(
-                          color: statusColor,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 0.8,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   void _showTransactionDetail(Map<String, dynamic> tx) {
     Navigator.push(

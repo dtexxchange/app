@@ -20,9 +20,9 @@ class NotificationService {
       return;
     }
     try {
+      await Firebase.initializeApp();
       _messaging = FirebaseMessaging.instance;
       _localNotifications = FlutterLocalNotificationsPlugin();
-      await Firebase.initializeApp();
       
       NotificationSettings settings = await _messaging.requestPermission(
         alert: true,

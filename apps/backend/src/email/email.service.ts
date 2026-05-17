@@ -88,7 +88,7 @@ export class EmailService {
   }
   async sendAssignmentAlert(
     adminEmail: string,
-    userEmail: string,
+    userName: string,
     walletAddress: string,
     walletName: string,
   ) {
@@ -100,7 +100,7 @@ export class EmailService {
       <div style="background-color: rgba(255, 255, 255, 0.03); border: 1px solid rgba(0, 255, 157, 0.1); border-radius: 16px; padding: 24px; text-align: left; margin-bottom: 30px;">
         <div style="margin-bottom: 16px;">
           <p style="color: ${this.TEXT_DIM}; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">User</p>
-          <p style="color: #ffffff; font-size: 14px; font-weight: 600; margin: 0;">${userEmail}</p>
+          <p style="color: #ffffff; font-size: 14px; font-weight: 600; margin: 0;">${userName}</p>
         </div>
         <div style="margin-bottom: 16px;">
           <p style="color: ${this.TEXT_DIM}; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">Wallet Gateway</p>
@@ -120,7 +120,7 @@ export class EmailService {
       await this.resend.emails.send({
         from: 'no-reply@trekora.arstyn.com',
         to: adminEmail,
-        subject: `[Alert] Deposit QR Viewed - ${userEmail}`,
+        subject: `[Alert] Deposit QR Viewed - ${userName}`,
         html,
       });
     } catch (error) {

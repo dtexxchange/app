@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
-import 'action_button.dart';
+
+import 'transaction_card.dart';
 
 class OverviewTab extends StatelessWidget {
   final List<dynamic> users;
@@ -42,6 +42,15 @@ class OverviewTab extends StatelessWidget {
     final primary = Theme.of(context).primaryColor;
     final blue = const Color(0xFF3B82F6);
 
+    final now = DateTime.now();
+    final todayTransactions = transactions.where((tx) {
+      final date = DateTime.tryParse(tx['createdAt']?.toString() ?? '');
+      if (date == null) return false;
+      return date.year == now.year &&
+          date.month == now.month &&
+          date.day == now.day;
+    }).toList();
+
     return RefreshIndicator(
       onRefresh: onRefresh,
       color: primary,
@@ -79,7 +88,7 @@ class OverviewTab extends StatelessWidget {
             StatCard(
               label: 'Current Conversion Rate',
               value: conversionRate != null
-                  ? '₹${conversionRate!.toStringAsFixed(2)}'
+                  ? '₹${conversionRate!.toStringAsFixed(4).replaceFirst(RegExp(r"\.?0*$"), "")}'
                   : '---',
               icon: Icons.show_chart,
               iconColor: blue,
@@ -112,7 +121,7 @@ class OverviewTab extends StatelessWidget {
                   child: StatCard(
                     label: 'USD Rate',
                     value: conversionRate != null
-                        ? '₹${conversionRate!.toStringAsFixed(2)}'
+                        ? '₹${conversionRate!.toStringAsFixed(4).replaceFirst(RegExp(r"\.?0*$"), "")}'
                         : '---',
                     icon: Icons.show_chart,
                     iconColor: blue,
@@ -173,13 +182,25 @@ class OverviewTab extends StatelessWidget {
           ),
           SizedBox(height: 12 * widthScale),
 
-          if (transactions.isEmpty)
-            _emptyState(context, 'No transactions', Icons.show_chart)
+          if (todayTransactions.isEmpty)
+            _emptyState(
+              context,
+              'No transactions today',
+              Icons.event_busy_rounded,
+              subtitle:
+                  'Please navigate to transactions details screen for full history.',
+            )
           else ...[
-            ...transactions
-                .take(20)
-                .map((tx) => _buildTxCard(context, tx, widthScale)),
-            if (transactions.length >= 20) ...[
+            ...todayTransactions.take(20).map(
+                  (tx) => TransactionCard(
+                    transaction: tx as Map<String, dynamic>,
+                    widthScale: widthScale,
+                    onTap: () => onTransactionTap(tx),
+                    onApprove: () => onUpdateTxStatus(tx['id'], 'COMPLETED'),
+                    onReject: () => onUpdateTxStatus(tx['id'], 'REJECTED'),
+                  ),
+                ),
+            if (todayTransactions.length >= 20) ...[
               const SizedBox(height: 16),
               GestureDetector(
                 onTap: onViewAll,
@@ -214,178 +235,12 @@ class OverviewTab extends StatelessWidget {
     );
   }
 
-  Widget _buildTxCard(
+  Widget _emptyState(
     BuildContext context,
-    Map<String, dynamic> tx,
-    double widthScale,
-  ) {
-    final isDeposit = tx['type'] == 'DEPOSIT';
-    final status = tx['status'] as String;
-    final isPending = status == 'PENDING';
-    final primary = Theme.of(context).primaryColor;
-    final blue = const Color(0xFF3B82F6);
-    final danger = const Color(0xFFF87171);
-    final border = Theme.of(context).dividerColor;
-    final bgCard = Theme.of(context).cardColor;
-    final textDim = Theme.of(context).colorScheme.onSurfaceVariant;
-
-    Color statusColor;
-    IconData statusIcon;
-    if (status == 'COMPLETED') {
-      statusColor = primary;
-      statusIcon = Icons.check_circle_outline;
-    } else if (status == 'PENDING') {
-      statusColor = blue;
-      statusIcon = Icons.access_time;
-    } else {
-      statusColor = danger;
-      statusIcon = Icons.cancel_outlined;
-    }
-
-    return GestureDetector(
-      onTap: () => onTransactionTap(tx),
-      child: Container(
-        margin: EdgeInsets.only(bottom: 10 * widthScale),
-        padding: EdgeInsets.all(16 * widthScale),
-        decoration: BoxDecoration(
-          color: bgCard,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: border),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 40 * widthScale,
-                  height: 40 * widthScale,
-                  decoration: BoxDecoration(
-                    color: isDeposit
-                        ? primary.withValues(alpha: 0.10)
-                        : blue.withValues(alpha: 0.10),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Icon(
-                    isDeposit ? Icons.arrow_downward : Icons.arrow_upward,
-                    size: 18 * widthScale,
-                    color: isDeposit ? primary : blue,
-                  ),
-                ),
-                SizedBox(width: 12 * widthScale),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        (tx['user']?['firstName'] != null ||
-                                tx['user']?['lastName'] != null)
-                            ? '${tx['user']?['firstName'] ?? ''} ${tx['user']?['lastName'] ?? ''}'
-                                  .trim()
-                            : tx['user']?['email'] ?? 'Unknown',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14 * widthScale,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      Text(
-                        DateFormat('MMM dd, hh:mm a').format(
-                          DateTime.tryParse(
-                                tx['createdAt']?.toString() ?? '',
-                              ) ??
-                              DateTime.now(),
-                        ),
-                        style: TextStyle(
-                          color: textDim,
-                          fontSize: 11 * widthScale,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      '${NumberFormat('#,##0.00').format(tx['amount'] as num)} USDT',
-                      style: GoogleFonts.outfit(
-                        color: isDeposit
-                            ? primary
-                            : Theme.of(context).colorScheme.onSurface,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14 * widthScale,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 7,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: statusColor.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            statusIcon,
-                            size: 10 * widthScale,
-                            color: statusColor,
-                          ),
-                          SizedBox(width: 4 * widthScale),
-                          Text(
-                            status,
-                            style: TextStyle(
-                              color: statusColor,
-                              fontSize: 9 * widthScale,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 0.8,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            if (isPending) ...[
-              const SizedBox(height: 12),
-              Container(height: 1, color: border),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: ActionButton(
-                      label: 'Approve',
-                      icon: Icons.check_circle_outline,
-                      color: primary,
-                      filled: true,
-                      onPressed: () => onUpdateTxStatus(tx['id'], 'COMPLETED'),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: ActionButton(
-                      label: 'Reject',
-                      icon: Icons.cancel_outlined,
-                      color: danger,
-                      onPressed: () => onUpdateTxStatus(tx['id'], 'REJECTED'),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _emptyState(BuildContext context, String label, IconData icon) {
+    String label,
+    IconData icon, {
+    String? subtitle,
+  }) {
     final textDim = Theme.of(context).colorScheme.onSurfaceVariant;
     final primary = Theme.of(context).primaryColor;
 
@@ -400,11 +255,7 @@ class OverviewTab extends StatelessWidget {
               color: primary.withValues(alpha: 0.05),
               shape: BoxShape.circle,
             ),
-            child: Icon(
-              icon,
-              size: 42,
-              color: primary.withValues(alpha: 0.2),
-            ),
+            child: Icon(icon, size: 42, color: primary.withValues(alpha: 0.2)),
           ),
           const SizedBox(height: 20),
           Text(
@@ -417,12 +268,9 @@ class OverviewTab extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'There is no data matching your current filters.',
+            subtitle ?? 'There is no data matching your current filters.',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              color: textDim,
-              fontSize: 13,
-            ),
+            style: TextStyle(color: textDim, fontSize: 13),
           ),
         ],
       ),

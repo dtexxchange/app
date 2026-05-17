@@ -73,6 +73,24 @@ const Signup: React.FC = () => {
                         has been submitted. Please wait for an administrator to
                         approve your account.
                     </p>
+                    <div className="glass bg-primary/5 p-6 rounded-2xl mb-8 border border-primary/20">
+                        <div className="flex items-center justify-between mb-4 text-left">
+                            <div>
+                                <h3 className="text-white font-bold text-sm mb-1">Download Mobile App</h3>
+                                <p className="text-text-dim text-xs">Access your assets on the go.</p>
+                            </div>
+                            <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5M5 12l7 7 7-7"/></svg>
+                            </div>
+                        </div>
+                        <a
+                            href="/usdt-exchange.apk"
+                            download
+                            className="w-full py-3 bg-white/5 hover:bg-white/10 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all block text-center border border-white/10"
+                        >
+                            Download APK
+                        </a>
+                    </div>
                     <Link
                         to="/login"
                         className="btn-primary w-full flex items-center justify-center gap-2 h-14 text-base"

@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../services/api_service.dart';
 import '../widgets/live_timer.dart';
+import '../widgets/expandable_amount.dart';
 
 class DepositScreen extends StatefulWidget {
   const DepositScreen({super.key});
@@ -130,15 +131,22 @@ class _DepositScreenState extends State<DepositScreen> {
                                 ),
                               ),
                               const SizedBox(height: 4),
-                              Text(
-                                _conversionRate != null
-                                    ? '1 USDT = ₹${_conversionRate!.toStringAsFixed(2)}'
-                                    : 'Fetching rate...',
-                                style: GoogleFonts.outfit(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
+                              _conversionRate != null
+                                  ? ExpandableAmount(
+                                      amount: _conversionRate!,
+                                      prefix: '1 USDT = ₹',
+                                      style: GoogleFonts.outfit(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    )
+                                  : Text(
+                                      'Fetching rate...',
+                                      style: GoogleFonts.outfit(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
                             ],
                           ),
                         ),

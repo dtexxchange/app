@@ -12,7 +12,7 @@ class TransactionCard extends StatelessWidget {
   const TransactionCard({
     super.key,
     required this.transaction,
-    required this.widthScale,
+    this.widthScale = 1.0,
     this.onTap,
     this.onApprove,
     this.onReject,
@@ -22,7 +22,7 @@ class TransactionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDeposit = transaction['type'] == 'DEPOSIT';
     final isExchange = transaction['type'] == 'EXCHANGE';
-    final isReferral = transaction['type'] == 'REFERRAL';
+    final isWithdrawal = transaction['type'] == 'WITHDRAWAL';
     final status = transaction['status'] as String;
     final isPending = status == 'PENDING';
 
@@ -58,6 +58,10 @@ class TransactionCard extends StatelessWidget {
       typeColor = blue;
       typeIcon = Icons.swap_horiz;
       typeLabel = 'Exchange';
+    } else if (isWithdrawal) {
+      typeColor = Colors.orangeAccent;
+      typeIcon = Icons.arrow_upward;
+      typeLabel = 'Withdrawal';
     } else {
       typeColor = Colors.green;
       typeIcon = Icons.card_giftcard;
@@ -198,7 +202,7 @@ class TransactionCard extends StatelessWidget {
                 ),
               ],
             ),
-            if (isPending) ...[
+            if (isPending && onApprove != null && onReject != null) ...[
               SizedBox(height: 12 * widthScale),
               Container(height: 1, color: border),
               SizedBox(height: 12 * widthScale),

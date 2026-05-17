@@ -45,7 +45,7 @@ class _WithdrawalFeeScreenState extends State<WithdrawalFeeScreen> {
               ?.toDouble();
           _history = jsonDecode(historyRes.body);
           if (_currentFee != null) {
-            _feeCtrl.text = _currentFee!.toStringAsFixed(2);
+            _feeCtrl.text = _currentFee!.toStringAsFixed(6).replaceFirst(RegExp(r"\.?0*$"), "");
           }
           _isLoading = false;
         });
@@ -227,7 +227,7 @@ class _WithdrawalFeeScreenState extends State<WithdrawalFeeScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '${(item['fee'] as num).toDouble().toStringAsFixed(2)} USDT',
+                  '${(item['fee'] as num).toDouble().toStringAsFixed(6).replaceFirst(RegExp(r"\.?0*$"), "")} USDT',
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 15,

@@ -9,6 +9,8 @@ import 'package:share_plus/share_plus.dart';
 
 import '../services/api_service.dart';
 import '../services/crypto_service.dart';
+import '../theme/app_theme.dart';
+import '../widgets/expandable_amount.dart';
 
 class TransactionDetailScreen extends StatefulWidget {
   final Map<String, dynamic> tx;
@@ -277,7 +279,7 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'AMOUNT (INR)',
+                              (isExchange || isWithdrawal) ? 'AMOUNT (INR)' : 'AMOUNT (USDT)',
                               style: TextStyle(
                                 color: textDim,
                                 fontSize: 11,
@@ -286,14 +288,25 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                               ),
                             ),
                             const SizedBox(height: 4),
-                            Text(
-                              '₹${NumberFormat('#,##0.00').format(amountInr)}',
-                              style: GoogleFonts.outfit(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                color: blue,
+                            if (isExchange || isWithdrawal)
+                              Text(
+                                '₹${NumberFormat('#,##0.##').format(amountInr)}',
+                                style: GoogleFonts.outfit(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  color: blue,
+                                ),
+                              )
+                            else
+                              ExpandableAmount(
+                                amount: amountUsdt,
+                                suffix: ' USDT',
+                                style: GoogleFonts.outfit(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  color: blue,
+                                ),
                               ),
-                            ),
                           ],
                         ),
                       ],
@@ -460,8 +473,8 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                     children: [
                       _DetailRow(
                         label: 'AMOUNT (USDT)',
-                        value:
-                            '${NumberFormat('#,##0.00').format(amountUsdt)} USDT',
+                        amountValue: amountUsdt,
+                        suffix: ' USDT',
                         valueColor: isDeposit ? primary : null,
                       ),
                       const SizedBox(height: 16),
@@ -470,20 +483,23 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                         const SizedBox(height: 16),
                         _DetailRow(
                           label: 'CONVERSION RATE',
-                          value: '₹${conversionRate.toStringAsFixed(2)}',
+                          amountValue: conversionRate,
+                          prefix: '₹',
                         ),
                       ],
                       if (tx['fee'] != null) ...[
                         const SizedBox(height: 16),
                         _DetailRow(
                           label: 'WITHDRAWAL FEE',
-                          value: '${(tx['fee'] as num).toDouble().toStringAsFixed(2)} USDT',
+                          amountValue: (tx['fee'] as num).toDouble(),
+                          suffix: ' USDT',
                           valueColor: danger,
                         ),
                         const SizedBox(height: 16),
                         _DetailRow(
                           label: 'NET AMOUNT',
-                          value: '${(amountUsdt - (tx['fee'] as num).toDouble()).toStringAsFixed(2)} USDT',
+                          amountValue: amountUsdt - (tx['fee'] as num).toDouble(),
+                          suffix: ' USDT',
                           valueColor: primary,
                         ),
                       ],
@@ -727,10 +743,20 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
 
 class _DetailRow extends StatelessWidget {
   final String label;
-  final String value;
+  final String? value;
+  final num? amountValue;
   final Color? valueColor;
+  final String prefix;
+  final String suffix;
 
-  const _DetailRow({required this.label, required this.value, this.valueColor});
+  const _DetailRow({
+    required this.label,
+    this.value,
+    this.amountValue,
+    this.valueColor,
+    this.prefix = '',
+    this.suffix = '',
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -753,19 +779,29 @@ class _DetailRow extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               Flexible(
-                child: Text(
-                  value,
-                  style: TextStyle(
-                    color:
-                        valueColor ?? Theme.of(context).colorScheme.onSurface,
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
+                child: amountValue != null
+                    ? ExpandableAmount(
+                        amount: amountValue!,
+                        prefix: prefix,
+                        suffix: suffix,
+                        style: TextStyle(
+                          color: valueColor ?? Theme.of(context).colorScheme.onSurface,
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      )
+                    : Text(
+                        value ?? '',
+                        style: TextStyle(
+                          color: valueColor ?? Theme.of(context).colorScheme.onSurface,
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
               ),
               const SizedBox(width: 4),
-              _CopyButton(label: label, value: value),
+              _CopyButton(label: label, value: value ?? amountValue?.toString() ?? ''),
             ],
           ),
         ),

@@ -160,7 +160,7 @@ class ExchangeTab extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              '₹${(h['rate'] as num).toStringAsFixed(2)}',
+                              '₹${(h['rate'] as num).toStringAsFixed(4).replaceFirst(RegExp(r"\.?0*$"), "")}',
                               style: const TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.bold,

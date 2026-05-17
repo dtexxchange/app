@@ -7,6 +7,7 @@ import {
     ShieldAlert,
     ShieldCheck,
     Upload,
+    MessageCircle,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import api from "../../lib/api";
@@ -18,6 +19,7 @@ import {
 
 const Settings: React.FC = () => {
     const [hasKeys, setHasKeys] = useState(false);
+    const [helpTelegram, setHelpTelegram] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [alert, setAlert] = useState<{
         title: string;
@@ -29,6 +31,9 @@ const Settings: React.FC = () => {
         try {
             const privKey = localStorage.getItem("admin_private_key");
             setHasKeys(!!privKey);
+
+            const res = await api.get("/settings/help-telegram");
+            setHelpTelegram(res.data.helpTelegram || "");
         } catch (e) {
             console.error(e);
         }
@@ -68,6 +73,28 @@ const Settings: React.FC = () => {
             setAlert({
                 title: "Failure",
                 message: "Cryptographic reset failed.",
+                type: "error",
+            });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const saveHelpTelegram = async () => {
+        setIsLoading(true);
+        try {
+            await api.patch("/settings/admin/help-telegram", {
+                telegram: helpTelegram,
+            });
+            setAlert({
+                title: "Updated",
+                message: "Help Telegram account has been updated.",
+                type: "success",
+            });
+        } catch (e) {
+            setAlert({
+                title: "Error",
+                message: "Failed to update Help Telegram account.",
                 type: "error",
             });
         } finally {
@@ -150,6 +177,56 @@ const Settings: React.FC = () => {
                                 </button>
                                 <button className="px-8 py-5 rounded-2xl border border-white/10 text-white font-bold text-[10px] uppercase tracking-widest hover:bg-white/5 transition-all flex items-center gap-3">
                                     <Upload size={16} /> Import PEM
+                                </button>
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* Help & Support */}
+                    <section className="glass p-10 space-y-8">
+                        <div className="flex items-center gap-5">
+                            <div className="w-14 h-14 rounded-2xl flex items-center justify-center border-2 border-primary/20 bg-primary/10 shadow-2xl shadow-primary/10">
+                                <MessageCircle className="text-primary" size={28} />
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-outfit font-bold text-white">
+                                    Help & Support
+                                </h3>
+                                <p className="text-[10px] font-bold uppercase tracking-[0.2em] mt-1 text-primary">
+                                    User Assistance
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-6">
+                            <p className="text-sm text-text-dim leading-relaxed max-w-xl">
+                                Configure the Telegram account where users will
+                                be directed when they click "Support & Help" in
+                                their mobile app.
+                            </p>
+
+                            <div className="space-y-4">
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-text-dim">
+                                        Telegram Handle / Link
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={helpTelegram}
+                                        onChange={(e) =>
+                                            setHelpTelegram(e.target.value)
+                                        }
+                                        placeholder="@SupportAccount or https://t.me/Support"
+                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-6 py-4 text-white font-medium focus:outline-none focus:border-primary transition-all"
+                                    />
+                                </div>
+
+                                <button
+                                    onClick={saveHelpTelegram}
+                                    disabled={isLoading}
+                                    className="px-10 py-5 rounded-2xl bg-primary text-bg-dark font-black uppercase text-[10px] tracking-widest hover:scale-105 transition-all disabled:opacity-50"
+                                >
+                                    {isLoading ? "Saving..." : "Save Help Account"}
                                 </button>
                             </div>
                         </div>

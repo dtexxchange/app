@@ -47,13 +47,13 @@ export class WalletService {
 
   // ─── Admin Deposit ────────────────────────────────────────────────────────────
   async adminDeposit(userId: string, amount: number, adminEmail: string) {
-    const roundedAmount = Math.round(amount * 100) / 100;
+    const roundedAmount = amount;
     if (roundedAmount <= 0) throw new BadRequestException('Invalid amount');
 
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundException('User not found');
 
-    return this.prisma.$transaction(async (tx) => {
+    const result = await this.prisma.$transaction(async (tx) => {
       await tx.user.update({
         where: { id: userId },
         data: { balance: { increment: roundedAmount } },
@@ -76,6 +76,16 @@ export class WalletService {
       );
       return transaction;
     });
+
+    await this.notificationsService.createNotification(
+      userId,
+      'Deposit Received',
+      `An amount of ${roundedAmount} USDT has been credited to your account.`,
+      'TRANSACTION_COMPLETED',
+      result.id,
+    );
+
+    return result;
   }
 
   // ─── Exchange ─────────────────────────────────────────────────────────────────
@@ -86,8 +96,8 @@ export class WalletService {
     userEmail: string,
     passcode: string,
   ) {
-    const roundedAmount = Math.round(amount * 100) / 100;
-    if (roundedAmount <= 0) throw new BadRequestException('Invalid amount');
+    const exchangeAmount = amount;
+    if (exchangeAmount <= 0) throw new BadRequestException('Invalid amount');
 
     const settings = await this.prisma.globalSettings.findUnique({
       where: { id: 'global_settings' },
@@ -109,19 +119,19 @@ export class WalletService {
       throw new BadRequestException('Invalid passcode for authorization');
     }
 
-    if (user.balance < amount)
+    if (user.balance < exchangeAmount)
       throw new BadRequestException('Insufficient balance');
 
     const result = await this.prisma.$transaction(async (tx) => {
       await tx.user.update({
         where: { id: userId },
-        data: { balance: { decrement: roundedAmount } },
+        data: { balance: { decrement: exchangeAmount } },
       });
       const transaction = await tx.transaction.create({
         data: {
           userId,
           type: TransactionType.EXCHANGE,
-          amount: roundedAmount,
+          amount: exchangeAmount,
           status: TransactionStatus.PENDING,
           bankDetails: encryptedBankDetails,
           conversionRate: settings.usdtToInrRate,
@@ -139,7 +149,7 @@ export class WalletService {
 
     await this.notificationsService.notifyAdmins(
       'New Exchange Request',
-      `A new exchange request of ${roundedAmount} USDT has been submitted.`,
+      `A new exchange request of ${exchangeAmount} USDT has been submitted.`,
       'TRANSACTION_NEW',
       result.id,
     );
@@ -155,8 +165,8 @@ export class WalletService {
     userEmail: string,
     passcode: string,
   ) {
-    const roundedAmount = Math.round(amount * 100) / 100;
-    if (roundedAmount <= 0) throw new BadRequestException('Invalid amount');
+    const withdrawAmount = amount;
+    if (withdrawAmount <= 0) throw new BadRequestException('Invalid amount');
 
     const settings = await this.prisma.globalSettings.findUnique({
       where: { id: 'global_settings' },
@@ -174,19 +184,19 @@ export class WalletService {
       throw new BadRequestException('Invalid passcode for authorization');
     }
 
-    if (user.balance < roundedAmount) throw new BadRequestException('Insufficient balance');
+    if (user.balance < withdrawAmount) throw new BadRequestException('Insufficient balance');
 
     const result = await this.prisma.$transaction(async (tx) => {
       await tx.user.update({
         where: { id: userId },
-        data: { balance: { decrement: roundedAmount } },
+        data: { balance: { decrement: withdrawAmount } },
       });
 
       const transaction = await tx.transaction.create({
         data: {
           userId,
           type: TransactionType.WITHDRAWAL,
-          amount: roundedAmount,
+          amount: withdrawAmount,
           fee: withdrawalFee,
           status: TransactionStatus.PENDING,
           bankDetails: encryptedBankDetails,
@@ -207,7 +217,7 @@ export class WalletService {
 
     await this.notificationsService.notifyAdmins(
       'New Withdrawal Request',
-      `A new withdrawal request of ${roundedAmount} USDT has been submitted.`,
+      `A new withdrawal request of ${withdrawAmount} USDT has been submitted.`,
       'TRANSACTION_NEW',
       result.id,
     );
@@ -283,8 +293,10 @@ export class WalletService {
       throw new BadRequestException('UTR is mandatory for completing transactions');
     }
 
+    let referralNotificationData: { userId: string; amount: number; txId: string } | null = null;
+
     const result = await this.prisma.$transaction(async (tx) => {
-      const roundedAmount = Math.round(transaction.amount * 100) / 100;
+      const roundedAmount = transaction.amount;
       if (status === TransactionStatus.COMPLETED) {
         if (transaction.type === TransactionType.DEPOSIT) {
           await tx.user.update({
@@ -301,7 +313,7 @@ export class WalletService {
           });
 
           if (user?.referredById) {
-            const commission = Math.round(roundedAmount * 0.003 * 100) / 100;
+            const commission = roundedAmount * 0.003;
             if (commission > 0) {
               await tx.user.update({
                 where: { id: user.referredById },
@@ -317,6 +329,12 @@ export class WalletService {
                   status: TransactionStatus.COMPLETED,
                 },
               });
+
+              referralNotificationData = {
+                userId: user.referredById,
+                amount: commission,
+                txId: commTx.id,
+              };
 
               const name = (user.firstName || user.lastName)
                 ? `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim()
@@ -376,6 +394,17 @@ export class WalletService {
       'TRANSACTION_STATUS',
       result.id,
     );
+
+    if (referralNotificationData) {
+      const data = referralNotificationData as { userId: string; amount: number; txId: string };
+      await this.notificationsService.createNotification(
+        data.userId,
+        'Referral Commission',
+        `You received a referral commission of ${data.amount} USDT.`,
+        'REFERRAL_COMMISSION',
+        data.txId,
+      );
+    }
 
     return result;
   }

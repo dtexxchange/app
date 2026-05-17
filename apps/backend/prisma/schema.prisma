@@ -107,6 +107,7 @@ model GlobalSettings {
   id               String   @id @default("global_settings")
   usdtToInrRate    Float?
   withdrawalFee    Float?   @default(0)
+  helpTelegram     String?
   updatedAt        DateTime @updatedAt
 }
 

@@ -428,7 +428,7 @@ const Overview: React.FC = () => {
                                         </div>
                                     </div>
 
-                                    {selectedTx.type === "EXCHANGE" && (
+                                    {(selectedTx.type === "EXCHANGE" || selectedTx.type === "WITHDRAWAL") && (
                                         <div className="glass p-8">
                                             <h3 className="text-sm font-bold text-white uppercase tracking-widest mb-6 flex items-center gap-2">
                                                 <ShieldIcon
