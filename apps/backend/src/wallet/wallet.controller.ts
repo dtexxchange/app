@@ -20,6 +20,23 @@ import { WalletService } from './wallet.service';
 export class WalletController {
   constructor(private walletService: WalletService) {}
 
+  @Get('deposit/active')
+  async getActiveDeposit(@Request() req) {
+    return this.walletService.getActiveDeposit(req.user.userId);
+  }
+
+  @Post('deposit')
+  async requestDeposit(
+    @Request() req,
+    @Body('amount') amount: number,
+  ) {
+    return this.walletService.requestDeposit(
+      req.user.userId,
+      amount,
+      req.user.email,
+    );
+  }
+
   @Post('admin/deposit')
   @Roles(Role.ADMIN)
   async adminDeposit(

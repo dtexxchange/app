@@ -34,21 +34,22 @@ class ApiService {
 
   final _storage = const FlutterSecureStorage(
     aOptions: AndroidOptions(encryptedSharedPreferences: true),
+    mOptions: MacOsOptions(useDataProtectionKeyChain: false),
   );
 
   Future<void> saveToken(String token) async {
     try {
-      await _storage.write(key: 'token', value: token);
+      await _storage.write(key: 'user_token', value: token);
     } catch (e) {
       debugPrint('Error saving token: $e');
       await _storage.deleteAll();
-      await _storage.write(key: 'token', value: token);
+      await _storage.write(key: 'user_token', value: token);
     }
   }
 
   Future<String?> getToken() async {
     try {
-      return await _storage.read(key: 'token');
+      return await _storage.read(key: 'user_token');
     } catch (e) {
       debugPrint('Error reading token: $e');
       await _storage.deleteAll();
@@ -58,7 +59,7 @@ class ApiService {
 
   Future<void> logout() async {
     try {
-      await _storage.delete(key: 'token');
+      await _storage.delete(key: 'user_token');
     } catch (e) {
       await _storage.deleteAll();
     }

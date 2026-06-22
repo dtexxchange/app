@@ -11,8 +11,6 @@ import 'package:screenshot/screenshot.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../services/api_service.dart';
-import '../services/crypto_service.dart';
-import '../theme/app_theme.dart';
 import '../widgets/expandable_amount.dart';
 
 class TransactionDetailScreen extends StatefulWidget {
@@ -59,7 +57,9 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
   Future<void> _loadDetails() async {
     setState(() => _isLoadingInfo = true);
     try {
-      const storage = FlutterSecureStorage();
+      const storage = FlutterSecureStorage(
+        mOptions: MacOsOptions(useDataProtectionKeyChain: false),
+      );
       final privPem = await storage.read(key: 'admin_private_key');
 
       if (_CryptoHelper.enableE2EE == false ||

@@ -127,4 +127,141 @@ export class EmailService {
       console.error('Failed to send assignment alert email:', error);
     }
   }
+
+  async sendTicketCreatedAdminAlert(
+    adminEmail: string,
+    readableId: string,
+    subject: string,
+    userEmail: string,
+    description: string,
+  ) {
+    const html = this.getEmailWrapper(
+      `
+      <p style="color: ${this.TEXT_DIM}; font-size: 16px; line-height: 1.6; margin-bottom: 30px;">
+        A new help & support ticket has been raised by a user.
+      </p>
+      <div style="background-color: rgba(255, 255, 255, 0.03); border: 1px solid rgba(0, 255, 157, 0.1); border-radius: 16px; padding: 24px; text-align: left; margin-bottom: 30px;">
+        <div style="margin-bottom: 16px;">
+          <p style="color: ${this.TEXT_DIM}; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">Ticket ID</p>
+          <p style="color: #ffffff; font-size: 14px; font-weight: 600; margin: 0;">#${readableId}</p>
+        </div>
+        <div style="margin-bottom: 16px;">
+          <p style="color: ${this.TEXT_DIM}; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">User Email</p>
+          <p style="color: #ffffff; font-size: 14px; font-weight: 600; margin: 0;">${userEmail}</p>
+        </div>
+        <div style="margin-bottom: 16px;">
+          <p style="color: ${this.TEXT_DIM}; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">Subject</p>
+          <p style="color: #ffffff; font-size: 14px; font-weight: 600; margin: 0;">${subject}</p>
+        </div>
+        <div>
+          <p style="color: ${this.TEXT_DIM}; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">Description</p>
+          <p style="color: ${this.TEXT_DIM}; font-size: 14px; margin: 0; line-height: 1.4;">${description}</p>
+        </div>
+      </div>
+    `,
+      'New Ticket Raised',
+    );
+
+    try {
+      await this.resend.emails.send({
+        from: 'no-reply@trekora.arstyn.com',
+        to: adminEmail,
+        subject: `[Support Ticket #${readableId}] ${subject}`,
+        html,
+      });
+    } catch (error) {
+      console.error('Failed to send ticket created admin email:', error);
+    }
+  }
+
+  async sendTicketReplyAlert(
+    toEmail: string,
+    senderEmail: string,
+    readableId: string,
+    subject: string,
+    messageContent: string,
+    isToAdmin: boolean,
+  ) {
+    const title = isToAdmin ? 'New Ticket Reply' : 'Admin Ticket Reply';
+    const heading = isToAdmin
+      ? `A user has replied to Ticket #${readableId}`
+      : `An administrator has replied to your Ticket #${readableId}`;
+
+    const html = this.getEmailWrapper(
+      `
+      <p style="color: ${this.TEXT_DIM}; font-size: 16px; line-height: 1.6; margin-bottom: 30px;">
+        ${heading}
+      </p>
+      <div style="background-color: rgba(255, 255, 255, 0.03); border: 1px solid rgba(0, 255, 157, 0.1); border-radius: 16px; padding: 24px; text-align: left; margin-bottom: 30px;">
+        <div style="margin-bottom: 12px;">
+          <p style="color: ${this.TEXT_DIM}; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">Sender</p>
+          <p style="color: #ffffff; font-size: 14px; font-weight: 600; margin: 0;">${senderEmail}</p>
+        </div>
+        <div style="margin-bottom: 12px;">
+          <p style="color: ${this.TEXT_DIM}; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">Ticket</p>
+          <p style="color: #ffffff; font-size: 14px; font-weight: 600; margin: 0;">#${readableId} - ${subject}</p>
+        </div>
+        <div>
+          <p style="color: ${this.TEXT_DIM}; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">Message</p>
+          <p style="color: #ffffff; font-size: 14px; margin: 0; line-height: 1.4;">${messageContent}</p>
+        </div>
+      </div>
+    `,
+      title,
+    );
+
+    try {
+      await this.resend.emails.send({
+        from: 'no-reply@trekora.arstyn.com',
+        to: toEmail,
+        subject: `[Re: Ticket #${readableId}] ${subject}`,
+        html,
+      });
+    } catch (error) {
+      console.error('Failed to send ticket reply email:', error);
+    }
+  }
+
+  async sendTicketStatusAlert(
+    userEmail: string,
+    readableId: string,
+    subject: string,
+    status: string,
+  ) {
+    const formattedStatus = status.replace(/_/g, ' ');
+    const html = this.getEmailWrapper(
+      `
+      <p style="color: ${this.TEXT_DIM}; font-size: 16px; line-height: 1.6; margin-bottom: 30px;">
+        Your support ticket has been updated by an administrator.
+      </p>
+      <div style="background-color: rgba(255, 255, 255, 0.03); border: 1px solid rgba(0, 255, 157, 0.1); border-radius: 16px; padding: 24px; text-align: left; margin-bottom: 30px;">
+        <div style="margin-bottom: 16px;">
+          <p style="color: ${this.TEXT_DIM}; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">Ticket ID</p>
+          <p style="color: #ffffff; font-size: 14px; font-weight: 600; margin: 0;">#${readableId}</p>
+        </div>
+        <div style="margin-bottom: 16px;">
+          <p style="color: ${this.TEXT_DIM}; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">Subject</p>
+          <p style="color: #ffffff; font-size: 14px; font-weight: 600; margin: 0;">${subject}</p>
+        </div>
+        <div>
+          <p style="color: ${this.TEXT_DIM}; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">New Status</p>
+          <p style="color: ${this.BRAND_COLOR}; font-size: 18px; font-weight: 700; margin: 0;">${formattedStatus}</p>
+        </div>
+      </div>
+    `,
+      'Ticket Status Updated',
+    );
+
+    try {
+      await this.resend.emails.send({
+        from: 'no-reply@trekora.arstyn.com',
+        to: userEmail,
+        subject: `[Status Update: Ticket #${readableId}] ${subject}`,
+        html,
+      });
+    } catch (error) {
+      console.error('Failed to send ticket status email:', error);
+    }
+  }
 }
+

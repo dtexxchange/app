@@ -576,7 +576,7 @@ class SettingsTab extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      'Set help Telegram account for users',
+                      'Manage help tickets and social support channels',
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                         fontSize: 13,

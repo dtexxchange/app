@@ -6,6 +6,7 @@ import {
 import { TransactionStatus, TransactionType } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { SettingsService } from '../settings/settings.service';
 
 @Injectable()
 export class WalletService {
@@ -13,6 +14,7 @@ export class WalletService {
   constructor(
     private prisma: PrismaService,
     private notificationsService: NotificationsService,
+    private settingsService: SettingsService,
   ) {}
 
   private transactionSelect = {
@@ -86,6 +88,117 @@ export class WalletService {
     );
 
     return result;
+  }
+
+  // ─── Get Active Deposit ───────────────────────────────────────────────────────
+  async getActiveDeposit(userId: string) {
+    const now = new Date();
+    // Check if user has an active wallet assignment
+    const activeAssignment = await this.prisma.walletAssignment.findFirst({
+      where: { userId, expiresAt: { gt: now } },
+      include: { wallet: true },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (!activeAssignment || !activeAssignment.wallet.isActive) {
+      return null;
+    }
+
+    // Find the pending transaction created within the assignment duration
+    const pendingTx = await this.prisma.transaction.findFirst({
+      where: {
+        userId,
+        type: TransactionType.DEPOSIT,
+        status: TransactionStatus.PENDING,
+        createdAt: { gte: activeAssignment.createdAt },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (!pendingTx) {
+      return null;
+    }
+
+    return {
+      wallet: activeAssignment.wallet,
+      transaction: pendingTx,
+      expiresAt: activeAssignment.expiresAt,
+    };
+  }
+
+  // ─── Request Deposit ──────────────────────────────────────────────────────────
+  async requestDeposit(userId: string, amount: number, userEmail: string) {
+    const roundedAmount = Math.round(amount * 100) / 100;
+    if (roundedAmount <= 0) {
+      throw new BadRequestException('Amount must be greater than 0');
+    }
+
+    // Check if there is an active deposit
+    const activeDeposit = await this.getActiveDeposit(userId);
+    if (activeDeposit) {
+      return activeDeposit;
+    }
+
+    // Assign a wallet
+    const walletResult = await this.settingsService.getAssignedWallet(userId);
+    if (!walletResult) {
+      throw new BadRequestException('No deposit gateways available');
+    }
+
+    if ('isBusy' in walletResult) {
+      return {
+        isBusy: true,
+        availableAt: walletResult.availableAt,
+      };
+    }
+
+    // Get the current conversion rate
+    const settings = await this.prisma.globalSettings.findUnique({
+      where: { id: 'global_settings' },
+    });
+    const currentRate = settings?.usdtToInrRate || null;
+
+    // Create the pending deposit transaction
+    const transaction = await this.prisma.$transaction(async (tx) => {
+      const createdTx = await tx.transaction.create({
+        data: {
+          userId,
+          type: TransactionType.DEPOSIT,
+          amount: roundedAmount,
+          status: TransactionStatus.PENDING,
+          conversionRate: currentRate,
+        },
+      });
+
+      await this.writeLog(
+        tx,
+        createdTx.id,
+        TransactionStatus.PENDING,
+        userEmail,
+        `Deposit request of ${roundedAmount} USDT submitted`,
+      );
+
+      return createdTx;
+    });
+
+    // Notify admins
+    await this.notificationsService.notifyAdmins(
+      'New Deposit Request',
+      `User ${userEmail} requested a deposit of ${roundedAmount} USDT.`,
+      'TRANSACTION_NEW',
+      transaction.id,
+    );
+
+    return {
+      wallet: {
+        id: walletResult.id,
+        name: walletResult.name,
+        address: walletResult.address,
+        network: walletResult.network,
+      },
+      transaction,
+      expiresAt: walletResult.expiresAt,
+    };
   }
 
   // ─── Exchange ─────────────────────────────────────────────────────────────────

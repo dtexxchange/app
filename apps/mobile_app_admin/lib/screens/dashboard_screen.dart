@@ -89,7 +89,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   bool _hasMobileKey = false;
-  final _storage = const FlutterSecureStorage();
+  final _storage = const FlutterSecureStorage(
+    mOptions: MacOsOptions(useDataProtectionKeyChain: false),
+  );
 
   Future<void> _checkMobileKeys() async {
     final key = await _storage.read(key: 'admin_private_key');
@@ -378,8 +380,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
           currentIndex: _tabIndex,
           onTap: (i) {
             setState(() => _tabIndex = i);
-            if (i == 0 || i == 2)
+            if (i == 0 || i == 2) {
               _fetchAll(); // Refresh when entering relevant tabs
+            }
           },
           backgroundColor: _bgDark,
           type: BottomNavigationBarType.fixed,

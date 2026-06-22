@@ -53,6 +53,8 @@ model User {
   walletAssignments WalletAssignment[]
   notifications Notification[]
   deviceTokens  DeviceToken[]
+  tickets       Ticket[]       @relation("UserTickets")
+  ticketMessages TicketMessage[] @relation("UserTicketMessages")
 }
 
 model Transaction {
@@ -107,8 +109,16 @@ model GlobalSettings {
   id               String   @id @default("global_settings")
   usdtToInrRate    Float?
   withdrawalFee    Float?   @default(0)
-  helpTelegram     String?
   updatedAt        DateTime @updatedAt
+}
+
+model SupportContact {
+  id        String   @id @default(uuid())
+  title     String
+  platform  String   @default("LINK") // TELEGRAM, WHATSAPP, LINK
+  url       String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model GlobalWallet {
@@ -213,5 +223,33 @@ model News {
   status      NewsStatus @default(PUBLISHED)
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
+}
+
+enum TicketStatus {
+  OPEN
+  RESOLVED
+  UNRESOLVED
+}
+
+model Ticket {
+  id         String          @id @default(uuid())
+  readableId BigInt          @unique @default(autoincrement())
+  subject    String
+  status     TicketStatus    @default(OPEN)
+  userId     String
+  user       User            @relation("UserTickets", fields: [userId], references: [id])
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+  messages   TicketMessage[]
+}
+
+model TicketMessage {
+  id        String   @id @default(uuid())
+  ticketId  String
+  ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  senderId  String
+  sender    User     @relation("UserTicketMessages", fields: [senderId], references: [id])
+  message   String
+  createdAt DateTime @default(now())
 }
 

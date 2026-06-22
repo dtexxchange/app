@@ -442,7 +442,7 @@ class _PrimaryButton extends StatelessWidget {
               ),
               elevation: 0,
             ).copyWith(
-              overlayColor: MaterialStateProperty.all(
+              overlayColor: WidgetStateProperty.all(
                 Colors.black.withValues(alpha: 0.1),
               ),
             ),

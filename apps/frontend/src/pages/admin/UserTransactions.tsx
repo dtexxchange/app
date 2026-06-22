@@ -28,7 +28,6 @@ const UserTransactions: React.FC = () => {
     const [filter, setFilter] = useState({ type: "", status: "", search: "" });
     const [selectedTx, setSelectedTx] = useState<any>(null);
     const [decryptedBankDetails, setDecryptedBankDetails] = useState<any>(null);
-    const [hasKeys, setHasKeys] = useState(false);
 
     const fetchUser = useCallback(async () => {
         try {
@@ -59,8 +58,6 @@ const UserTransactions: React.FC = () => {
 
     useEffect(() => {
         fetchUser();
-        const privKey = localStorage.getItem("admin_private_key");
-        setHasKeys(!!privKey);
     }, [fetchUser]);
 
     useEffect(() => {
@@ -68,8 +65,17 @@ const UserTransactions: React.FC = () => {
     }, [fetchTransactions]);
 
     const handleUpdateStatus = async (txId: string, status: string) => {
+        let utr: string | null = null;
+        if (status === "COMPLETED") {
+            utr = prompt("Please enter the UTR / reference number to complete this transaction:");
+            if (utr === null) return;
+            if (!utr.trim()) {
+                alert("UTR is required to complete the transaction.");
+                return;
+            }
+        }
         try {
-            await api.patch(`/wallet/transactions/${txId}/status`, { status });
+            await api.patch(`/wallet/transactions/${txId}/status`, { status, utr });
             fetchTransactions();
             if (selectedTx?.id === txId) {
                 const { data } = await api.get(`/wallet/transactions/${txId}`);

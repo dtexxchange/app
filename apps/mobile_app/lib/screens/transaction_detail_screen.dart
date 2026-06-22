@@ -9,16 +9,12 @@ import 'package:share_plus/share_plus.dart';
 
 import '../services/api_service.dart';
 import '../services/crypto_service.dart';
-import '../theme/app_theme.dart';
 import '../widgets/expandable_amount.dart';
 
 class TransactionDetailScreen extends StatefulWidget {
   final Map<String, dynamic> tx;
 
-  const TransactionDetailScreen({
-    super.key,
-    required this.tx,
-  });
+  const TransactionDetailScreen({super.key, required this.tx});
 
   @override
   State<TransactionDetailScreen> createState() =>
@@ -241,7 +237,11 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                         ),
                         child: Row(
                           children: [
-                            Icon(Icons.receipt_outlined, color: primary, size: 16),
+                            Icon(
+                              Icons.receipt_outlined,
+                              color: primary,
+                              size: 16,
+                            ),
                             const SizedBox(width: 10),
                             Expanded(
                               child: Column(
@@ -279,7 +279,9 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              (isExchange || isWithdrawal) ? 'AMOUNT (INR)' : 'AMOUNT (USDT)',
+                              (isExchange || isWithdrawal)
+                                  ? 'AMOUNT (INR)'
+                                  : 'AMOUNT (USDT)',
                               style: TextStyle(
                                 color: textDim,
                                 fontSize: 11,
@@ -392,7 +394,9 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
               // Section 2: Bank Details (Instructions for Exchange/Withdrawal)
               if (isExchange || isWithdrawal) ...[
                 Text(
-                  isWithdrawal ? 'WITHDRAWAL DESTINATION' : 'EXCHANGE INSTRUCTIONS',
+                  isWithdrawal
+                      ? 'WITHDRAWAL DESTINATION'
+                      : 'EXCHANGE INSTRUCTIONS',
                   style: TextStyle(
                     color: textDim,
                     fontSize: 11,
@@ -498,7 +502,8 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                         const SizedBox(height: 16),
                         _DetailRow(
                           label: 'NET AMOUNT',
-                          amountValue: amountUsdt - (tx['fee'] as num).toDouble(),
+                          amountValue:
+                              amountUsdt - (tx['fee'] as num).toDouble(),
                           suffix: ' USDT',
                           valueColor: primary,
                         ),
@@ -785,7 +790,9 @@ class _DetailRow extends StatelessWidget {
                         prefix: prefix,
                         suffix: suffix,
                         style: TextStyle(
-                          color: valueColor ?? Theme.of(context).colorScheme.onSurface,
+                          color:
+                              valueColor ??
+                              Theme.of(context).colorScheme.onSurface,
                           fontSize: 13,
                           fontWeight: FontWeight.bold,
                         ),
@@ -793,7 +800,9 @@ class _DetailRow extends StatelessWidget {
                     : Text(
                         value ?? '',
                         style: TextStyle(
-                          color: valueColor ?? Theme.of(context).colorScheme.onSurface,
+                          color:
+                              valueColor ??
+                              Theme.of(context).colorScheme.onSurface,
                           fontSize: 13,
                           fontWeight: FontWeight.bold,
                         ),
@@ -801,7 +810,10 @@ class _DetailRow extends StatelessWidget {
                       ),
               ),
               const SizedBox(width: 4),
-              _CopyButton(label: label, value: value ?? amountValue?.toString() ?? ''),
+              _CopyButton(
+                label: label,
+                value: value ?? amountValue?.toString() ?? '',
+              ),
             ],
           ),
         ),
@@ -861,9 +873,7 @@ class _CopyButtonState extends State<_CopyButton> {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.all(6),
         decoration: BoxDecoration(
-          color: _copied
-              ? primary.withValues(alpha: 0.15)
-              : Colors.transparent,
+          color: _copied ? primary.withValues(alpha: 0.15) : Colors.transparent,
           borderRadius: BorderRadius.circular(6),
         ),
         child: Icon(

@@ -309,7 +309,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 Switch(
                   value: theme.brightness == Brightness.dark,
-                  activeColor: theme.primaryColor,
+                  activeThumbColor: theme.primaryColor,
                   onChanged: (v) => themeService.toggleTheme(),
                 ),
               ],
@@ -340,7 +340,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           _ActionRow(
             icon: Icons.support_agent_outlined,
             label: 'Support & Help',
-            onTap: _contactSupport,
+            onTap: () => Navigator.pushNamed(context, '/tickets'),
           ),
         ],
       ),

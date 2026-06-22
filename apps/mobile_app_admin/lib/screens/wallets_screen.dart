@@ -441,7 +441,7 @@ class _WalletsScreenState extends State<WalletsScreen> {
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                value: network,
+                initialValue: network,
                 dropdownColor: _bgCard,
                 style: const TextStyle(
                   fontSize: 14,

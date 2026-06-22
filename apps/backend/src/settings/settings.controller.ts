@@ -126,4 +126,43 @@ export class SettingsController {
   async updateHelpTelegram(@Body('telegram') telegram: string) {
     return this.settingsService.updateHelpTelegram(telegram);
   }
+
+  @Get('support-contacts')
+  @UseGuards(JwtAuthGuard)
+  async getSupportContacts() {
+    return this.settingsService.getSupportContacts();
+  }
+
+  @Post('admin/support-contacts')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  async createSupportContact(
+    @Body('title') title: string,
+    @Body('platform') platform: string,
+    @Body('url') url: string,
+  ) {
+    return this.settingsService.createSupportContact(title, platform, url);
+  }
+
+  @Patch('admin/support-contacts/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  async updateSupportContact(
+    @Param('id') id: string,
+    @Body()
+    data: {
+      title?: string;
+      platform?: string;
+      url?: string;
+    },
+  ) {
+    return this.settingsService.updateSupportContact(id, data);
+  }
+
+  @Delete('admin/support-contacts/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  async deleteSupportContact(@Param('id') id: string) {
+    return this.settingsService.deleteSupportContact(id);
+  }
 }

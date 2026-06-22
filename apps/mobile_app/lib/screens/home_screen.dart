@@ -19,6 +19,7 @@ class CustomBottomSheet extends StatelessWidget {
   final Widget child;
 
   const CustomBottomSheet({
+    super.key,
     required this.title,
     required this.icon,
     required this.iconColor,
@@ -80,7 +81,7 @@ class CustomBottomSheet extends StatelessWidget {
 
 class AmountField extends StatelessWidget {
   final TextEditingController controller;
-  const AmountField({required this.controller});
+  const AmountField({super.key, required this.controller});
 
   @override
   Widget build(BuildContext context) {
@@ -122,6 +123,7 @@ class SheetField extends StatelessWidget {
   final String hint;
   final TextInputType? keyboardType;
   const SheetField({
+    super.key,
     required this.controller,
     required this.hint,
     this.keyboardType,
@@ -166,6 +168,7 @@ class PrimaryButton extends StatelessWidget {
   final IconData? icon;
   final VoidCallback? onPressed;
   const PrimaryButton({
+    super.key,
     required this.label,
     required this.onPressed,
     this.icon,
@@ -219,7 +222,12 @@ class GhostButton extends StatelessWidget {
   final String label;
   final IconData? icon;
   final VoidCallback? onPressed;
-  const GhostButton({required this.label, required this.onPressed, this.icon});
+  const GhostButton({
+    super.key,
+    required this.label,
+    required this.onPressed,
+    this.icon,
+  });
 
   @override
   Widget build(BuildContext context) {

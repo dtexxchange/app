@@ -19,6 +19,17 @@ export class SettingsService implements OnModuleInit {
       update: {},
       create: { id: 'global_settings', usdtToInrRate: null },
     });
+
+    // Seed default support contacts if table is empty
+    const count = await this.prisma.supportContact.count();
+    if (count === 0) {
+      await this.prisma.supportContact.createMany({
+        data: [
+          { title: 'Telegram Support', platform: 'TELEGRAM', url: '@Support' },
+          { title: 'WhatsApp Hotline', platform: 'WHATSAPP', url: '+1234567890' },
+        ],
+      });
+    }
   }
 
   async getAllWallets() {
@@ -260,16 +271,46 @@ export class SettingsService implements OnModuleInit {
   }
 
   async getHelpTelegram() {
-    const settings = await this.prisma.globalSettings.findUnique({
-      where: { id: 'global_settings' },
-    });
-    return { helpTelegram: settings?.helpTelegram };
+    const contacts = await this.getSupportContacts();
+    const telegram = contacts.find((c) => c.platform === 'TELEGRAM');
+    return { helpTelegram: telegram?.url || '' };
   }
 
   async updateHelpTelegram(telegram: string) {
-    return this.prisma.globalSettings.update({
-      where: { id: 'global_settings' },
-      data: { helpTelegram: telegram },
+    const contacts = await this.getSupportContacts();
+    const telegramContact = contacts.find((c) => c.platform === 'TELEGRAM');
+    if (telegramContact) {
+      return this.updateSupportContact(telegramContact.id, { url: telegram });
+    } else {
+      return this.createSupportContact('Telegram Support', 'TELEGRAM', telegram);
+    }
+  }
+
+  async getSupportContacts() {
+    return this.prisma.supportContact.findMany({
+      orderBy: { createdAt: 'asc' },
+    });
+  }
+
+  async createSupportContact(title: string, platform: string, url: string) {
+    return this.prisma.supportContact.create({
+      data: { title, platform, url },
+    });
+  }
+
+  async updateSupportContact(
+    id: string,
+    data: { title?: string; platform?: string; url?: string },
+  ) {
+    return this.prisma.supportContact.update({
+      where: { id },
+      data,
+    });
+  }
+
+  async deleteSupportContact(id: string) {
+    return this.prisma.supportContact.delete({
+      where: { id },
     });
   }
 }

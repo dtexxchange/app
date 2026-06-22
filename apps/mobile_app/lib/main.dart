@@ -11,6 +11,8 @@ import 'screens/passcode_screen.dart';
 import 'screens/success_screen.dart';
 import 'screens/transactions_screen.dart';
 import 'screens/withdrawal_screen.dart';
+import 'screens/tickets_screen.dart';
+import 'screens/ticket_detail_screen.dart';
 import 'services/api_service.dart';
 import 'services/notification_service.dart';
 import 'services/theme_service.dart';
@@ -57,6 +59,8 @@ class MainApp extends StatelessWidget {
             '/deposit': (context) => const DepositScreen(),
             '/withdraw': (context) => const WithdrawalScreen(),
             '/notifications': (context) => const NotificationsScreen(),
+            '/tickets': (context) => const TicketsScreen(),
+            '/ticket-detail': (context) => const TicketDetailScreen(),
           },
         );
       },

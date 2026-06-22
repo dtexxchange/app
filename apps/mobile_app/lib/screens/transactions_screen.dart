@@ -35,7 +35,7 @@ class TransactionsScreenState extends State<TransactionsScreen>
   bool _hasMore = true;
   int _page = 1;
 
-  String _filterType = '';
+  final String _filterType = '';
   String _filterStatus = '';
 
   final _api = ApiService();
@@ -45,7 +45,13 @@ class TransactionsScreenState extends State<TransactionsScreen>
   bool _isSearching = false;
   String _searchQuery = '';
   int _currentTypeTab = 0;
-  final List<String> _typeTabs = ['All', 'Deposits', 'Exchanges', 'Withdrawals', 'Referral'];
+  final List<String> _typeTabs = [
+    'All',
+    'Deposits',
+    'Exchanges',
+    'Withdrawals',
+    'Referral',
+  ];
 
   @override
   void initState() {
@@ -100,8 +106,10 @@ class TransactionsScreenState extends State<TransactionsScreen>
 
     try {
       // Increase limit to allow better local filtering/search like the admin app
-      final effectiveLimit = _isSearching || _currentTypeTab != 0 ? 100 : _pageSize;
-      
+      final effectiveLimit = _isSearching || _currentTypeTab != 0
+          ? 100
+          : _pageSize;
+
       final params = <String, String>{'page': '1', 'limit': '$effectiveLimit'};
       if (_filterType.isNotEmpty) params['type'] = _filterType;
       if (_filterStatus.isNotEmpty) params['status'] = _filterStatus;
@@ -139,7 +147,9 @@ class TransactionsScreenState extends State<TransactionsScreen>
       } else if (tabType == 'WITHDRAWALS') {
         filtered = filtered.where((tx) => tx['type'] == 'WITHDRAWAL').toList();
       } else if (tabType == 'REFERRAL') {
-        filtered = filtered.where((tx) => tx['type'] == 'REFERRAL_COMMISSION').toList();
+        filtered = filtered
+            .where((tx) => tx['type'] == 'REFERRAL_COMMISSION')
+            .toList();
       }
     }
 
@@ -151,7 +161,10 @@ class TransactionsScreenState extends State<TransactionsScreen>
         final readableId = tx['readableId']?.toString().toLowerCase() ?? '';
         final type = tx['type']?.toString().toLowerCase() ?? '';
         final amount = tx['amount']?.toString() ?? '';
-        return txId.contains(q) || readableId.contains(q) || type.contains(q) || amount.contains(q);
+        return txId.contains(q) ||
+            readableId.contains(q) ||
+            type.contains(q) ||
+            amount.contains(q);
       }).toList();
     }
 
@@ -163,8 +176,13 @@ class TransactionsScreenState extends State<TransactionsScreen>
     setState(() => _isFetchingMore = true);
 
     try {
-      final effectiveLimit = _isSearching || _currentTypeTab != 0 ? 100 : _pageSize;
-      final params = <String, String>{'page': '$_page', 'limit': '$effectiveLimit'};
+      final effectiveLimit = _isSearching || _currentTypeTab != 0
+          ? 100
+          : _pageSize;
+      final params = <String, String>{
+        'page': '$_page',
+        'limit': '$effectiveLimit',
+      };
       if (_filterType.isNotEmpty) params['type'] = _filterType;
       if (_filterStatus.isNotEmpty) params['status'] = _filterStatus;
 
@@ -190,7 +208,10 @@ class TransactionsScreenState extends State<TransactionsScreen>
 
   @override
   Widget build(BuildContext context) {
-    final widthScale = (MediaQuery.of(context).size.width / 375.0).clamp(0.85, 1.2);
+    final widthScale = (MediaQuery.of(context).size.width / 375.0).clamp(
+      0.85,
+      1.2,
+    );
     final displayTxs = _filteredTransactions;
 
     return Scaffold(
@@ -207,54 +228,58 @@ class TransactionsScreenState extends State<TransactionsScreen>
               child: _isLoading
                   ? Center(child: CircularProgressIndicator(color: _primary))
                   : displayTxs.isEmpty
-                      ? ListView(
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          children: [
-                            SizedBox(height: MediaQuery.of(context).size.height * 0.2),
-                            _buildEmptyState(),
-                          ],
-                        )
-                      : ListView.builder(
-                          controller: _scrollController,
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          padding: const EdgeInsets.fromLTRB(24, 16, 24, 100),
-                          itemCount: displayTxs.length + (_isFetchingMore || _hasMore ? 1 : 0),
-                          itemBuilder: (ctx, i) {
-                            if (i < displayTxs.length) {
-                              return _buildTxTile(displayTxs[i]);
-                            }
-                            
-                            // Load-more indicator or end-of-list footer
-                            if (_isFetchingMore) {
-                              return Center(
-                                child: Padding(
-                                  padding: const EdgeInsets.all(24),
-                                  child: CircularProgressIndicator(
-                                    color: _primary,
-                                    strokeWidth: 2,
-                                  ),
-                                ),
-                              );
-                            }
-                            
-                            if (!_hasMore && displayTxs.isNotEmpty) {
-                              return Center(
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 24),
-                                  child: Text(
-                                    '— All transactions loaded —',
-                                    style: TextStyle(
-                                      color: _textDim.withValues(alpha: 0.5),
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ),
-                              );
-                            }
-                            
-                            return const SizedBox.shrink();
-                          },
+                  ? ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      children: [
+                        SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.2,
                         ),
+                        _buildEmptyState(),
+                      ],
+                    )
+                  : ListView.builder(
+                      controller: _scrollController,
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.fromLTRB(24, 16, 24, 100),
+                      itemCount:
+                          displayTxs.length +
+                          (_isFetchingMore || _hasMore ? 1 : 0),
+                      itemBuilder: (ctx, i) {
+                        if (i < displayTxs.length) {
+                          return _buildTxTile(displayTxs[i]);
+                        }
+
+                        // Load-more indicator or end-of-list footer
+                        if (_isFetchingMore) {
+                          return Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(24),
+                              child: CircularProgressIndicator(
+                                color: _primary,
+                                strokeWidth: 2,
+                              ),
+                            ),
+                          );
+                        }
+
+                        if (!_hasMore && displayTxs.isNotEmpty) {
+                          return Center(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 24),
+                              child: Text(
+                                '— All transactions loaded —',
+                                style: TextStyle(
+                                  color: _textDim.withValues(alpha: 0.5),
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                          );
+                        }
+
+                        return const SizedBox.shrink();
+                      },
+                    ),
             ),
           ),
         ],
@@ -333,7 +358,7 @@ class TransactionsScreenState extends State<TransactionsScreen>
                   icon: Icon(Icons.search, color: _textDim, size: 22),
                   onPressed: () => setState(() => _isSearching = true),
                 ),
-              
+
               Stack(
                 alignment: Alignment.center,
                 children: [
@@ -386,9 +411,7 @@ class TransactionsScreenState extends State<TransactionsScreen>
               decoration: BoxDecoration(
                 color: isSelected ? _primary : _bgCard,
                 borderRadius: BorderRadius.circular(25),
-                border: Border.all(
-                  color: isSelected ? _primary : _border,
-                ),
+                border: Border.all(color: isSelected ? _primary : _border),
               ),
               child: Text(
                 _typeTabs[index],
@@ -465,7 +488,6 @@ class TransactionsScreenState extends State<TransactionsScreen>
       ),
     );
   }
-
 
   Widget _buildEmptyState() {
     return Column(
@@ -619,13 +641,10 @@ class TransactionsScreenState extends State<TransactionsScreen>
   void _showTransactionDetail(Map<String, dynamic> tx) {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => TransactionDetailScreen(tx: tx),
-      ),
+      MaterialPageRoute(builder: (context) => TransactionDetailScreen(tx: tx)),
     );
   }
 }
-
 
 extension StringExtension on String {
   String capitalize() =>

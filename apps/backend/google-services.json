@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "1001966213166",
+    "project_id": "dtexxchange-a0118",
+    "storage_bucket": "dtexxchange-a0118.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1001966213166:android:ae9e59bf7796900020e7bf",
+        "android_client_info": {
+          "package_name": "com.dtexxchange.mobile_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAxhL9B2g-9xd-vVHj_pnQz-73uWyghdfs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1001966213166:android:d80001851caf30ba20e7bf",
+        "android_client_info": {
+          "package_name": "com.dtexxchange.mobile_app_admin"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAxhL9B2g-9xd-vVHj_pnQz-73uWyghdfs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

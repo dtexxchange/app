@@ -23,11 +23,11 @@ class UserCard extends StatelessWidget {
             .toUpperCase();
     final joined = DateTime.tryParse(user['createdAt']?.toString() ?? '');
 
-    final _bgCard = Theme.of(context).cardColor;
-    final _border = Theme.of(context).dividerColor;
-    final _primary = Theme.of(context).primaryColor;
-    const _blue = Color(0xFF3B82F6);
-    const _danger = Color(0xFFF87171);
+    final bgCard = Theme.of(context).cardColor;
+    final border = Theme.of(context).dividerColor;
+    final primary = Theme.of(context).primaryColor;
+    const blue = Color(0xFF3B82F6);
+    const danger = Color(0xFFF87171);
 
     return GestureDetector(
       onTap: onTap,
@@ -35,9 +35,9 @@ class UserCard extends StatelessWidget {
         margin: EdgeInsets.only(bottom: 10 * widthScale),
         padding: EdgeInsets.all(16 * widthScale),
         decoration: BoxDecoration(
-          color: _bgCard,
+          color: bgCard,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: _border),
+          border: Border.all(color: border),
         ),
         child: Row(
           children: [
@@ -45,14 +45,14 @@ class UserCard extends StatelessWidget {
               width: 44 * widthScale,
               height: 44 * widthScale,
               decoration: BoxDecoration(
-                color: (isAdmin ? _primary : _blue).withValues(alpha: 0.10),
+                color: (isAdmin ? primary : blue).withValues(alpha: 0.10),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Center(
                 child: Text(
                   initial,
                   style: TextStyle(
-                    color: isAdmin ? _primary : _blue,
+                    color: isAdmin ? primary : blue,
                     fontSize: 18 * widthScale,
                     fontWeight: FontWeight.bold,
                   ),
@@ -89,7 +89,7 @@ class UserCard extends StatelessWidget {
                         decoration: BoxDecoration(
                           color:
                               (isAdmin
-                                      ? _primary
+                                      ? primary
                                       : Theme.of(context).colorScheme.onSurface)
                                   .withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(20),
@@ -98,7 +98,7 @@ class UserCard extends StatelessWidget {
                           user['role'],
                           style: TextStyle(
                             color: isAdmin
-                                ? _primary
+                                ? primary
                                 : Theme.of(context).colorScheme.onSurface,
                             fontSize: 9 * widthScale,
                             fontWeight: FontWeight.bold,
@@ -115,10 +115,10 @@ class UserCard extends StatelessWidget {
                           decoration: BoxDecoration(
                             color:
                                 (user['status'] == 'APPROVED'
-                                        ? _primary
+                                        ? primary
                                         : user['status'] == 'PENDING_APPROVAL'
-                                        ? _blue
-                                        : _danger)
+                                        ? blue
+                                        : danger)
                                     .withValues(alpha: 0.08),
                             borderRadius: BorderRadius.circular(20),
                           ),
@@ -126,10 +126,10 @@ class UserCard extends StatelessWidget {
                             (user['status'] as String).replaceAll('_', ' '),
                             style: TextStyle(
                               color: user['status'] == 'APPROVED'
-                                  ? _primary
+                                  ? primary
                                   : user['status'] == 'PENDING_APPROVAL'
-                                  ? _blue
-                                  : _danger,
+                                  ? blue
+                                  : danger,
                               fontSize: 9 * widthScale,
                               fontWeight: FontWeight.bold,
                               letterSpacing: 0.5,
@@ -169,7 +169,7 @@ class UserCard extends StatelessWidget {
                 Text(
                   'USDT',
                   style: TextStyle(
-                    color: _primary,
+                    color: primary,
                     fontSize: 10 * widthScale,
                     fontWeight: FontWeight.bold,
                   ),

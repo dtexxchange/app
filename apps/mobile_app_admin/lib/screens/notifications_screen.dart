@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../services/api_service.dart';
+import 'admin_ticket_detail_screen.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -104,6 +105,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       return GestureDetector(
                         onTap: () {
                           if (!isRead) _markAsRead(n['id']);
+                          if (n['type'] == 'TICKET_UPDATE' && n['relatedId'] != null) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => AdminTicketDetailScreen(ticketId: n['relatedId']),
+                              ),
+                            );
+                          }
                         },
                         child: Container(
                           padding: const EdgeInsets.all(16),
@@ -210,6 +219,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         return Icons.swap_horiz;
       case 'QR_ASSIGNMENT':
         return Icons.qr_code_scanner;
+      case 'TICKET_UPDATE':
+        return Icons.chat_bubble_outline_rounded;
       default:
         return Icons.notifications_none;
     }

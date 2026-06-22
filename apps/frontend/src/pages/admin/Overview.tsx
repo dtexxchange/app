@@ -82,8 +82,17 @@ const Overview: React.FC = () => {
     }, [fetchTransactions]);
 
     const handleUpdateStatus = async (id: string, status: string) => {
+        let utr: string | null = null;
+        if (status === "COMPLETED") {
+            utr = prompt("Please enter the UTR / reference number to complete this transaction:");
+            if (utr === null) return;
+            if (!utr.trim()) {
+                alert("UTR is required to complete the transaction.");
+                return;
+            }
+        }
         try {
-            await api.patch(`/wallet/transactions/${id}/status`, { status });
+            await api.patch(`/wallet/transactions/${id}/status`, { status, utr });
             fetchTransactions();
             if (selectedTx?.id === id) {
                 const { data } = await api.get(`/wallet/transactions/${id}`);

@@ -105,6 +105,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       return GestureDetector(
                         onTap: () {
                           if (!isRead) _markAsRead(n['id']);
+                          if (n['type'] == 'TICKET_UPDATE' && n['relatedId'] != null) {
+                            Navigator.pushNamed(
+                              context,
+                              '/ticket-detail',
+                              arguments: n['relatedId'],
+                            );
+                          }
                         },
                         child: Container(
                           padding: const EdgeInsets.all(16),
@@ -211,6 +218,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         return Icons.swap_horiz;
       case 'QR_ASSIGNMENT':
         return Icons.qr_code;
+      case 'TICKET_UPDATE':
+        return Icons.chat_bubble_outline_rounded;
       default:
         return Icons.notifications_none;
     }

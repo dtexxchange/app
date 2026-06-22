@@ -8,6 +8,9 @@ import {
     ShieldCheck,
     Upload,
     MessageCircle,
+    Plus,
+    Trash2,
+    Edit2,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import api from "../../lib/api";
@@ -18,22 +21,25 @@ import {
 } from "../../lib/crypto";
 
 const Settings: React.FC = () => {
-    const [hasKeys, setHasKeys] = useState(false);
-    const [helpTelegram, setHelpTelegram] = useState("");
+    const [contacts, setContacts] = useState<any[]>([]);
+    const [newContact, setNewContact] = useState({ title: "", platform: "LINK", url: "" });
+    const [editingContactId, setEditingContactId] = useState<string | null>(null);
+    const [editingContactData, setEditingContactData] = useState({ title: "", platform: "LINK", url: "" });
     const [isLoading, setIsLoading] = useState(false);
     const [alert, setAlert] = useState<{
         title: string;
         message: string;
         type: "success" | "error";
     } | null>(null);
+    const [hasKeys, setHasKeys] = useState(false);
 
     const fetchData = async () => {
         try {
             const privKey = localStorage.getItem("admin_private_key");
             setHasKeys(!!privKey);
 
-            const res = await api.get("/settings/help-telegram");
-            setHelpTelegram(res.data.helpTelegram || "");
+            const res = await api.get("/settings/support-contacts");
+            setContacts(Array.isArray(res.data) ? res.data : []);
         } catch (e) {
             console.error(e);
         }
@@ -80,26 +86,84 @@ const Settings: React.FC = () => {
         }
     };
 
-    const saveHelpTelegram = async () => {
+    const createContact = async () => {
+        if (!newContact.title.trim() || !newContact.url.trim()) return;
         setIsLoading(true);
         try {
-            await api.patch("/settings/admin/help-telegram", {
-                telegram: helpTelegram,
-            });
+            await api.post("/settings/admin/support-contacts", newContact);
+            setNewContact({ title: "", platform: "LINK", url: "" });
+            const res = await api.get("/settings/support-contacts");
+            setContacts(Array.isArray(res.data) ? res.data : []);
             setAlert({
-                title: "Updated",
-                message: "Help Telegram account has been updated.",
+                title: "Created",
+                message: "Support contact has been added.",
                 type: "success",
             });
         } catch (e) {
             setAlert({
                 title: "Error",
-                message: "Failed to update Help Telegram account.",
+                message: "Failed to add support contact.",
                 type: "error",
             });
         } finally {
             setIsLoading(false);
         }
+    };
+
+    const updateContact = async (id: string) => {
+        if (!editingContactData.title.trim() || !editingContactData.url.trim()) return;
+        setIsLoading(true);
+        try {
+            await api.patch(`/settings/admin/support-contacts/${id}`, editingContactData);
+            setEditingContactId(null);
+            const res = await api.get("/settings/support-contacts");
+            setContacts(Array.isArray(res.data) ? res.data : []);
+            setAlert({
+                title: "Updated",
+                message: "Support contact has been updated.",
+                type: "success",
+            });
+        } catch (e) {
+            setAlert({
+                title: "Error",
+                message: "Failed to update support contact.",
+                type: "error",
+            });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const deleteContact = async (id: string) => {
+        if (!window.confirm("Are you sure you want to delete this contact?")) return;
+        setIsLoading(true);
+        try {
+            await api.delete(`/settings/admin/support-contacts/${id}`);
+            const res = await api.get("/settings/support-contacts");
+            setContacts(Array.isArray(res.data) ? res.data : []);
+            setAlert({
+                title: "Deleted",
+                message: "Support contact has been removed.",
+                type: "success",
+            });
+        } catch (e) {
+            setAlert({
+                title: "Error",
+                message: "Failed to delete support contact.",
+                type: "error",
+            });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const startEditing = (contact: any) => {
+        setEditingContactId(contact.id);
+        setEditingContactData({
+            title: contact.title,
+            platform: contact.platform,
+            url: contact.url,
+        });
     };
 
     return (
@@ -190,43 +254,160 @@ const Settings: React.FC = () => {
                             </div>
                             <div>
                                 <h3 className="text-xl font-outfit font-bold text-white">
-                                    Help & Support
+                                    Help & Support Channels
                                 </h3>
                                 <p className="text-[10px] font-bold uppercase tracking-[0.2em] mt-1 text-primary">
-                                    User Assistance
+                                    Direct Contact CRUD
                                 </p>
                             </div>
                         </div>
 
                         <div className="space-y-6">
-                            <p className="text-sm text-text-dim leading-relaxed max-w-xl">
-                                Configure the Telegram account where users will
-                                be directed when they click "Support & Help" in
-                                their mobile app.
+                            <p className="text-sm text-text-dim leading-relaxed">
+                                Manage the direct support channels (Telegram, WhatsApp, links) shown to users. You can add, edit, or delete as many custom contacts as needed.
                             </p>
 
+                            {/* Active Channels List */}
                             <div className="space-y-4">
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-text-dim">
-                                        Telegram Handle / Link
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={helpTelegram}
-                                        onChange={(e) =>
-                                            setHelpTelegram(e.target.value)
-                                        }
-                                        placeholder="@SupportAccount or https://t.me/Support"
-                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-6 py-4 text-white font-medium focus:outline-none focus:border-primary transition-all"
-                                    />
+                                <h4 className="text-xs font-black uppercase tracking-widest text-text-dim">
+                                    Active Contact Channels
+                                </h4>
+                                {contacts.length === 0 ? (
+                                    <p className="text-xs text-text-dim italic">No support channels configured.</p>
+                                ) : (
+                                    <div className="grid grid-cols-1 gap-4">
+                                        {contacts.map((c) => (
+                                            <div key={c.id} className="glass p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 border-white/5">
+                                                {editingContactId === c.id ? (
+                                                    <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                        <input
+                                                            type="text"
+                                                            value={editingContactData.title}
+                                                            onChange={(e) => setEditingContactData({ ...editingContactData, title: e.target.value })}
+                                                            placeholder="Button Title (e.g. Telegram Support)"
+                                                            className="bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white text-xs focus:outline-none focus:border-primary"
+                                                        />
+                                                        <select
+                                                            value={editingContactData.platform}
+                                                            onChange={(e) => setEditingContactData({ ...editingContactData, platform: e.target.value })}
+                                                            className="bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white text-xs focus:outline-none focus:border-primary cursor-pointer"
+                                                        >
+                                                            <option value="TELEGRAM">Telegram</option>
+                                                            <option value="WHATSAPP">WhatsApp</option>
+                                                            <option value="LINK">General Link</option>
+                                                        </select>
+                                                        <input
+                                                            type="text"
+                                                            value={editingContactData.url}
+                                                            onChange={(e) => setEditingContactData({ ...editingContactData, url: e.target.value })}
+                                                            placeholder="Username, Phone or URL Link"
+                                                            className="bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white text-xs focus:outline-none focus:border-primary"
+                                                        />
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex items-center gap-4">
+                                                        <div className={`px-3 py-1.5 rounded-lg text-[9px] font-black tracking-widest uppercase border ${
+                                                            c.platform === "TELEGRAM" ? "bg-blue-500/10 border-blue-500/20 text-blue-400" :
+                                                            c.platform === "WHATSAPP" ? "bg-green-500/10 border-green-500/20 text-green-400" :
+                                                            "bg-primary/10 border-primary/20 text-primary"
+                                                        }`}>
+                                                            {c.platform}
+                                                        </div>
+                                                        <div>
+                                                            <div className="font-bold text-white text-sm">{c.title}</div>
+                                                            <div className="text-[10px] text-text-dim truncate max-w-md">{c.url}</div>
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                <div className="flex items-center gap-2">
+                                                    {editingContactId === c.id ? (
+                                                        <>
+                                                            <button
+                                                                onClick={() => updateContact(c.id)}
+                                                                className="px-4 py-2 rounded-lg bg-primary text-bg-dark font-bold text-[10px] uppercase tracking-widest hover:scale-105 transition-all"
+                                                            >
+                                                                Save
+                                                            </button>
+                                                            <button
+                                                                onClick={() => setEditingContactId(null)}
+                                                                className="px-4 py-2 rounded-lg border border-white/10 text-white font-bold text-[10px] uppercase tracking-widest hover:bg-white/5 transition-all"
+                                                            >
+                                                                Cancel
+                                                            </button>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <button
+                                                                onClick={() => startEditing(c)}
+                                                                className="p-2 hover:bg-white/5 rounded-lg text-text-dim hover:text-white transition-colors"
+                                                            >
+                                                                <Edit2 size={16} />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => deleteContact(c.id)}
+                                                                className="p-2 hover:bg-white/5 rounded-lg text-red-400/80 hover:text-red-400 transition-colors"
+                                                            >
+                                                                <Trash2 size={16} />
+                                                            </button>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Create New Channel */}
+                            <div className="space-y-4 pt-4 border-t border-white/5">
+                                <h4 className="text-xs font-black uppercase tracking-widest text-text-dim flex items-center gap-2">
+                                    <Plus size={16} className="text-primary" /> Create Support Channel
+                                </h4>
+
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-text-dim">Title</label>
+                                        <input
+                                            type="text"
+                                            value={newContact.title}
+                                            onChange={(e) => setNewContact({ ...newContact, title: e.target.value })}
+                                            placeholder="e.g. Email Helpline"
+                                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-xs focus:outline-none focus:border-primary"
+                                        />
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-text-dim">Platform</label>
+                                        <select
+                                            value={newContact.platform}
+                                            onChange={(e) => setNewContact({ ...newContact, platform: e.target.value })}
+                                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-xs focus:outline-none focus:border-primary cursor-pointer"
+                                        >
+                                            <option value="TELEGRAM">Telegram</option>
+                                            <option value="WHATSAPP">WhatsApp</option>
+                                            <option value="LINK">General Link</option>
+                                        </select>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-text-dim">Redirect Address / Handle</label>
+                                        <input
+                                            type="text"
+                                            value={newContact.url}
+                                            onChange={(e) => setNewContact({ ...newContact, url: e.target.value })}
+                                            placeholder="e.g. @support or +123... or https://..."
+                                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-xs focus:outline-none focus:border-primary"
+                                        />
+                                    </div>
                                 </div>
 
                                 <button
-                                    onClick={saveHelpTelegram}
-                                    disabled={isLoading}
-                                    className="px-10 py-5 rounded-2xl bg-primary text-bg-dark font-black uppercase text-[10px] tracking-widest hover:scale-105 transition-all disabled:opacity-50"
+                                    onClick={createContact}
+                                    disabled={isLoading || !newContact.title.trim() || !newContact.url.trim()}
+                                    className="px-6 py-4 rounded-xl bg-primary text-bg-dark font-black uppercase text-[10px] tracking-widest hover:scale-105 transition-all disabled:opacity-50"
                                 >
-                                    {isLoading ? "Saving..." : "Save Help Account"}
+                                    Add New Channel
                                 </button>
                             </div>
                         </div>

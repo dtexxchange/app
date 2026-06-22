@@ -44,7 +44,7 @@ Since the app only allows whitelisted users to log in, you must create the first
 ```bash
 curl -X POST http://localhost:3000/auth/setup-admin \
      -H "Content-Type: application/json" \
-     -d '{"email": "your-email@example.com"}'
+     -d '{"email": "dtexxchange@gmail.com"}'
 ```
 
 ### 4. Web Frontend Setup
