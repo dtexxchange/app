@@ -18,15 +18,28 @@ export class NotificationsService {
       const envServiceAccountBase64 = process.env.FIREBASE_SERVICE_ACCOUNT_BASE64;
       const serviceAccountPath = path.join(process.cwd(), 'firebase-service-account.json');
 
+      const parseJsonConfig = (jsonStr: string) => {
+        let clean = jsonStr.trim();
+        // Remove outer quotes if Vercel/shell wrapped it
+        if (clean.startsWith('"') && clean.endsWith('"')) {
+          clean = clean.slice(1, -1);
+        }
+        // Unescape escaped quotes (e.g. \" to ")
+        clean = clean.replace(/\\"/g, '"');
+        // Unescape escaped newlines (e.g. \n to actual newline)
+        clean = clean.replace(/\\n/g, '\n');
+        return JSON.parse(clean);
+      };
+
       if (envServiceAccount) {
-        const parsedAccount = JSON.parse(envServiceAccount);
+        const parsedAccount = parseJsonConfig(envServiceAccount);
         this.firebaseApp = admin.initializeApp({
           credential: admin.credential.cert(parsedAccount),
         });
         console.log('Firebase Admin initialized via FIREBASE_SERVICE_ACCOUNT env.');
       } else if (envServiceAccountBase64) {
         const decoded = Buffer.from(envServiceAccountBase64, 'base64').toString('utf-8');
-        const parsedAccount = JSON.parse(decoded);
+        const parsedAccount = parseJsonConfig(decoded);
         this.firebaseApp = admin.initializeApp({
           credential: admin.credential.cert(parsedAccount),
         });
