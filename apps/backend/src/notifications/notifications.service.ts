@@ -27,14 +27,41 @@ export class NotificationsService {
         // Unescape escaped quotes (e.g. \" to ")
         clean = clean.replace(/\\"/g, '"');
         
-        const parsed = JSON.parse(clean);
-        
-        // Handle double-escaped newlines in private key AFTER parsing
-        if (parsed && typeof parsed.private_key === 'string') {
-          parsed.private_key = parsed.private_key.replace(/\\n/g, '\n');
+        try {
+          const parsed = JSON.parse(clean);
+          
+          // Handle double-escaped newlines in private key AFTER parsing
+          if (parsed && typeof parsed.private_key === 'string') {
+            parsed.private_key = parsed.private_key.replace(/\\n/g, '\n');
+          }
+          
+          return parsed;
+        } catch (parseError) {
+          console.warn('Standard JSON.parse failed. Attempting regex extraction fallback. Error:', parseError);
+          
+          // Regex fallback for malformed/escaped JSON strings
+          const projectIdMatch = clean.match(/["']?project_id["']?\s*:\s*["']([^"']+)["']/);
+          const clientEmailMatch = clean.match(/["']?client_email["']?\s*:\s*["']([^"']+)["']/);
+          const privateKeyMatch = clean.match(/["']?private_key["']?\s*:\s*["']([^"']+)["']/);
+          
+          if (projectIdMatch && clientEmailMatch && privateKeyMatch) {
+            const projectId = projectIdMatch[1];
+            const clientEmail = clientEmailMatch[1];
+            let privateKey = privateKeyMatch[1];
+            
+            // Clean up any escapes in private key (e.g. \n or \\n)
+            privateKey = privateKey.replace(/\\n/g, '\n');
+            
+            console.log('Successfully extracted Firebase credentials via regex fallback.');
+            return {
+              projectId,
+              clientEmail,
+              privateKey,
+            };
+          }
+          
+          throw parseError;
         }
-        
-        return parsed;
       };
 
       if (envServiceAccount) {
