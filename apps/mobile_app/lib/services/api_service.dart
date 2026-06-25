@@ -13,7 +13,7 @@ class ApiService {
 
     if (kIsWeb) {
       return isProduction
-          ? 'https://app-production-0ff2.up.railway.app'
+          ? 'https://dtexxchange.vercel.app'
           : 'http://localhost:3200';
     }
 
@@ -21,7 +21,7 @@ class ApiService {
     // 1. Run this command in your terminal: adb reverse tcp:3000 tcp:3000
     // 2. The app will then connect to your computer's localhost:3000
     return isProduction
-        ? 'https://app-production-0ff2.up.railway.app'
+        ? 'https://dtexxchange.vercel.app'
         : 'http://localhost:3200';
   }
 
