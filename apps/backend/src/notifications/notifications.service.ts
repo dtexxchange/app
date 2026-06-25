@@ -26,9 +26,15 @@ export class NotificationsService {
         }
         // Unescape escaped quotes (e.g. \" to ")
         clean = clean.replace(/\\"/g, '"');
-        // Unescape escaped newlines (e.g. \n to actual newline)
-        clean = clean.replace(/\\n/g, '\n');
-        return JSON.parse(clean);
+        
+        const parsed = JSON.parse(clean);
+        
+        // Handle double-escaped newlines in private key AFTER parsing
+        if (parsed && typeof parsed.private_key === 'string') {
+          parsed.private_key = parsed.private_key.replace(/\\n/g, '\n');
+        }
+        
+        return parsed;
       };
 
       if (envServiceAccount) {
