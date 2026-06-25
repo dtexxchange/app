@@ -85,8 +85,10 @@ export class NotificationsService {
         });
         console.log('Firebase Admin initialized via FIREBASE_SERVICE_ACCOUNT env.');
       } else if (envServiceAccountBase64) {
+        console.log(`Found FIREBASE_SERVICE_ACCOUNT_BASE64 env of length: ${envServiceAccountBase64.length}`);
         const decoded = Buffer.from(envServiceAccountBase64, 'base64').toString('utf-8');
         const parsedAccount = parseJsonConfig(decoded);
+        console.log(`Decoded service account successfully. project_id is: "${parsedAccount?.project_id || parsedAccount?.project_info?.project_id || 'not found'}"`);
         this.firebaseApp = admin.initializeApp({
           credential: admin.credential.cert(parsedAccount),
         });
