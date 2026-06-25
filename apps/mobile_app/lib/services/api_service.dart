@@ -14,7 +14,7 @@ class ApiService {
     if (kIsWeb) {
       return isProduction
           ? 'https://app-production-0ff2.up.railway.app'
-          : 'http://localhost:3000';
+          : 'http://localhost:3200';
     }
 
     // For USB Debugging (Physical Device) or Emulator:
@@ -22,14 +22,14 @@ class ApiService {
     // 2. The app will then connect to your computer's localhost:3000
     return isProduction
         ? 'https://app-production-0ff2.up.railway.app'
-        : 'http://localhost:3000';
+        : 'http://localhost:3200';
   }
 
   static String get webUrl {
     const bool isProduction = kReleaseMode;
     return isProduction
         ? 'https://dtexxchange.netlify.app'
-        : 'http://localhost:5173'; // Vite default dev port
+        : 'http://localhost:3273'; // Vite default dev port
   }
 
   final _storage = const FlutterSecureStorage(

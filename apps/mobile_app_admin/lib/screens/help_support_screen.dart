@@ -13,7 +13,8 @@ class HelpSupportScreen extends StatefulWidget {
   State<HelpSupportScreen> createState() => _HelpSupportScreenState();
 }
 
-class _HelpSupportScreenState extends State<HelpSupportScreen> with SingleTickerProviderStateMixin {
+class _HelpSupportScreenState extends State<HelpSupportScreen>
+    with SingleTickerProviderStateMixin {
   Color get _bgDark => Theme.of(context).scaffoldBackgroundColor;
   Color get _bgCard => Theme.of(context).cardColor;
   Color get _primary => Theme.of(context).primaryColor;
@@ -74,7 +75,8 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> with SingleTicker
   }
 
   void _scrollListener() {
-    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
       if (_hasMore && !_isLoadMore && !_isLoading) {
         _fetchMoreTickets();
       }
@@ -106,10 +108,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> with SingleTicker
     final String? status = _getTabStatus(_tabController.index);
     final String query = _searchQuery.trim();
 
-    final Map<String, String> queryParams = {
-      'page': '1',
-      'limit': '10',
-    };
+    final Map<String, String> queryParams = {'page': '1', 'limit': '10'};
     if (status != null) {
       queryParams['status'] = status;
     }
@@ -210,11 +209,10 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> with SingleTicker
 
     setState(() => _isSavingContacts = true);
     try {
-      final res = await _api.patchRequest('/settings/admin/support-contacts/$id', {
-        'title': title,
-        'platform': _editPlatform,
-        'url': url,
-      });
+      final res = await _api.patchRequest(
+        '/settings/admin/support-contacts/$id',
+        {'title': title, 'platform': _editPlatform, 'url': url},
+      );
       if (res.statusCode == 200) {
         setState(() {
           _editingId = null;
@@ -252,8 +250,17 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> with SingleTicker
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: _bgCard,
-        title: Text('Delete Channel', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: Colors.white)),
-        content: Text('Are you sure you want to delete this support channel?', style: GoogleFonts.inter(color: Colors.white70)),
+        title: Text(
+          'Delete Channel',
+          style: GoogleFonts.outfit(
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+        content: Text(
+          'Are you sure you want to delete this support channel?',
+          style: GoogleFonts.inter(color: Colors.white70),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -262,7 +269,13 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> with SingleTicker
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(backgroundColor: _danger),
-            child: const Text('Delete', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            child: const Text(
+              'Delete',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
         ],
       ),
@@ -272,7 +285,9 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> with SingleTicker
 
     setState(() => _isSavingContacts = true);
     try {
-      final res = await _api.deleteRequest('/settings/admin/support-contacts/$id');
+      final res = await _api.deleteRequest(
+        '/settings/admin/support-contacts/$id',
+      );
       if (res.statusCode == 200) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -367,7 +382,10 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> with SingleTicker
             children: [
               if (!showContactsForm)
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 8,
+                  ),
                   child: Container(
                     height: 48,
                     decoration: BoxDecoration(
@@ -378,21 +396,35 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> with SingleTicker
                     child: TextField(
                       onChanged: (v) {
                         setState(() => _searchQuery = v);
-                        if (_searchDebounce?.isActive ?? false) _searchDebounce!.cancel();
-                        _searchDebounce = Timer(const Duration(milliseconds: 500), () {
-                          _fetchTickets();
-                        });
+                        if (_searchDebounce?.isActive ?? false) {
+                          _searchDebounce!.cancel();
+                        }
+                        _searchDebounce = Timer(
+                          const Duration(milliseconds: 500),
+                          () {
+                            _fetchTickets();
+                          },
+                        );
                       },
-                      style: GoogleFonts.outfit(fontSize: 15, fontWeight: FontWeight.w500),
+                      style: GoogleFonts.outfit(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                      ),
                       decoration: InputDecoration(
                         hintText: 'Search email, subject or ticket #',
                         hintStyle: TextStyle(
                           color: _textDim.withValues(alpha: 0.5),
                           fontSize: 14,
                         ),
-                        prefixIcon: Icon(Icons.search, color: _primary, size: 20),
+                        prefixIcon: Icon(
+                          Icons.search,
+                          color: _primary,
+                          size: 20,
+                        ),
                         border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                        contentPadding: const EdgeInsets.symmetric(
+                          vertical: 14,
+                        ),
                       ),
                     ),
                   ),
@@ -402,7 +434,10 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> with SingleTicker
                 indicatorColor: _primary,
                 labelColor: _primary,
                 unselectedLabelColor: _textDim,
-                labelStyle: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13),
+                labelStyle: GoogleFonts.inter(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                ),
                 unselectedLabelStyle: GoogleFonts.inter(fontSize: 13),
                 tabs: const [
                   Tab(text: 'All'),
@@ -419,139 +454,151 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> with SingleTicker
       body: _isLoading
           ? Center(child: CircularProgressIndicator(color: _primary))
           : showContactsForm
-              ? _buildContactsForm()
-              : RefreshIndicator(
-                  onRefresh: () => _fetchTickets(silent: true),
-                  color: _primary,
-                  child: _filteredTickets.isEmpty
-                      ? _buildEmptyState()
-                      : ListView.separated(
-                          controller: _scrollController,
-                          padding: const EdgeInsets.fromLTRB(24, 20, 24, 60),
-                          itemCount: _filteredTickets.length + (_isLoadMore ? 1 : 0),
-                          separatorBuilder: (context, index) => const SizedBox(height: 16),
-                          itemBuilder: (context, index) {
-                            if (index == _filteredTickets.length) {
-                              return Center(
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 16),
-                                  child: CircularProgressIndicator(color: _primary),
-                                ),
-                              );
-                            }
-                            final ticket = _filteredTickets[index];
-                            final readableId = ticket['readableId'] ?? '';
-                            final subject = ticket['subject'] ?? '';
-                            final status = ticket['status'] ?? 'OPEN';
-                            final user = ticket['user'] ?? {};
-                            final email = user['email'] ?? 'Unknown User';
-                            final date = DateTime.parse(ticket['updatedAt'] ?? ticket['createdAt']);
+          ? _buildContactsForm()
+          : RefreshIndicator(
+              onRefresh: () => _fetchTickets(silent: true),
+              color: _primary,
+              child: _filteredTickets.isEmpty
+                  ? _buildEmptyState()
+                  : ListView.separated(
+                      controller: _scrollController,
+                      padding: const EdgeInsets.fromLTRB(24, 20, 24, 60),
+                      itemCount:
+                          _filteredTickets.length + (_isLoadMore ? 1 : 0),
+                      separatorBuilder: (context, index) =>
+                          const SizedBox(height: 16),
+                      itemBuilder: (context, index) {
+                        if (index == _filteredTickets.length) {
+                          return Center(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              child: CircularProgressIndicator(color: _primary),
+                            ),
+                          );
+                        }
+                        final ticket = _filteredTickets[index];
+                        final readableId = ticket['readableId'] ?? '';
+                        final subject = ticket['subject'] ?? '';
+                        final status = ticket['status'] ?? 'OPEN';
+                        final user = ticket['user'] ?? {};
+                        final email = user['email'] ?? 'Unknown User';
+                        final date = DateTime.parse(
+                          ticket['updatedAt'] ?? ticket['createdAt'],
+                        );
 
-                            return InkWell(
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => AdminTicketDetailScreen(ticketId: ticket['id']),
-                                  ),
-                                ).then((_) => _fetchTickets(silent: true));
-                              },
-                              borderRadius: BorderRadius.circular(20),
-                              child: Container(
-                                padding: const EdgeInsets.all(20),
-                                decoration: BoxDecoration(
-                                  color: _bgCard,
-                                  borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(color: _border),
+                        return InkWell(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => AdminTicketDetailScreen(
+                                  ticketId: ticket['id'],
                                 ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                              ),
+                            ).then((_) => _fetchTickets(silent: true));
+                          },
+                          borderRadius: BorderRadius.circular(20),
+                          child: Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: _bgCard,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: _border),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(
-                                          'Ticket #$readableId',
-                                          style: GoogleFonts.inter(
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.bold,
-                                            color: _textDim,
-                                          ),
-                                        ),
-                                        _buildStatusBadge(status),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 8),
                                     Text(
-                                      subject,
-                                      style: GoogleFonts.outfit(
-                                        fontSize: 16,
+                                      'Ticket #$readableId',
+                                      style: GoogleFonts.inter(
+                                        fontSize: 11,
                                         fontWeight: FontWeight.bold,
+                                        color: _textDim,
                                       ),
                                     ),
-                                    const SizedBox(height: 12),
-                                    Divider(height: 1, color: _border),
-                                    const SizedBox(height: 12),
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    _buildStatusBadge(status),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  subject,
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                Divider(height: 1, color: _border),
+                                const SizedBox(height: 12),
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'RAISED BY',
+                                            style: GoogleFonts.inter(
+                                              fontSize: 9,
+                                              fontWeight: FontWeight.bold,
+                                              color: _textDim,
+                                              letterSpacing: 0.5,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            email,
+                                            style: GoogleFonts.inter(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.end,
                                       children: [
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                'RAISED BY',
-                                                style: GoogleFonts.inter(
-                                                  fontSize: 9,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: _textDim,
-                                                  letterSpacing: 0.5,
-                                                ),
-                                              ),
-                                              const SizedBox(height: 2),
-                                              Text(
-                                                email,
-                                                style: GoogleFonts.inter(
-                                                  fontSize: 13,
-                                                  fontWeight: FontWeight.w600,
-                                                ),
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ],
+                                        Text(
+                                          'LAST UPDATED',
+                                          style: GoogleFonts.inter(
+                                            fontSize: 9,
+                                            fontWeight: FontWeight.bold,
+                                            color: _textDim,
+                                            letterSpacing: 0.5,
                                           ),
                                         ),
-                                        Column(
-                                          crossAxisAlignment: CrossAxisAlignment.end,
-                                          children: [
-                                            Text(
-                                              'LAST UPDATED',
-                                              style: GoogleFonts.inter(
-                                                fontSize: 9,
-                                                fontWeight: FontWeight.bold,
-                                                color: _textDim,
-                                                letterSpacing: 0.5,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 2),
-                                            Text(
-                                              DateFormat('MMM d, hh:mm a').format(date),
-                                              style: GoogleFonts.inter(
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.w500,
-                                              ),
-                                            ),
-                                          ],
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          DateFormat(
+                                            'MMM d, hh:mm a',
+                                          ).format(date),
+                                          style: GoogleFonts.inter(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w500,
+                                          ),
                                         ),
                                       ],
                                     ),
                                   ],
                                 ),
-                              ),
-                            );
-                          },
-                        ),
-                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+            ),
     );
   }
 
@@ -613,7 +660,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> with SingleTicker
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         itemCount: _contacts.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 12),
+                        separatorBuilder: (_, _) => const SizedBox(height: 12),
                         itemBuilder: (context, index) {
                           final c = _contacts[index];
                           final id = c['id'].toString();
@@ -625,7 +672,9 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> with SingleTicker
                               decoration: BoxDecoration(
                                 color: _bgDark.withValues(alpha: 0.3),
                                 borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: _primary.withValues(alpha: 0.3)),
+                                border: Border.all(
+                                  color: _primary.withValues(alpha: 0.3),
+                                ),
                               ),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -648,7 +697,9 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> with SingleTicker
                                   ),
                                   const SizedBox(height: 8),
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: _bgDark.withValues(alpha: 0.5),
                                       borderRadius: BorderRadius.circular(12),
@@ -700,15 +751,24 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> with SingleTicker
                                         child: SizedBox(
                                           height: 40,
                                           child: ElevatedButton(
-                                            onPressed: _isSavingContacts ? null : () => _updateSupportContact(id),
+                                            onPressed: _isSavingContacts
+                                                ? null
+                                                : () =>
+                                                      _updateSupportContact(id),
                                             style: ElevatedButton.styleFrom(
                                               backgroundColor: _primary,
                                               foregroundColor: Colors.black,
                                               shape: RoundedRectangleBorder(
-                                                borderRadius: BorderRadius.circular(10),
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
                                               ),
                                             ),
-                                            child: const Text('Save', style: TextStyle(fontWeight: FontWeight.bold)),
+                                            child: const Text(
+                                              'Save',
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
                                           ),
                                         ),
                                       ),
@@ -717,14 +777,22 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> with SingleTicker
                                         child: SizedBox(
                                           height: 40,
                                           child: OutlinedButton(
-                                            onPressed: () => setState(() => _editingId = null),
+                                            onPressed: () => setState(
+                                              () => _editingId = null,
+                                            ),
                                             style: OutlinedButton.styleFrom(
                                               side: BorderSide(color: _border),
                                               shape: RoundedRectangleBorder(
-                                                borderRadius: BorderRadius.circular(10),
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
                                               ),
                                             ),
-                                            child: const Text('Cancel', style: TextStyle(color: Colors.white)),
+                                            child: const Text(
+                                              'Cancel',
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                              ),
+                                            ),
                                           ),
                                         ),
                                       ),
@@ -770,7 +838,8 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> with SingleTicker
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Row(
                                         children: [
@@ -788,11 +857,19 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> with SingleTicker
                                           ),
                                           const SizedBox(width: 8),
                                           Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 6,
+                                              vertical: 2,
+                                            ),
                                             decoration: BoxDecoration(
                                               color: badgeBg,
-                                              borderRadius: BorderRadius.circular(6),
-                                              border: Border.all(color: badgeColor.withValues(alpha: 0.2)),
+                                              borderRadius:
+                                                  BorderRadius.circular(6),
+                                              border: Border.all(
+                                                color: badgeColor.withValues(
+                                                  alpha: 0.2,
+                                                ),
+                                              ),
                                             ),
                                             child: Text(
                                               platform,
@@ -820,7 +897,11 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> with SingleTicker
                                   ),
                                 ),
                                 IconButton(
-                                  icon: Icon(Icons.edit_outlined, color: _primary, size: 20),
+                                  icon: Icon(
+                                    Icons.edit_outlined,
+                                    color: _primary,
+                                    size: 20,
+                                  ),
                                   onPressed: () {
                                     setState(() {
                                       _editingId = id;
@@ -831,7 +912,11 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> with SingleTicker
                                   },
                                 ),
                                 IconButton(
-                                  icon: const Icon(Icons.delete_outline, color: _danger, size: 20),
+                                  icon: const Icon(
+                                    Icons.delete_outline,
+                                    color: _danger,
+                                    size: 20,
+                                  ),
                                   onPressed: () => _deleteSupportContact(id),
                                 ),
                               ],
@@ -956,7 +1041,10 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> with SingleTicker
                           )
                         : const Text(
                             'Add New Channel',
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                            ),
                           ),
                   ),
                 ),
@@ -990,10 +1078,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> with SingleTicker
         const SizedBox(height: 8),
         TextField(
           controller: controller,
-          style: GoogleFonts.outfit(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
+          style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w600),
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: TextStyle(
@@ -1091,11 +1176,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> with SingleTicker
             Text(
               'No support tickets match the current search or filter criteria.',
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                color: _textDim,
-                height: 1.5,
-              ),
+              style: TextStyle(fontSize: 14, color: _textDim, height: 1.5),
             ),
           ],
         ),

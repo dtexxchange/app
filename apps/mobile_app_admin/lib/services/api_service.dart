@@ -14,16 +14,16 @@ class ApiService {
     if (kIsWeb) {
       return isProduction
           ? 'https://app-production-0ff2.up.railway.app'
-          : 'http://localhost:3000';
+          : 'http://localhost:3200';
     }
 
     // For USB Debugging (Physical Device) or Emulator:
-    // 1. Run this command in your terminal: adb reverse tcp:3000 tcp:3000
-    // & $env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe reverse tcp:3000 tcp:3000
-    // 2. The app will then connect to your computer's localhost:3000
+    // 1. Run this command in your terminal: adb reverse tcp:3200 tcp:3200
+    // & $env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe reverse tcp:3200 tcp:3200
+    // 2. The app will then connect to your computer's localhost:3200
     return isProduction
         ? 'https://app-production-0ff2.up.railway.app'
-        : 'http://127.0.0.1:3000';
+        : 'http://127.0.0.1:3200';
   }
 
   final _storage = const FlutterSecureStorage(
