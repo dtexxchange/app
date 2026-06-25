@@ -201,208 +201,205 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
           child: ListView(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
             children: [
-              // Section 1: Core Summary
+              // Section 1: Google Pay Styled Core Summary
+              const SizedBox(height: 16),
+              Center(
+                child: Container(
+                  width: 72,
+                  height: 72,
+                  decoration: BoxDecoration(
+                    color: statusColor.withValues(alpha: 0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    status == 'COMPLETED'
+                        ? Icons.check_circle_rounded
+                        : status == 'PENDING'
+                            ? Icons.schedule_rounded
+                            : Icons.cancel_rounded,
+                    color: statusColor,
+                    size: 44,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Center(
+                child: (isExchange || isWithdrawal)
+                    ? Text(
+                        '₹${NumberFormat('#,##0.##').format(amountInr)}',
+                        style: GoogleFonts.outfit(
+                          fontSize: 36,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      )
+                    : ExpandableAmount(
+                        amount: amountUsdt,
+                        suffix: ' USDT',
+                        style: GoogleFonts.outfit(
+                          fontSize: 36,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+              ),
+              const SizedBox(height: 8),
+              Center(
+                child: Text(
+                  isDeposit
+                      ? 'Deposit Request'
+                      : isExchange
+                          ? 'Exchange'
+                          : 'Withdrawal',
+                  style: GoogleFonts.outfit(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: textDim,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Center(
+                child: _buildStatusBadge(status, statusColor),
+              ),
+              const SizedBox(height: 28),
               _buildSectionCard(
                 child: Column(
                   children: [
+                    Text(
+                      'TRANSACTION ID',
+                      style: TextStyle(
+                        color: textDim,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 4),
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'TRANSACTION ID',
-                              style: TextStyle(
-                                color: textDim,
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 1,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Row(
-                              children: [
-                                Text(
-                                  tx['readableId']?.toString() ?? 'UNKNOWN',
-                                  style: const TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                _CopyButton(
-                                  label: 'ID',
-                                  value: tx['readableId']?.toString() ?? '',
-                                ),
-                              ],
-                            ),
-                          ],
+                        Text(
+                          tx['readableId']?.toString() ?? 'UNKNOWN',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                        _buildStatusBadge(status, statusColor),
+                        const SizedBox(width: 8),
+                        _CopyButton(
+                          label: 'ID',
+                          value: tx['readableId']?.toString() ?? '',
+                        ),
                       ],
                     ),
                     if (tx['utr'] != null) ...[
-                      const SizedBox(height: 16),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 10,
+                      const SizedBox(height: 20),
+                      Text(
+                        'UTR NUMBER',
+                        style: TextStyle(
+                          color: textDim,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1,
                         ),
-                        decoration: BoxDecoration(
-                          color: primary.withValues(alpha: 0.05),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: primary.withValues(alpha: 0.1),
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.receipt_outlined,
-                              color: primary,
-                              size: 16,
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            tx['utr'],
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
                             ),
-                            const SizedBox(width: 10),
-                            Expanded(
+                          ),
+                          const SizedBox(width: 8),
+                          _CopyButton(label: 'UTR', value: tx['utr']),
+                        ],
+                      ),
+                    ],
+                    const SizedBox(height: 20),
+                    Container(height: 1, color: border.withValues(alpha: 0.15)),
+                    const SizedBox(height: 16),
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        final double itemWidth = (constraints.maxWidth - 16) / 2;
+                        final bool useGrid = itemWidth > 130;
+                        return Wrap(
+                          spacing: 16,
+                          runSpacing: 16,
+                          children: [
+                            SizedBox(
+                              width: useGrid ? itemWidth : constraints.maxWidth,
                               child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
                                   Text(
-                                    'UTR NUMBER',
+                                    'CREATED TIME',
                                     style: TextStyle(
                                       color: textDim,
                                       fontSize: 9,
                                       fontWeight: FontWeight.bold,
                                       letterSpacing: 0.5,
                                     ),
+                                    textAlign: TextAlign.center,
                                   ),
+                                  const SizedBox(height: 4),
                                   Text(
-                                    tx['utr'],
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.bold,
+                                    DateFormat('MMM dd, hh:mm a').format(
+                                      DateTime.parse(
+                                        tx['createdAt'] ??
+                                            DateTime.now().toString(),
+                                      ),
                                     ),
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                    textAlign: TextAlign.center,
                                   ),
                                 ],
                               ),
                             ),
-                            _CopyButton(label: 'UTR', value: tx['utr']),
-                          ],
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: 24),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              (isExchange || isWithdrawal) ? 'AMOUNT (INR)' : 'AMOUNT (USDT)',
-                              style: TextStyle(
-                                color: textDim,
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 1,
+                            SizedBox(
+                              width: useGrid ? itemWidth : constraints.maxWidth,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    'TRANSACTION TIME',
+                                    style: TextStyle(
+                                      color: textDim,
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 0.5,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    DateFormat('MMM dd, hh:mm a').format(
+                                      DateTime.parse(
+                                        tx['updatedAt'] ??
+                                            tx['createdAt'] ??
+                                            DateTime.now().toString(),
+                                      ),
+                                    ),
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
                               ),
                             ),
-                            const SizedBox(height: 4),
-                            if (isExchange || isWithdrawal)
-                              Text(
-                                '₹${NumberFormat('#,##0.##').format(amountInr)}',
-                                style: GoogleFonts.outfit(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                  color: blue,
-                                ),
-                              )
-                            else
-                              ExpandableAmount(
-                                amount: amountUsdt,
-                                suffix: ' USDT',
-                                style: GoogleFonts.outfit(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                  color: blue,
-                                ),
-                              ),
                           ],
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    Container(height: 1, color: border.withValues(alpha: 0.15)),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'CREATED AT',
-                                style: TextStyle(
-                                  color: textDim,
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                DateFormat('MMM dd, hh:mm a').format(
-                                  DateTime.parse(
-                                    tx['createdAt'] ??
-                                        DateTime.now().toString(),
-                                  ),
-                                ),
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Container(
-                          width: 1,
-                          height: 24,
-                          margin: const EdgeInsets.symmetric(horizontal: 12),
-                          color: border.withValues(alpha: 0.2),
-                        ),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Text(
-                                'UPDATED AT',
-                                style: TextStyle(
-                                  color: textDim,
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                DateFormat('MMM dd, hh:mm a').format(
-                                  DateTime.parse(
-                                    tx['updatedAt'] ??
-                                        tx['createdAt'] ??
-                                        DateTime.now().toString(),
-                                  ),
-                                ),
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+                        );
+                      },
                     ),
                   ],
                 ),
@@ -422,8 +419,9 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                _buildSectionCard(
+                 _buildSectionCard(
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       if (_isLoadingInfo)
                         const Center(
@@ -432,32 +430,51 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                             child: CircularProgressIndicator(strokeWidth: 2),
                           ),
                         )
-                      else if (_decrypted != null) ...[
-                        _infoRow(
-                          'Beneficiary',
-                          _decrypted!['name'] ?? 'Unknown',
-                          context,
-                        ),
-                        const SizedBox(height: 12),
-                        _infoRow(
-                          'Account',
-                          _decrypted!['account'] ?? 'Locked',
-                          context,
-                        ),
-                        const SizedBox(height: 12),
-                        _infoRow(
-                          'Bank',
-                          _decrypted!['bank'] ?? 'Private',
-                          context,
-                        ),
-                        const SizedBox(height: 12),
-                        _infoRow(
-                          'IFSC/Sort',
-                          _decrypted!['ifsc'] ?? 'LOCKED',
-                          context,
-                          isLast: true,
-                        ),
-                      ] else
+                      else if (_decrypted != null)
+                        LayoutBuilder(
+                          builder: (context, constraints) {
+                            final double itemWidth = (constraints.maxWidth - 16) / 2;
+                            return Wrap(
+                              spacing: 16,
+                              runSpacing: 16,
+                              children: [
+                                SizedBox(
+                                  width: itemWidth > 130 ? itemWidth : constraints.maxWidth,
+                                  child: _infoRow(
+                                    'Beneficiary',
+                                    _decrypted!['name'] ?? 'Unknown',
+                                    context,
+                                  ),
+                                ),
+                                SizedBox(
+                                  width: itemWidth > 130 ? itemWidth : constraints.maxWidth,
+                                  child: _infoRow(
+                                    'Account',
+                                    _decrypted!['account'] ?? 'Locked',
+                                    context,
+                                  ),
+                                ),
+                                SizedBox(
+                                  width: itemWidth > 130 ? itemWidth : constraints.maxWidth,
+                                  child: _infoRow(
+                                    'Bank',
+                                    _decrypted!['bank'] ?? 'Private',
+                                    context,
+                                  ),
+                                ),
+                                SizedBox(
+                                  width: itemWidth > 130 ? itemWidth : constraints.maxWidth,
+                                  child: _infoRow(
+                                    'IFSC/Sort',
+                                    _decrypted!['ifsc'] ?? 'LOCKED',
+                                    context,
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
+                        )
+                      else
                         Text(
                           'Locked: Requires Admin RSA Key',
                           style: TextStyle(color: danger, fontSize: 12),
@@ -816,38 +833,40 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
   Widget _infoRow(
     String label,
     String value,
-    BuildContext context, {
-    bool isLast = false,
-  }) {
+    BuildContext context,
+  ) {
     final textDim = Theme.of(context).colorScheme.onSurfaceVariant;
-    return Container(
-      padding: EdgeInsets.only(bottom: isLast ? 0 : 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: TextStyle(color: textDim, fontSize: 12)),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                Flexible(
-                  child: Text(
-                    value,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                const SizedBox(width: 4),
-                _CopyButton(label: label, value: value),
-              ],
-            ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label.toUpperCase(),
+          style: TextStyle(
+            color: textDim,
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 0.5,
           ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 4),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            Flexible(
+              child: Text(
+                value,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(width: 4),
+            _CopyButton(label: label, value: value),
+          ],
+        ),
+      ],
     );
   }
 
