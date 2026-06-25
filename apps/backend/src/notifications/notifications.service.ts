@@ -14,6 +14,10 @@ export class NotificationsService {
 
   private initFirebase() {
     try {
+      const individualProjectId = process.env.FIREBASE_PROJECT_ID;
+      const individualClientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+      const individualPrivateKey = process.env.FIREBASE_PRIVATE_KEY;
+
       const envServiceAccount = process.env.FIREBASE_SERVICE_ACCOUNT;
       const envServiceAccountBase64 = process.env.FIREBASE_SERVICE_ACCOUNT_BASE64;
       const serviceAccountPath = path.join(process.cwd(), 'firebase-service-account.json');
@@ -64,7 +68,17 @@ export class NotificationsService {
         }
       };
 
-      if (envServiceAccount) {
+      if (individualProjectId && individualClientEmail && individualPrivateKey) {
+        const cleanKey = individualPrivateKey.replace(/\\n/g, '\n');
+        this.firebaseApp = admin.initializeApp({
+          credential: admin.credential.cert({
+            projectId: individualProjectId,
+            clientEmail: individualClientEmail,
+            privateKey: cleanKey,
+          }),
+        });
+        console.log('Firebase Admin initialized via individual environment variables.');
+      } else if (envServiceAccount) {
         const parsedAccount = parseJsonConfig(envServiceAccount);
         this.firebaseApp = admin.initializeApp({
           credential: admin.credential.cert(parsedAccount),
