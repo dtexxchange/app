@@ -253,3 +253,12 @@ model TicketMessage {
   createdAt DateTime @default(now())
 }
 
+model AppRelease {
+  id          String   @id @default(uuid())
+  version     String
+  changes     String?  @db.Text
+  apkUrl      String?
+  isActive    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+}
+

@@ -57,6 +57,22 @@ class ApiService {
     }
   }
 
+  Future<Map<String, dynamic>?> getLatestVersion() async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/api/app-releases/latest'));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        // The API returns the release object, or empty if none. Check if it has a version.
+        if (data != null && data['version'] != null) {
+          return data;
+        }
+      }
+    } catch (e) {
+      debugPrint('Error fetching latest version: $e');
+    }
+    return null;
+  }
+
   Future<void> logout() async {
     try {
       await _storage.delete(key: 'user_token');

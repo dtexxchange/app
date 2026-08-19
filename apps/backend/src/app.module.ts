@@ -12,10 +12,17 @@ import { NewsModule } from './news/news.module';
 import { TicketsModule } from './tickets/tickets.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { AppReleaseModule } from './app-release/app-release.module';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', '..', 'public'),
+      serveRoot: '/',
+    }),
     PrismaModule,
     EmailModule,
     AuthModule,
@@ -26,6 +33,7 @@ import { AppService } from './app.service';
     NotificationsModule,
     NewsModule,
     TicketsModule,
+    AppReleaseModule,
   ],
   controllers: [AppController],
   providers: [AppService],

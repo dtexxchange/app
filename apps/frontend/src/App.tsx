@@ -25,6 +25,8 @@ import Wallets from "./pages/admin/Wallets";
 import WithdrawalFee from "./pages/admin/WithdrawalFee";
 import AdminNews from "./pages/admin/News";
 import UserTransactions from "./pages/admin/UserTransactions";
+import Releases from "./pages/Releases";
+import AppReleases from "./pages/admin/AppReleases";
 
 const ProtectedRoute: React.FC<{
     children: React.ReactNode;
@@ -87,7 +89,14 @@ const App: React.FC = () => {
                             path="/withdrawal-fee"
                             element={<WithdrawalFee />}
                         />
+                        <Route
+                            path="/app-releases"
+                            element={<AppReleases />}
+                        />
                     </Route>
+
+                    {/* Public Release Route */}
+                    <Route path="/releases" element={<Releases />} />
 
                     {/* User Routes */}
                     <Route

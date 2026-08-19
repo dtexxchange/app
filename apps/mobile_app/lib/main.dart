@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import 'screens/auth_screen.dart';
 import 'screens/bank_accounts_screen.dart';
@@ -13,6 +14,7 @@ import 'screens/transactions_screen.dart';
 import 'screens/withdrawal_screen.dart';
 import 'screens/tickets_screen.dart';
 import 'screens/ticket_detail_screen.dart';
+import 'screens/update_warning_screen.dart';
 import 'services/api_service.dart';
 import 'services/notification_service.dart';
 import 'services/theme_service.dart';
@@ -68,24 +70,74 @@ class MainApp extends StatelessWidget {
   }
 }
 
-class InitialRouteHandler extends StatelessWidget {
+class InitialRouteHandler extends StatefulWidget {
   const InitialRouteHandler({super.key});
 
   @override
+  State<InitialRouteHandler> createState() => _InitialRouteHandlerState();
+}
+
+class _InitialRouteHandlerState extends State<InitialRouteHandler> {
+  bool _isLoading = true;
+  bool _needsUpdate = false;
+  String _latestVersion = '';
+  String? _token;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeApp();
+  }
+
+  Future<void> _initializeApp() async {
+    try {
+      // 1. Check App Version
+      final latestRelease = await ApiService().getLatestVersion();
+      if (latestRelease != null && latestRelease['version'] != null) {
+        final packageInfo = await PackageInfo.fromPlatform();
+        final currentVersion = packageInfo.version;
+        final latestVersion = latestRelease['version'] as String;
+
+        // Simple comparison: if versions don't match, require update
+        if (currentVersion != latestVersion) {
+          setState(() {
+            _needsUpdate = true;
+            _latestVersion = latestVersion;
+            _isLoading = false;
+          });
+          return;
+        }
+      }
+
+      // 2. Check Auth Token
+      _token = await ApiService().getToken();
+    } catch (e) {
+      debugPrint('Initialization error: $e');
+    } finally {
+      if (mounted && !_needsUpdate) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return FutureBuilder<String?>(
-      future: ApiService().getToken(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
-        }
-        if (snapshot.hasData && snapshot.data != null) {
-          return const MainScreen();
-        }
-        return const AuthScreen();
-      },
-    );
+    if (_isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_needsUpdate) {
+      return UpdateWarningScreen(latestVersion: _latestVersion);
+    }
+
+    if (_token != null) {
+      return const MainScreen();
+    }
+
+    return const AuthScreen();
   }
 }

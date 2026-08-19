@@ -9,6 +9,7 @@ import {
     QrCode,
     Banknote,
     Newspaper,
+    Smartphone,
 } from "lucide-react";
 import React from "react";
 import { NavLink, Outlet } from "react-router-dom";
@@ -37,6 +38,7 @@ const AdminLayout: React.FC = () => {
             label: "Withdrawal Fee",
         },
         { path: "/news", icon: <Newspaper size={20} />, label: "News & Bulletins" },
+        { path: "/app-releases", icon: <Smartphone size={20} />, label: "App Releases" },
         { path: "/settings", icon: <Settings size={20} />, label: "Settings" },
     ];
 
