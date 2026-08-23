@@ -1,16 +1,17 @@
-import { Controller, Get, Post, Body, UseInterceptors, UploadedFile, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { AppReleaseService } from './app-release.service';
+import { Role } from '@prisma/client';
+import * as fs from 'fs';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
-import { Role } from '@prisma/client';
+import { RolesGuard } from '../common/guards/roles.guard';
+import { AppReleaseService } from './app-release.service';
 
 @Controller('app-releases')
 export class AppReleaseController {
-  constructor(private readonly appReleaseService: AppReleaseService) {}
+  constructor(private readonly appReleaseService: AppReleaseService) { }
 
   @Get('latest')
   async getLatestRelease() {
@@ -27,7 +28,18 @@ export class AppReleaseController {
   @Roles(Role.ADMIN)
   @UseInterceptors(FileInterceptor('file', {
     storage: diskStorage({
-      destination: './public/apks',
+      destination: (req, file, cb) => {
+        const dir = './public/apks';
+        try {
+          if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir, { recursive: true });
+          }
+          cb(null, dir);
+        } catch (err) {
+          // Fallback to /tmp for read-only environments like Vercel
+          cb(null, '/tmp');
+        }
+      },
       filename: (req, file, cb) => {
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
         const ext = extname(file.originalname);
