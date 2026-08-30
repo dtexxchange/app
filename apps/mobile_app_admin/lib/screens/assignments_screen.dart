@@ -166,7 +166,7 @@ class _AssignmentsScreenState extends State<AssignmentsScreen> {
   Future<void> _fetchAssignments() async {
     setState(() => _isLoading = true);
     try {
-      final res = await _api.getRequest('/settings/admin/assignments');
+      final res = await _api.getRequest('/api/settings/admin/assignments');
       if (res.statusCode == 200) {
         if (mounted) setState(() => _assignments = jsonDecode(res.body));
       }

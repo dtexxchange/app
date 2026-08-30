@@ -24,7 +24,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   Future<void> _fetchNotifications() async {
     try {
-      final response = await _api.getRequest('/notifications');
+      final response = await _api.getRequest('/api/notifications');
       if (response.statusCode == 200) {
         setState(() {
           _notifications = jsonDecode(response.body);
@@ -41,7 +41,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   Future<void> _markAllAsRead() async {
     try {
-      await _api.patchRequest('/notifications/read-all', {});
+      await _api.patchRequest('/api/notifications/read-all', {});
       _fetchNotifications();
     } catch (e) {
       debugPrint('Error marking all as read: $e');
@@ -50,7 +50,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   Future<void> _markAsRead(String id) async {
     try {
-      await _api.patchRequest('/notifications/$id/read', {});
+      await _api.patchRequest('/api/notifications/$id/read', {});
       _fetchNotifications();
     } catch (e) {
       debugPrint('Error marking as read: $e');
@@ -60,7 +60,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -88,125 +87,123 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       body: _isLoading
           ? Center(child: CircularProgressIndicator(color: theme.primaryColor))
           : _notifications.isEmpty
-              ? _buildEmptyState(theme)
-              : RefreshIndicator(
-                  onRefresh: _fetchNotifications,
-                  color: theme.primaryColor,
-                  child: ListView.separated(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: _notifications.length,
-                    separatorBuilder: (context, index) =>
-                        const SizedBox(height: 12),
-                    itemBuilder: (context, index) {
-                      final n = _notifications[index];
-                      final isRead = n['isRead'] as bool;
-                      final date = DateTime.parse(n['createdAt']);
+          ? _buildEmptyState(theme)
+          : RefreshIndicator(
+              onRefresh: _fetchNotifications,
+              color: theme.primaryColor,
+              child: ListView.separated(
+                padding: const EdgeInsets.all(16),
+                itemCount: _notifications.length,
+                separatorBuilder: (context, index) =>
+                    const SizedBox(height: 12),
+                itemBuilder: (context, index) {
+                  final n = _notifications[index];
+                  final isRead = n['isRead'] as bool;
+                  final date = DateTime.parse(n['createdAt']);
 
-                      return GestureDetector(
-                        onTap: () {
-                          if (!isRead) _markAsRead(n['id']);
-                          if (n['type'] == 'TICKET_UPDATE' && n['relatedId'] != null) {
-                            Navigator.pushNamed(
-                              context,
-                              '/ticket-detail',
-                              arguments: n['relatedId'],
-                            );
-                          }
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: isRead
-                                ? theme.cardColor.withValues(alpha: 0.6)
-                                : theme.cardColor,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
+                  return GestureDetector(
+                    onTap: () {
+                      if (!isRead) _markAsRead(n['id']);
+                      if (n['type'] == 'TICKET_UPDATE' &&
+                          n['relatedId'] != null) {
+                        Navigator.pushNamed(
+                          context,
+                          '/ticket-detail',
+                          arguments: n['relatedId'],
+                        );
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: isRead
+                            ? theme.cardColor.withValues(alpha: 0.6)
+                            : theme.cardColor,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: isRead
+                              ? theme.dividerColor.withValues(alpha: 0.5)
+                              : theme.primaryColor.withValues(alpha: 0.3),
+                          width: isRead ? 1 : 1.5,
+                        ),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
                               color: isRead
-                                  ? theme.dividerColor.withValues(alpha: 0.5)
-                                  : theme.primaryColor.withValues(alpha: 0.3),
-                              width: isRead ? 1 : 1.5,
+                                  ? Colors.grey.withValues(alpha: 0.1)
+                                  : theme.primaryColor.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Icon(
+                              _getIcon(n['type']),
+                              color: isRead ? Colors.grey : theme.primaryColor,
+                              size: 20,
                             ),
                           ),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(10),
-                                decoration: BoxDecoration(
-                                  color: isRead
-                                      ? Colors.grey.withValues(alpha: 0.1)
-                                      : theme.primaryColor.withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Icon(
-                                  _getIcon(n['type']),
-                                  color: isRead
-                                      ? Colors.grey
-                                      : theme.primaryColor,
-                                  size: 20,
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Expanded(
-                                          child: Text(
-                                            n['title'] ?? '',
-                                            style: GoogleFonts.outfit(
-                                              fontSize: 16,
-                                              fontWeight: isRead
-                                                  ? FontWeight.w600
-                                                  : FontWeight.w700,
-                                              color: isRead
-                                                  ? theme.colorScheme.onSurface
-                                                      .withValues(alpha: 0.7)
-                                                  : theme.colorScheme.onSurface,
-                                            ),
-                                          ),
+                                    Expanded(
+                                      child: Text(
+                                        n['title'] ?? '',
+                                        style: GoogleFonts.outfit(
+                                          fontSize: 16,
+                                          fontWeight: isRead
+                                              ? FontWeight.w600
+                                              : FontWeight.w700,
+                                          color: isRead
+                                              ? theme.colorScheme.onSurface
+                                                    .withValues(alpha: 0.7)
+                                              : theme.colorScheme.onSurface,
                                         ),
-                                        Text(
-                                          DateFormat('hh:mm a').format(date),
-                                          style: GoogleFonts.inter(
-                                            fontSize: 12,
-                                            color: Colors.grey,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 6),
-                                    Text(
-                                      n['body'] ?? '',
-                                      style: GoogleFonts.inter(
-                                        fontSize: 14,
-                                        color: theme.colorScheme.onSurface
-                                            .withValues(
-                                                alpha: isRead ? 0.6 : 0.85),
                                       ),
                                     ),
-                                    const SizedBox(height: 4),
                                     Text(
-                                      DateFormat('MMM d, yyyy').format(date),
+                                      DateFormat('hh:mm a').format(date),
                                       style: GoogleFonts.inter(
-                                        fontSize: 11,
-                                        color: Colors.grey.withValues(alpha: 0.8),
+                                        fontSize: 12,
+                                        color: Colors.grey,
                                       ),
                                     ),
                                   ],
                                 ),
-                              ),
-                            ],
+                                const SizedBox(height: 6),
+                                Text(
+                                  n['body'] ?? '',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 14,
+                                    color: theme.colorScheme.onSurface
+                                        .withValues(alpha: isRead ? 0.6 : 0.85),
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  DateFormat('MMM d, yyyy').format(date),
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11,
+                                    color: Colors.grey.withValues(alpha: 0.8),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
     );
   }
 
@@ -247,10 +244,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           const SizedBox(height: 8),
           Text(
             'No new notifications at the moment.',
-            style: GoogleFonts.inter(
-              fontSize: 14,
-              color: Colors.grey,
-            ),
+            style: GoogleFonts.inter(fontSize: 14, color: Colors.grey),
           ),
         ],
       ),

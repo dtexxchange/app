@@ -60,7 +60,7 @@ class _AdminTicketDetailScreenState extends State<AdminTicketDetailScreen> {
 
   Future<void> _fetchTicketDetails() async {
     try {
-      final res = await _api.getRequest('/tickets/${widget.ticketId}');
+      final res = await _api.getRequest('/api/tickets/${widget.ticketId}');
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         if (mounted) {
@@ -81,7 +81,7 @@ class _AdminTicketDetailScreenState extends State<AdminTicketDetailScreen> {
     _page = 1;
     _hasMore = true;
     try {
-      final res = await _api.getRequest('/tickets/${widget.ticketId}/messages?page=1&limit=20');
+      final res = await _api.getRequest('/api/tickets/${widget.ticketId}/messages?page=1&limit=20');
       if (res.statusCode == 200) {
         final List<dynamic> data = jsonDecode(res.body);
         if (mounted) {
@@ -107,7 +107,7 @@ class _AdminTicketDetailScreenState extends State<AdminTicketDetailScreen> {
     setState(() => _isLoadMore = true);
     final nextPage = _page + 1;
     try {
-      final res = await _api.getRequest('/tickets/${widget.ticketId}/messages?page=$nextPage&limit=20');
+      final res = await _api.getRequest('/api/tickets/${widget.ticketId}/messages?page=$nextPage&limit=20');
       if (res.statusCode == 200) {
         final List<dynamic> data = jsonDecode(res.body);
         if (mounted) {
@@ -150,7 +150,7 @@ class _AdminTicketDetailScreenState extends State<AdminTicketDetailScreen> {
 
     try {
       final res = await _api.postRequest(
-        '/tickets/${widget.ticketId}/messages',
+        '/api/tickets/${widget.ticketId}/messages',
         {'message': text},
       );
 
@@ -190,7 +190,7 @@ class _AdminTicketDetailScreenState extends State<AdminTicketDetailScreen> {
     setState(() => _isChangingStatus = true);
     try {
       final res = await _api.patchRequest(
-        '/tickets/${widget.ticketId}/status',
+        '/api/tickets/${widget.ticketId}/status',
         {'status': status},
       );
 

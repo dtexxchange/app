@@ -24,7 +24,7 @@ class _NewsScreenState extends State<NewsScreen> {
   Future<void> _fetchNews() async {
     setState(() => _isLoading = true);
     try {
-      final res = await _api.getRequest('/news/admin');
+      final res = await _api.getRequest('/api/news/admin');
       if (res.statusCode == 200) {
         if (mounted) {
           setState(() {
@@ -44,7 +44,7 @@ class _NewsScreenState extends State<NewsScreen> {
 
   Future<void> _createNews(String title, String description, String? link) async {
     try {
-      final res = await _api.postRequest('/news', {
+      final res = await _api.postRequest('/api/news', {
         'title': title,
         'description': description,
         if (link != null && link.isNotEmpty) 'link': link,
@@ -62,7 +62,7 @@ class _NewsScreenState extends State<NewsScreen> {
 
   Future<void> _updateNews(String id, String title, String description, String? link, String status) async {
     try {
-      final res = await _api.patchRequest('/news/$id', {
+      final res = await _api.patchRequest('/api/news/$id', {
         'title': title,
         'description': description,
         'link': link ?? '',
@@ -82,7 +82,7 @@ class _NewsScreenState extends State<NewsScreen> {
   Future<void> _toggleStatus(String id, String currentStatus) async {
     final newStatus = currentStatus == 'PUBLISHED' ? 'ARCHIVED' : 'PUBLISHED';
     try {
-      final res = await _api.patchRequest('/news/$id', {'status': newStatus});
+      final res = await _api.patchRequest('/api/news/$id', {'status': newStatus});
       if (res.statusCode == 200) {
         _showSnack(
           newStatus == 'PUBLISHED' ? 'News Published' : 'News Archived',
@@ -99,7 +99,7 @@ class _NewsScreenState extends State<NewsScreen> {
 
   Future<void> _deleteNews(String id) async {
     try {
-      final res = await _api.deleteRequest('/news/$id');
+      final res = await _api.deleteRequest('/api/news/$id');
       if (res.statusCode == 200) {
         _showSnack('News deleted successfully', success: true);
         _fetchNews();

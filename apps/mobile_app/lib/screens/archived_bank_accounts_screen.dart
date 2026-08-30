@@ -33,7 +33,7 @@ class _ArchivedBankAccountsScreenState
   Future<void> _fetchArchivedAccounts() async {
     setState(() => _isLoading = true);
     try {
-      final res = await _api.getRequest('/bank-accounts/archived');
+      final res = await _api.getRequest('/api/bank-accounts/archived');
       if (res.statusCode == 200 && mounted) {
         setState(() {
           _accounts = jsonDecode(res.body);
@@ -48,7 +48,7 @@ class _ArchivedBankAccountsScreenState
 
   Future<void> _restoreAccount(String id) async {
     try {
-      final res = await _api.postRequest('/bank-accounts/$id/restore', {});
+      final res = await _api.postRequest('/api/bank-accounts/$id/restore', {});
       if ((res.statusCode == 201 || res.statusCode == 200) && mounted) {
         _fetchArchivedAccounts();
         ScaffoldMessenger.of(

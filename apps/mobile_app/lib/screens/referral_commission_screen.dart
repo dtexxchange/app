@@ -40,7 +40,7 @@ class _ReferralCommissionScreenState extends State<ReferralCommissionScreen> {
     try {
       // Fetch transactions of type REFERRAL_COMMISSION related to this user
       final res = await _api.getRequest(
-        '/wallet/transactions?type=REFERRAL_COMMISSION&relatedUserId=${widget.referredUser['id']}',
+        '/api/wallet/transactions?type=REFERRAL_COMMISSION&relatedUserId=${widget.referredUser['id']}',
       );
 
       if (res.statusCode == 200) {

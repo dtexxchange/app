@@ -48,7 +48,7 @@ class _UserTransactionsScreenState extends State<UserTransactionsScreen> {
       params.add('limit=500');
 
       final query = '?${params.join('&')}';
-      final res = await _api.getRequest('/wallet/transactions$query');
+      final res = await _api.getRequest('/api/wallet/transactions$query');
 
       if (res.statusCode == 200 && mounted) {
         setState(() {
@@ -233,7 +233,7 @@ class _UserTransactionsScreenState extends State<UserTransactionsScreen> {
     if (result == null || result['confirmed'] != true) return;
 
     try {
-      final res = await _api.patchRequest('/wallet/transactions/$id/status', {
+      final res = await _api.patchRequest('/api/wallet/transactions/$id/status', {
         'status': status,
         'utr': result['utr'],
       });

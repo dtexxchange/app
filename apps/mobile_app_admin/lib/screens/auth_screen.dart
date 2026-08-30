@@ -29,7 +29,7 @@ class _AuthScreenState extends State<AuthScreen> {
   Future<void> _sendOtp() async {
     setState(() => _isLoading = true);
     try {
-      final res = await _api.postRequest('/auth/send-otp', {
+      final res = await _api.postRequest('/api/auth/send-otp', {
         'email': _emailController.text,
       });
       if (res.statusCode == 201 || res.statusCode == 200) {
@@ -67,7 +67,7 @@ class _AuthScreenState extends State<AuthScreen> {
   Future<void> _verifyOtp() async {
     setState(() => _isLoading = true);
     try {
-      final res = await _api.postRequest('/auth/verify-otp', {
+      final res = await _api.postRequest('/api/auth/verify-otp', {
         'email': _emailController.text,
         'code': _otpController.text,
       });

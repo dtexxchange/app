@@ -86,7 +86,7 @@ class _WalletsScreenState extends State<WalletsScreen> {
   Future<void> _fetchWallets() async {
     setState(() => _isLoading = true);
     try {
-      final res = await _api.getRequest('/settings/admin/wallets');
+      final res = await _api.getRequest('/api/settings/admin/wallets');
       if (res.statusCode == 200) {
         if (mounted) setState(() => _wallets = jsonDecode(res.body));
       }
@@ -99,7 +99,7 @@ class _WalletsScreenState extends State<WalletsScreen> {
 
   Future<void> _addWallet(String address, String network, String name) async {
     try {
-      final res = await _api.postRequest('/settings/admin/wallets', {
+      final res = await _api.postRequest('/api/settings/admin/wallets', {
         'address': address,
         'network': network,
         'name': name,
@@ -115,7 +115,7 @@ class _WalletsScreenState extends State<WalletsScreen> {
 
   Future<void> _toggleWallet(String id, bool active) async {
     try {
-      await _api.patchRequest('/settings/admin/wallets/$id', {
+      await _api.patchRequest('/api/settings/admin/wallets/$id', {
         'isActive': active,
       });
       _fetchWallets();
@@ -158,7 +158,7 @@ class _WalletsScreenState extends State<WalletsScreen> {
     if (confirm != true) return;
 
     try {
-      await _api.deleteRequest('/settings/admin/wallets/$id');
+      await _api.deleteRequest('/api/settings/admin/wallets/$id');
       _fetchWallets();
     } catch (e) {
       debugPrint(e.toString());

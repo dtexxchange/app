@@ -117,7 +117,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen>
     }
 
     final String queryString = Uri(queryParameters: queryParams).query;
-    final String url = '/tickets?$queryString';
+    final String url = '/api/tickets?$queryString';
 
     try {
       final res = await _api.getRequest(url);
@@ -142,7 +142,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen>
 
   Future<void> _fetchSupportContacts() async {
     try {
-      final res = await _api.getRequest('/settings/support-contacts');
+      final res = await _api.getRequest('/api/settings/support-contacts');
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         if (mounted) {
@@ -163,7 +163,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen>
 
     setState(() => _isSavingContacts = true);
     try {
-      final res = await _api.postRequest('/settings/admin/support-contacts', {
+      final res = await _api.postRequest('/api/settings/admin/support-contacts', {
         'title': title,
         'platform': _newPlatform,
         'url': url,
@@ -210,7 +210,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen>
     setState(() => _isSavingContacts = true);
     try {
       final res = await _api.patchRequest(
-        '/settings/admin/support-contacts/$id',
+        '/api/settings/admin/support-contacts/$id',
         {'title': title, 'platform': _editPlatform, 'url': url},
       );
       if (res.statusCode == 200) {
@@ -286,7 +286,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen>
     setState(() => _isSavingContacts = true);
     try {
       final res = await _api.deleteRequest(
-        '/settings/admin/support-contacts/$id',
+        '/api/settings/admin/support-contacts/$id',
       );
       if (res.statusCode == 200) {
         if (mounted) {
@@ -337,7 +337,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen>
     }
 
     final String queryString = Uri(queryParameters: queryParams).query;
-    final String url = '/tickets?$queryString';
+    final String url = '/api/tickets?$queryString';
 
     try {
       final res = await _api.getRequest(url);

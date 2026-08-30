@@ -49,9 +49,9 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
 
   Future<void> _loadData() async {
     try {
-      final userRes = await _api.getRequest('/users/me');
-      final settingsRes = await _api.getRequest('/settings/conversion-rate');
-      final accountsRes = await _api.getRequest('/bank-accounts');
+      final userRes = await _api.getRequest('/api/users/me');
+      final settingsRes = await _api.getRequest('/api/settings/conversion-rate');
+      final accountsRes = await _api.getRequest('/api/bank-accounts');
 
       if (mounted) {
         setState(() {

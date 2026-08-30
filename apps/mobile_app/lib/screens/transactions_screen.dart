@@ -115,7 +115,7 @@ class TransactionsScreenState extends State<TransactionsScreen>
       if (_filterStatus.isNotEmpty) params['status'] = _filterStatus;
 
       final query = params.entries.map((e) => '${e.key}=${e.value}').join('&');
-      final res = await _api.getRequest('/wallet/transactions?$query');
+      final res = await _api.getRequest('/api/wallet/transactions?$query');
 
       if (res.statusCode == 200 && mounted) {
         final List data = jsonDecode(res.body);
@@ -187,7 +187,7 @@ class TransactionsScreenState extends State<TransactionsScreen>
       if (_filterStatus.isNotEmpty) params['status'] = _filterStatus;
 
       final query = params.entries.map((e) => '${e.key}=${e.value}').join('&');
-      final res = await _api.getRequest('/wallet/transactions?$query');
+      final res = await _api.getRequest('/api/wallet/transactions?$query');
 
       if (res.statusCode == 200 && mounted) {
         final List data = jsonDecode(res.body);

@@ -35,7 +35,7 @@ class _PasscodeScreenState extends State<PasscodeScreen> {
 
   Future<void> _checkUserStatus() async {
     try {
-      final res = await _api.getRequest('/users/me');
+      final res = await _api.getRequest('/api/users/me');
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         setState(() {
@@ -78,7 +78,7 @@ class _PasscodeScreenState extends State<PasscodeScreen> {
       // Verify old passcode
       setState(() => _isLoading = true);
       try {
-        final res = await _api.postRequest('/users/me/passcode/verify', {
+        final res = await _api.postRequest('/api/users/me/passcode/verify', {
           'passcode': input,
         });
         final data = jsonDecode(res.body);
@@ -123,7 +123,7 @@ class _PasscodeScreenState extends State<PasscodeScreen> {
   Future<void> _submitFinal() async {
     setState(() => _isLoading = true);
     try {
-      final res = await _api.patchRequest('/users/me/passcode', {
+      final res = await _api.patchRequest('/api/users/me/passcode', {
         'passcode': _newPasscode,
         if (_oldPasscode != null) 'oldPasscode': _oldPasscode,
       });

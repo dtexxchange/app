@@ -46,10 +46,10 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
 
   Future<void> _loadData() async {
     try {
-      final userRes = await _api.getRequest('/users/me');
-      final feeRes = await _api.getRequest('/settings/withdrawal-fee');
-      final rateRes = await _api.getRequest('/settings/conversion-rate');
-      final accountsRes = await _api.getRequest('/bank-accounts');
+      final userRes = await _api.getRequest('/api/users/me');
+      final feeRes = await _api.getRequest('/api/settings/withdrawal-fee');
+      final rateRes = await _api.getRequest('/api/settings/conversion-rate');
+      final accountsRes = await _api.getRequest('/api/bank-accounts');
 
       if (mounted) {
         setState(() {

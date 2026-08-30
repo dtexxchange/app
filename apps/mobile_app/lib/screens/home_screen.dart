@@ -336,7 +336,7 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
     try {
       // Parallel fetch for speed
       await Future.wait([
-        _api.getRequest('/news').then((newsRes) {
+        _api.getRequest('/api/news').then((newsRes) {
           if (newsRes.statusCode == 200) {
             if (mounted) {
               setState(() {
@@ -345,7 +345,7 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
             }
           }
         }),
-        _api.getRequest('/settings/conversion-rate').then((rateRes) {
+        _api.getRequest('/api/settings/conversion-rate').then((rateRes) {
           if (rateRes.statusCode == 200) {
             final data = jsonDecode(rateRes.body);
             setState(() {
@@ -355,7 +355,7 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
             });
           }
         }),
-        _api.getRequest('/users/me').then((userRes) {
+        _api.getRequest('/api/users/me').then((userRes) {
           if (userRes.statusCode == 200) {
             final data = jsonDecode(userRes.body);
             setState(() {
@@ -365,7 +365,7 @@ class HomeScreenState extends State<HomeScreen> with RouteAware {
           }
         }),
         // Only fetch the last 10 for the home dashboard
-        _api.getRequest('/wallet/transactions?limit=10').then((txRes) {
+        _api.getRequest('/api/wallet/transactions?limit=10').then((txRes) {
           if (txRes.statusCode == 200) {
             setState(() {
               _transactions = jsonDecode(txRes.body);

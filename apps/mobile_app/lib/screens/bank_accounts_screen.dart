@@ -42,7 +42,7 @@ class _BankAccountsScreenState extends State<BankAccountsScreen> {
   Future<void> _fetchAccounts() async {
     setState(() => _isLoading = true);
     try {
-      final res = await _api.getRequest('/bank-accounts');
+      final res = await _api.getRequest('/api/bank-accounts');
       if (res.statusCode == 200 && mounted) {
         setState(() {
           _accounts = jsonDecode(res.body);
@@ -108,7 +108,7 @@ class _BankAccountsScreenState extends State<BankAccountsScreen> {
     if (confirm != true) return;
 
     try {
-      final res = await _api.deleteRequest('/bank-accounts/$id');
+      final res = await _api.deleteRequest('/api/bank-accounts/$id');
       if (res.statusCode == 200) {
         _fetchAccounts();
         if (mounted) {
@@ -174,10 +174,10 @@ class _BankAccountsScreenState extends State<BankAccountsScreen> {
                 };
                 final res = isEdit
                     ? await _api.patchRequest(
-                        '/bank-accounts/${account['id']}',
+                        '/api/bank-accounts/${account['id']}',
                         data,
                       )
-                    : await _api.postRequest('/bank-accounts', data);
+                    : await _api.postRequest('/api/bank-accounts', data);
 
                 if (res.statusCode == 200 || res.statusCode == 201) {
                   Navigator.pop(ctx);
@@ -462,7 +462,7 @@ class _BankAccountsScreenState extends State<BankAccountsScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) => FutureBuilder(
-        future: _api.getRequest('/bank-accounts/$id/logs'),
+        future: _api.getRequest('/api/bank-accounts/$id/logs'),
         builder: (ctx, snapshot) {
           if (!snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());

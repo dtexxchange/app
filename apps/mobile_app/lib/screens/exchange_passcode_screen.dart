@@ -51,7 +51,7 @@ class _ExchangePasscodeScreenState extends State<ExchangePasscodeScreen> {
       // 1. Get Public Key if needed
       String pubKey = "";
       if (CryptoService.enableE2EE) {
-        final keyRes = await _api.getRequest('/wallet/admin/public-key');
+        final keyRes = await _api.getRequest('/api/wallet/admin/public-key');
         pubKey = jsonDecode(keyRes.body)['publicKey'];
       }
 
@@ -60,7 +60,7 @@ class _ExchangePasscodeScreenState extends State<ExchangePasscodeScreen> {
 
       // 3. Save Bank Account if requested
       if (save) {
-        await _api.postRequest('/bank-accounts', {
+        await _api.postRequest('/api/bank-accounts', {
           'name': bankDetails['name'],
           'bankName': bankDetails['bank'],
           'accountNo': bankDetails['account'],
@@ -69,7 +69,7 @@ class _ExchangePasscodeScreenState extends State<ExchangePasscodeScreen> {
       }
 
       // 4. Submit Transaction
-      final endpoint = type == 'withdrawal' ? '/wallet/withdraw' : '/wallet/exchange';
+      final endpoint = type == 'withdrawal' ? '/api/wallet/withdraw' : '/api/wallet/exchange';
       final res = await _api.postRequest(endpoint, {
         'amount': amount,
         'bankDetails': encrypted,

@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { format } from "date-fns";
 import { Upload, Smartphone, Loader2, Plus, Trash2 } from "lucide-react";
+import api from "../../lib/api";
 
 interface AppRelease {
     id: string;
@@ -25,11 +26,8 @@ const AppReleases: React.FC = () => {
     const fetchReleases = async () => {
         setIsLoading(true);
         try {
-            const res = await fetch('/api/app-releases');
-            if (res.ok) {
-                const data = await res.json();
-                setReleases(data);
-            }
+            const res = await api.get('/app-releases');
+            setReleases(res.data);
         } catch (error) {
             console.error("Failed to fetch releases", error);
         } finally {
@@ -52,31 +50,23 @@ const AppReleases: React.FC = () => {
         if (!file || !version) return;
 
         setIsUploading(true);
-        const token = localStorage.getItem('token');
-        
         const formData = new FormData();
         formData.append('file', file);
         formData.append('version', version);
         formData.append('changes', changes);
 
         try {
-            const res = await fetch('/api/app-releases', {
-                method: 'POST',
+            await api.post('/app-releases', formData, {
                 headers: {
-                    'Authorization': `Bearer ${token}`
+                    'Content-Type': 'multipart/form-data',
                 },
-                body: formData,
             });
 
-            if (res.ok) {
-                setVersion("");
-                setChanges("");
-                setFile(null);
-                if (fileInputRef.current) fileInputRef.current.value = '';
-                await fetchReleases();
-            } else {
-                alert("Failed to upload new release");
-            }
+            setVersion("");
+            setChanges("");
+            setFile(null);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+            await fetchReleases();
         } catch (error) {
             console.error("Upload error", error);
             alert("Error uploading release");

@@ -13,7 +13,7 @@ class ApiService {
 
     if (kIsWeb) {
       return isProduction
-          ? 'https://dtexxchange.vercel.app'
+          ? 'https://equinoxexchange.cc'
           : 'http://localhost:3200';
     }
 
@@ -22,7 +22,7 @@ class ApiService {
     // & $env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe reverse tcp:3200 tcp:3200
     // 2. The app will then connect to your computer's localhost:3200
     return isProduction
-        ? 'https://dtexxchange.vercel.app'
+        ? 'https://equinoxexchange.cc'
         : 'http://127.0.0.1:3200';
   }
 
@@ -62,9 +62,9 @@ class ApiService {
   Future<void> _handleResponse(http.Response response) async {
     if (response.statusCode == 401 ||
         (response.statusCode == 404 &&
-            response.request?.url.path.endsWith('/users/me') == true) ||
+            response.request?.url.path.endsWith('/api/users/me') == true) ||
         (response.statusCode == 404 &&
-            response.request?.url.path.endsWith('/admin/me') == true)) {
+            response.request?.url.path.endsWith('/api/admin/me') == true)) {
       await logout();
       navigatorKey.currentState?.pushNamedAndRemoveUntil(
         '/login',

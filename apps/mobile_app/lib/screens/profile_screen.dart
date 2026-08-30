@@ -30,7 +30,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _fetchProfile() async {
     try {
-      final res = await _api.getRequest('/users/me');
+      final res = await _api.getRequest('/api/users/me');
       if (mounted) {
         if (res.statusCode == 200) {
           setState(() {
@@ -48,7 +48,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _fetchHelpTelegram() async {
     try {
-      final res = await _api.getRequest('/settings/help-telegram');
+      final res = await _api.getRequest('/api/settings/help-telegram');
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         if (mounted) {
@@ -338,9 +338,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           Divider(height: 1, color: theme.dividerColor),
           _ActionRow(
-            icon: Icons.support_agent_outlined,
-            label: 'Support & Help',
+            icon: Icons.confirmation_number_outlined,
+            label: 'Support Tickets',
             onTap: () => Navigator.pushNamed(context, '/tickets'),
+          ),
+          Divider(height: 1, color: theme.dividerColor),
+          _ActionRow(
+            icon: Icons.chat_bubble_outline_rounded,
+            label: 'Telegram Support',
+            onTap: _contactSupport,
           ),
         ],
       ),

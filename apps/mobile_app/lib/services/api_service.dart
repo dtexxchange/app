@@ -13,7 +13,7 @@ class ApiService {
 
     if (kIsWeb) {
       return isProduction
-          ? 'https://dtexxchange.vercel.app'
+          ? 'https://equinoxexchange.cc'
           : 'http://localhost:3200';
     }
 
@@ -21,14 +21,14 @@ class ApiService {
     // 1. Run this command in your terminal: adb reverse tcp:3000 tcp:3000
     // 2. The app will then connect to your computer's localhost:3000
     return isProduction
-        ? 'https://dtexxchange.vercel.app'
+        ? 'https://equinoxexchange.cc'
         : 'http://localhost:3200';
   }
 
   static String get webUrl {
     const bool isProduction = kReleaseMode;
     return isProduction
-        ? 'https://dtexxchange.netlify.app'
+        ? 'https://equinoxexchange.cc'
         : 'http://localhost:3273'; // Vite default dev port
   }
 
@@ -59,7 +59,9 @@ class ApiService {
 
   Future<Map<String, dynamic>?> getLatestVersion() async {
     try {
-      final response = await http.get(Uri.parse('$baseUrl/api/app-releases/latest'));
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/app-releases/latest'),
+      );
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         // The API returns the release object, or empty if none. Check if it has a version.
@@ -84,7 +86,7 @@ class ApiService {
   Future<void> _handleResponse(http.Response response) async {
     if (response.statusCode == 401 ||
         (response.statusCode == 404 &&
-            response.request?.url.path.endsWith('/users/me') == true)) {
+            response.request?.url.path.endsWith('/api/users/me') == true)) {
       await logout();
       navigatorKey.currentState?.pushNamedAndRemoveUntil(
         '/login',

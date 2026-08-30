@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { format } from "date-fns";
 import { Download, Smartphone } from "lucide-react";
+import api from "../lib/api";
 
 interface AppRelease {
     id: string;
@@ -20,18 +21,16 @@ const Releases: React.FC = () => {
         const fetchReleases = async () => {
             try {
                 const [latestRes, allRes] = await Promise.all([
-                    fetch('/api/app-releases/latest'),
-                    fetch('/api/app-releases')
+                    api.get('/app-releases/latest'),
+                    api.get('/app-releases')
                 ]);
 
-                if (latestRes.ok) {
-                    const latestData = await latestRes.json();
-                    setLatest(latestData);
+                if (latestRes.data) {
+                    setLatest(latestRes.data);
                 }
 
-                if (allRes.ok) {
-                    const allData = await allRes.json();
-                    setReleases(allData);
+                if (allRes.data) {
+                    setReleases(allRes.data);
                 }
             } catch (error) {
                 console.error("Failed to fetch releases", error);

@@ -36,11 +36,11 @@ class _ReferralScreenState extends State<ReferralScreen> {
     setState(() => _isLoading = true);
     try {
       // Get user info for their referral code
-      final userRes = await _api.getRequest('/users/me');
+      final userRes = await _api.getRequest('/api/users/me');
       final userData = jsonDecode(userRes.body);
 
       // Get referrals list
-      final referRes = await _api.getRequest('/users/me/referrals');
+      final referRes = await _api.getRequest('/api/users/me/referrals');
       final referData = jsonDecode(referRes.body);
 
       setState(() {

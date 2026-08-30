@@ -53,7 +53,7 @@ class _TicketsScreenState extends State<TicketsScreen> {
     _page = 1;
     _hasMore = true;
     try {
-      final response = await _api.getRequest('/tickets?page=1&limit=10');
+      final response = await _api.getRequest('/api/tickets?page=1&limit=10');
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
         if (mounted) {
@@ -79,7 +79,7 @@ class _TicketsScreenState extends State<TicketsScreen> {
     setState(() => _isLoadMore = true);
     final nextPage = _page + 1;
     try {
-      final response = await _api.getRequest('/tickets?page=$nextPage&limit=10');
+      final response = await _api.getRequest('/api/tickets?page=$nextPage&limit=10');
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
         if (mounted) {
@@ -103,7 +103,7 @@ class _TicketsScreenState extends State<TicketsScreen> {
 
   Future<void> _fetchSupportContacts() async {
     try {
-      final res = await _api.getRequest('/settings/support-contacts');
+      final res = await _api.getRequest('/api/settings/support-contacts');
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         if (mounted) {
@@ -293,7 +293,7 @@ class _TicketsScreenState extends State<TicketsScreen> {
                               setSheetState(() => isSubmitting = true);
 
                               try {
-                                final res = await _api.postRequest('/tickets', {
+                                final res = await _api.postRequest('/api/tickets', {
                                   'subject': subjectCtrl.text.trim(),
                                   'description': descriptionCtrl.text.trim(),
                                 });

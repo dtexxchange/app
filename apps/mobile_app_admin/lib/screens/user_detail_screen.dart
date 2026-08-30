@@ -123,7 +123,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
   Future<void> _fetchUser() async {
     setState(() => _isLoading = true);
     try {
-      final res = await _api.getRequest('/users/${widget.userId}');
+      final res = await _api.getRequest('/api/users/${widget.userId}');
       if (res.statusCode == 200 && mounted) {
         setState(() {
           _user = jsonDecode(res.body);
@@ -474,7 +474,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
 
   Future<void> _updateUserStatus(String status) async {
     try {
-      final res = await _api.patchRequest('/users/${widget.userId}/status', {
+      final res = await _api.patchRequest('/api/users/${widget.userId}/status', {
         'status': status,
       });
       if (res.statusCode == 200 || res.statusCode == 201) {
@@ -584,7 +584,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                 final amount = double.tryParse(amountCtrl.text);
                 if (amount == null || amount <= 0) return;
                 try {
-                  final res = await _api.postRequest('/wallet/admin/deposit', {
+                  final res = await _api.postRequest('/api/wallet/admin/deposit', {
                     'userId': widget.userId,
                     'amount': amount,
                   });
@@ -734,7 +734,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
 
   Future<void> _updateTxStatus(String id, String status, {String? utr}) async {
     try {
-      final res = await _api.patchRequest('/wallet/transactions/$id/status', {
+      final res = await _api.patchRequest('/api/wallet/transactions/$id/status', {
         'status': status,
         'utr': utr,
       });

@@ -34,9 +34,9 @@ class _WithdrawalFeeScreenState extends State<WithdrawalFeeScreen> {
 
   Future<void> _loadData() async {
     try {
-      final feeRes = await _api.getRequest('/settings/withdrawal-fee');
+      final feeRes = await _api.getRequest('/api/settings/withdrawal-fee');
       final historyRes = await _api.getRequest(
-        '/settings/withdrawal-fee/history',
+        '/api/settings/withdrawal-fee/history',
       );
 
       if (mounted) {
@@ -61,7 +61,7 @@ class _WithdrawalFeeScreenState extends State<WithdrawalFeeScreen> {
 
     setState(() => _isSaving = true);
     try {
-      final res = await _api.patchRequest('/settings/withdrawal-fee', {
+      final res = await _api.patchRequest('/api/settings/withdrawal-fee', {
         'fee': fee,
       });
       if (res.statusCode == 200) {

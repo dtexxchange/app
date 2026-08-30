@@ -68,8 +68,8 @@ class _DepositScreenState extends State<DepositScreen> {
     setState(() => _isLoading = true);
     try {
       final results = await Future.wait([
-        _api.getRequest('/wallet/deposit/active'),
-        _api.getRequest('/settings/conversion-rate'),
+        _api.getRequest('/api/wallet/deposit/active'),
+        _api.getRequest('/api/settings/conversion-rate'),
       ]);
 
       if (results[1].statusCode == 200) {
@@ -126,7 +126,7 @@ class _DepositScreenState extends State<DepositScreen> {
     });
 
     try {
-      final response = await _api.postRequest('/wallet/deposit', {'amount': amount});
+      final response = await _api.postRequest('/api/wallet/deposit', {'amount': amount});
       if (response.statusCode == 201 || response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data != null) {

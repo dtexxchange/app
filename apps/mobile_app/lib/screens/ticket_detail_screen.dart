@@ -50,7 +50,8 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
   }
 
   void _scrollListener() {
-    if (_scrollCtrl.position.pixels >= _scrollCtrl.position.maxScrollExtent - 200) {
+    if (_scrollCtrl.position.pixels >=
+        _scrollCtrl.position.maxScrollExtent - 200) {
       if (_hasMore && !_isLoadMore && !_isLoading) {
         _fetchMoreMessages();
       }
@@ -59,7 +60,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
 
   Future<void> _fetchTicketDetails() async {
     try {
-      final res = await _api.getRequest('/tickets/$_ticketId');
+      final res = await _api.getRequest('/api/tickets/$_ticketId');
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         if (mounted) {
@@ -80,7 +81,9 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
     _page = 1;
     _hasMore = true;
     try {
-      final res = await _api.getRequest('/tickets/$_ticketId/messages?page=1&limit=20');
+      final res = await _api.getRequest(
+        '/api/tickets/$_ticketId/messages?page=1&limit=20',
+      );
       if (res.statusCode == 200) {
         final List<dynamic> data = jsonDecode(res.body);
         if (mounted) {
@@ -106,7 +109,9 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
     setState(() => _isLoadMore = true);
     final nextPage = _page + 1;
     try {
-      final res = await _api.getRequest('/tickets/$_ticketId/messages?page=$nextPage&limit=20');
+      final res = await _api.getRequest(
+        '/api/tickets/$_ticketId/messages?page=$nextPage&limit=20',
+      );
       if (res.statusCode == 200) {
         final List<dynamic> data = jsonDecode(res.body);
         if (mounted) {
@@ -148,7 +153,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
     _msgCtrl.clear();
 
     try {
-      final res = await _api.postRequest('/tickets/$_ticketId/messages', {
+      final res = await _api.postRequest('/api/tickets/$_ticketId/messages', {
         'message': text,
       });
 
@@ -174,10 +179,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: $e'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -259,19 +261,24 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
                               if (index == _messages.length) {
                                 return Center(
                                   child: Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 16),
-                                    child: CircularProgressIndicator(color: theme.primaryColor),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 16,
+                                    ),
+                                    child: CircularProgressIndicator(
+                                      color: theme.primaryColor,
+                                    ),
                                   ),
                                 );
                               }
                               final msg = _messages[index];
                               final sender = msg['sender'] ?? {};
-                              final isUser = msg['senderId'] == _ticket?['userId'];
+                              final isUser =
+                                  msg['senderId'] == _ticket?['userId'];
                               final senderName = isUser
                                   ? 'You'
                                   : (sender['firstName'] != null
-                                      ? '${sender['firstName']} (Support)'
-                                      : 'Support Agent');
+                                        ? '${sender['firstName']} (Support)'
+                                        : 'Support Agent');
                               final time = DateTime.parse(msg['createdAt']);
 
                               return _buildMessageBubble(
@@ -292,7 +299,6 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
   }
 
   Widget _buildStatusBanner(String status) {
-    final theme = Theme.of(context);
     final isResolved = status == 'RESOLVED';
 
     return Container(
@@ -304,8 +310,12 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
       child: Row(
         children: [
           Icon(
-            isResolved ? Icons.check_circle_outline_rounded : Icons.info_outline,
-            color: isResolved ? const Color(0xFF047857) : const Color(0xFFB91C1C),
+            isResolved
+                ? Icons.check_circle_outline_rounded
+                : Icons.info_outline,
+            color: isResolved
+                ? const Color(0xFF047857)
+                : const Color(0xFFB91C1C),
             size: 20,
           ),
           const SizedBox(width: 12),
@@ -317,7 +327,9 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
               style: GoogleFonts.inter(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: isResolved ? const Color(0xFF065F46) : const Color(0xFF991B1B),
+                color: isResolved
+                    ? const Color(0xFF065F46)
+                    : const Color(0xFF991B1B),
               ),
             ),
           ),
@@ -335,12 +347,18 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
   }) {
     final bubbleColor = isUser
         ? theme.primaryColor
-        : (theme.brightness == Brightness.dark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9));
+        : (theme.brightness == Brightness.dark
+              ? const Color(0xFF1E293B)
+              : const Color(0xFFF1F5F9));
     final textColor = isUser
         ? Colors.white
         : (theme.brightness == Brightness.dark ? Colors.white : Colors.black87);
-    final alignment = isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start;
-    final margin = isUser ? const EdgeInsets.only(left: 40, bottom: 16) : const EdgeInsets.only(right: 40, bottom: 16);
+    final alignment = isUser
+        ? CrossAxisAlignment.end
+        : CrossAxisAlignment.start;
+    final margin = isUser
+        ? const EdgeInsets.only(left: 40, bottom: 16)
+        : const EdgeInsets.only(right: 40, bottom: 16);
 
     return Align(
       alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
@@ -384,7 +402,9 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
               DateFormat('hh:mm a').format(time),
               style: GoogleFonts.inter(
                 fontSize: 10,
-                color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                color: theme.colorScheme.onSurfaceVariant.withValues(
+                  alpha: 0.6,
+                ),
               ),
             ),
           ],
@@ -424,7 +444,9 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
                 decoration: InputDecoration(
                   hintText: 'Type your message...',
                   hintStyle: TextStyle(
-                    color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                    color: theme.colorScheme.onSurfaceVariant.withValues(
+                      alpha: 0.5,
+                    ),
                   ),
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(vertical: 12),

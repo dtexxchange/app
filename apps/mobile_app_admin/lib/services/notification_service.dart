@@ -63,7 +63,7 @@ class NotificationService {
       String? token = await _messaging.getToken();
       if (token != null) {
         debugPrint('Admin FCM Token: $token');
-        await _apiService.postRequest('/notifications/device-token', {
+        await _apiService.postRequest('/api/notifications/device-token', {
           'token': token,
           'platform': Platform.isAndroid ? 'android' : Platform.isIOS ? 'ios' : 'unknown',
         });

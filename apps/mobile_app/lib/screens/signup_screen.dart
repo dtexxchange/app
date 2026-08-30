@@ -28,7 +28,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
     setState(() => _isLoading = true);
     try {
-      final res = await _api.postRequest('/auth/signup', {
+      final res = await _api.postRequest('/api/auth/signup', {
         'firstName': _firstNameController.text,
         'lastName': _lastNameController.text,
         'email': _emailController.text,

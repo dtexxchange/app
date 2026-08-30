@@ -100,7 +100,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Future<void> _fetchConversionRate() async {
     try {
-      final res = await _api.getRequest('/settings/conversion-rate');
+      final res = await _api.getRequest('/api/settings/conversion-rate');
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         if (mounted) {
@@ -123,7 +123,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Future<void> _fetchRateHistory() async {
     try {
-      final res = await _api.getRequest('/settings/conversion-rate/history');
+      final res = await _api.getRequest('/api/settings/conversion-rate/history');
       if (res.statusCode == 200) {
         if (mounted) {
           setState(() {
@@ -143,7 +143,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _showSnack('Invalid rate value');
         return;
       }
-      final res = await _api.patchRequest('/settings/conversion-rate', {
+      final res = await _api.patchRequest('/api/settings/conversion-rate', {
         'rate': rate,
       });
       if (res.statusCode == 200) {
@@ -173,8 +173,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
       final uParams = _userSearch.isNotEmpty ? '?search=$_userSearch' : '';
 
-      final txRes = await _api.getRequest('/wallet/transactions$txQ');
-      final uRes = await _api.getRequest('/users$uParams');
+      final txRes = await _api.getRequest('/api/wallet/transactions$txQ');
+      final uRes = await _api.getRequest('/api/users$uParams');
 
       if (mounted) {
         setState(() {
@@ -209,7 +209,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
 
     try {
-      await _api.patchRequest('/wallet/transactions/$id/status', {
+      await _api.patchRequest('/api/wallet/transactions/$id/status', {
         'status': status,
         'utr': utr,
       });
@@ -828,7 +828,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
       builder: (ctx) => AddUserSheet(
         onAddUser: (email, role) async {
-          await _api.postRequest('/users', {'email': email, 'role': role});
+          await _api.postRequest('/api/users', {'email': email, 'role': role});
           _fetchAll();
           _showSnack('User whitelisted successfully', success: true);
         },
@@ -865,7 +865,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           '-----BEGIN PRIVATE KEY-----\nMOCK_MOBILE_KEY_DATA\n-----END PRIVATE KEY-----';
       const mockPub = 'MOCK_PUBLIC_KEY';
 
-      await _api.patchRequest('/wallet/admin/public-key', {
+      await _api.patchRequest('/api/wallet/admin/public-key', {
         'publicKey': mockPub,
       });
       await _storage.write(key: 'admin_private_key', value: mockPriv);

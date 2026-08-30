@@ -25,7 +25,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   Future<void> _fetchNotifications() async {
     try {
-      final response = await _api.getRequest('/notifications');
+      final response = await _api.getRequest('/api/notifications');
       if (response.statusCode == 200) {
         setState(() {
           _notifications = jsonDecode(response.body);
@@ -42,7 +42,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   Future<void> _markAllAsRead() async {
     try {
-      await _api.patchRequest('/notifications/read-all', {});
+      await _api.patchRequest('/api/notifications/read-all', {});
       _fetchNotifications();
     } catch (e) {
       debugPrint('Error marking all as read: $e');
@@ -51,7 +51,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   Future<void> _markAsRead(String id) async {
     try {
-      await _api.patchRequest('/notifications/$id/read', {});
+      await _api.patchRequest('/api/notifications/$id/read', {});
       _fetchNotifications();
     } catch (e) {
       debugPrint('Error marking as read: $e');
