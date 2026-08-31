@@ -64,7 +64,7 @@ const Releases: React.FC = () => {
                 </div>
 
                 {latest && latest.apkUrl && (
-                    <div className="bg-gradient-to-br from-primary/20 to-transparent border border-primary/30 p-8 rounded-3xl text-center shadow-[0_0_50px_rgba(0,255,157,0.05)] relative overflow-hidden group">
+                    <div className="bg-linear-to-br from-primary/20 to-transparent border border-primary/30 p-8 rounded-3xl text-center shadow-[0_0_50px_rgba(0,255,157,0.05)] relative overflow-hidden group">
                         <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                         <h2 className="text-3xl font-bold font-outfit text-white mb-2 relative z-10">
                             Version {latest.version}

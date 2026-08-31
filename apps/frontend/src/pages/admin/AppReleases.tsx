@@ -21,6 +21,7 @@ const AppReleases: React.FC = () => {
     const [version, setVersion] = useState("");
     const [changes, setChanges] = useState("");
     const [file, setFile] = useState<File | null>(null);
+    const [isDragging, setIsDragging] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const fetchReleases = async () => {
@@ -41,7 +42,39 @@ const AppReleases: React.FC = () => {
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
-            setFile(e.target.files[0]);
+            const selected = e.target.files[0];
+            if (selected.name.toLowerCase().endsWith('.apk')) {
+                setFile(selected);
+            } else {
+                alert("Please select an .apk file");
+                if (fileInputRef.current) fileInputRef.current.value = '';
+            }
+        }
+    };
+
+    const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(true);
+    };
+
+    const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+    };
+
+    const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+            const droppedFile = e.dataTransfer.files[0];
+            if (droppedFile.name.toLowerCase().endsWith('.apk')) {
+                setFile(droppedFile);
+            } else {
+                alert("Please drop a valid .apk file");
+            }
         }
     };
 
@@ -115,13 +148,22 @@ const AppReleases: React.FC = () => {
                             <div>
                                 <label className="block text-sm font-medium text-text-dim mb-2">APK File</label>
                                 <div 
-                                    className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-colors ${file ? 'border-primary/50 bg-primary/5' : 'border-white/20 hover:border-white/40'}`}
+                                    className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all duration-200 ${
+                                        isDragging 
+                                            ? 'border-primary bg-primary/15 scale-[1.01]' 
+                                            : file 
+                                                ? 'border-primary/50 bg-primary/5 hover:border-primary' 
+                                                : 'border-white/20 hover:border-white/40 hover:bg-white/[0.02]'
+                                    }`}
                                     onClick={() => fileInputRef.current?.click()}
+                                    onDragEnter={handleDragOver}
+                                    onDragOver={handleDragOver}
+                                    onDragLeave={handleDragLeave}
+                                    onDrop={handleDrop}
                                 >
                                     <input
                                         type="file"
                                         accept=".apk"
-                                        required
                                         ref={fileInputRef}
                                         onChange={handleFileChange}
                                         className="hidden"
@@ -132,12 +174,21 @@ const AppReleases: React.FC = () => {
                                                 <Upload size={20} className="text-primary" />
                                             </div>
                                             <p className="text-white font-medium text-sm truncate">{file.name}</p>
-                                            <p className="text-xs text-text-dim">Click to change</p>
+                                            <p className="text-xs text-text-dim">
+                                                {(file.size / (1024 * 1024)).toFixed(2)} MB • Click or drag to replace
+                                            </p>
+                                        </div>
+                                    ) : isDragging ? (
+                                        <div className="space-y-2">
+                                            <div className="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center mx-auto animate-bounce">
+                                                <Upload size={20} className="text-primary" />
+                                            </div>
+                                            <p className="text-primary text-sm font-medium">Drop the APK file here</p>
                                         </div>
                                     ) : (
                                         <div className="space-y-2">
                                             <Upload size={24} className="text-text-dim mx-auto mb-2" />
-                                            <p className="text-text-dim text-sm">Click to select APK file</p>
+                                            <p className="text-text-dim text-sm">Click to select or drag & drop APK</p>
                                         </div>
                                     )}
                                 </div>
