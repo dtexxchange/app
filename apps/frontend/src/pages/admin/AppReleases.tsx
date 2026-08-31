@@ -16,7 +16,7 @@ const AppReleases: React.FC = () => {
     const [releases, setReleases] = useState<AppRelease[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isUploading, setIsUploading] = useState(false);
-    
+
     // Form state
     const [version, setVersion] = useState("");
     const [changes, setChanges] = useState("");
@@ -144,17 +144,16 @@ const AppReleases: React.FC = () => {
                                     className="w-full bg-bg-dark border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary/50 transition-colors"
                                 />
                             </div>
-                            
+
                             <div>
                                 <label className="block text-sm font-medium text-text-dim mb-2">APK File</label>
-                                <div 
-                                    className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all duration-200 ${
-                                        isDragging 
-                                            ? 'border-primary bg-primary/15 scale-[1.01]' 
-                                            : file 
-                                                ? 'border-primary/50 bg-primary/5 hover:border-primary' 
-                                                : 'border-white/20 hover:border-white/40 hover:bg-white/[0.02]'
-                                    }`}
+                                <div
+                                    className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all duration-200 ${isDragging
+                                            ? 'border-primary bg-primary/15 scale-[1.01]'
+                                            : file
+                                                ? 'border-primary/50 bg-primary/5 hover:border-primary'
+                                                : 'border-white/20 hover:border-white/40 hover:bg-white/2'
+                                        }`}
                                     onClick={() => fileInputRef.current?.click()}
                                     onDragEnter={handleDragOver}
                                     onDragOver={handleDragOver}
@@ -230,7 +229,7 @@ const AppReleases: React.FC = () => {
                 <div className="lg:col-span-2">
                     <div className="bg-white/5 border border-white/10 rounded-3xl p-6">
                         <h2 className="text-xl font-bold font-outfit text-white mb-6">Release History</h2>
-                        
+
                         {isLoading ? (
                             <div className="flex justify-center py-12">
                                 <Loader2 size={32} className="text-primary animate-spin" />
