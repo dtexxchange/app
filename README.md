@@ -8,13 +8,13 @@ A high-performance, secure banking simulation platform allowing users to manage 
 - **Role-Based Access Control**:
   - **Admin**: Whitelist users, approve/reject transactions, view decrypted bank details for fulfillment.
   - **User**: View balance, request deposits, request exchanges with encrypted bank details.
-- **OTP Authentication**: Secure login via Resend Email OTP.
+- **OTP Authentication**: Secure login via Email OTP.
 - **Simulated Wallet**: Transactional integrity (deduction on request, refund on rejection).
 - **Premium Aesthetics**: Sleek dark-mode interface with toxic green and gold accents.
 
 ## 🏗️ Technology Stack
 
-- **Backend**: NestJS, Prisma ORM, PostgreSQL.
+- **Backend**: NestJS, Prisma ORM, PostgreSQL, Nodemailer (SMTP).
 - **Web Frontend**: React, Vite, Framer Motion, Tailwind/Glassmorphism.
 - **Mobile**: Flutter/Dart (User & Admin apps).
 - **E2EE**: Web Crypto API (SubtleCrypto) & PointyCastle (Dart).
@@ -27,13 +27,13 @@ A high-performance, secure banking simulation platform allowing users to manage 
 - **Node.js** (v18+)
 - **PostgreSQL** (Running locally or hosted)
 - **Flutter SDK** (For mobile development)
-- **Resend API Key** (Get it at [resend.com](https://resend.com))
+- **SMTP Credentials** (e.g. OceanicHost / DirectAdmin)
 
 ### 2. Backend Setup
 ```bash
 cd apps/backend
 npm install
-# Update .env with your DATABASE_URL and RESEND_API_KEY
+# Update .env with your DATABASE_URL and SMTP credentials
 npx prisma generate
 npx prisma db push # Sync schema to database
 npm run start:dev

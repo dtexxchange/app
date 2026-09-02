@@ -58,11 +58,10 @@ const History: React.FC = () => {
                             <button
                                 key={type}
                                 onClick={() => setFilter({ ...filter, type })}
-                                className={`px-5 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest border transition-all shrink-0 ${
-                                    filter.type === type
+                                className={`px-5 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest border transition-all shrink-0 ${filter.type === type
                                         ? "bg-accent-blue border-accent-blue text-white shadow-lg shadow-accent-blue/10"
                                         : "border-white/10 text-text-dim hover:text-white hover:border-white/20"
-                                }`}
+                                    }`}
                             >
                                 {type || "All Instructions"}
                             </button>
@@ -107,11 +106,10 @@ const History: React.FC = () => {
                                     <td className="px-10 py-6">
                                         <div className="flex items-center gap-3">
                                             <div
-                                                className={`w-10 h-10 rounded-xl flex items-center justify-center border transition-all ${
-                                                    tx.type === "DEPOSIT"
+                                                className={`w-10 h-10 rounded-xl flex items-center justify-center border transition-all ${tx.type === "DEPOSIT"
                                                         ? "bg-primary/5 border-primary/20 text-primary"
                                                         : "bg-accent-blue/5 border-accent-blue/20 text-accent-blue"
-                                                }`}
+                                                    }`}
                                             >
                                                 {tx.type === "DEPOSIT" ? (
                                                     <ArrowDownLeft size={18} />
@@ -139,13 +137,12 @@ const History: React.FC = () => {
                                     </td>
                                     <td className="px-10 py-6">
                                         <div
-                                            className={`inline-flex items-center gap-2 px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border ${
-                                                tx.status === "COMPLETED"
+                                            className={`inline-flex items-center gap-2 px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border ${tx.status === "COMPLETED"
                                                     ? "border-primary/20 text-primary bg-primary/5"
                                                     : tx.status === "PENDING"
-                                                      ? "border-accent-blue/20 text-accent-blue bg-accent-blue/5"
-                                                      : "border-red-400/20 text-red-400"
-                                            }`}
+                                                        ? "border-accent-blue/20 text-accent-blue bg-accent-blue/5"
+                                                        : "border-red-400/20 text-red-400"
+                                                }`}
                                         >
                                             {tx.status === "COMPLETED" ? (
                                                 <CheckCircle2 size={12} />
@@ -266,7 +263,7 @@ const History: React.FC = () => {
                                                         ₹
                                                         {formatAmount(
                                                             selectedTx.amount *
-                                                                selectedTx.conversionRate,
+                                                            selectedTx.conversionRate,
                                                         )}
                                                     </p>
                                                 </div>
@@ -289,7 +286,7 @@ const History: React.FC = () => {
                                                         key={log.id}
                                                         className="relative pl-8 pb-8 last:pb-0"
                                                     >
-                                                        <div className="absolute left-[-11px] top-0 w-4 h-4 rounded-full bg-bg-dark border-2 border-accent-blue flex items-center justify-center">
+                                                        <div className="absolute -left-2.75 top-0 w-4 h-4 rounded-full bg-bg-dark border-2 border-accent-blue flex items-center justify-center">
                                                             <div className="w-1 h-1 rounded-full bg-accent-blue" />
                                                         </div>
                                                         <div className="flex justify-between gap-4">
@@ -314,7 +311,7 @@ const History: React.FC = () => {
                                                                 <div className="text-[10px] text-accent-blue/60 font-black uppercase tracking-tighter">
                                                                     by{" "}
                                                                     {log.actor ===
-                                                                    "system"
+                                                                        "system"
                                                                         ? "Platform"
                                                                         : "Network Admin"}
                                                                 </div>
@@ -325,12 +322,12 @@ const History: React.FC = () => {
                                             )}
                                             {(!selectedTx.logs ||
                                                 selectedTx.logs.length ===
-                                                    0) && (
-                                                <p className="text-xs text-text-dim italic">
-                                                    No lifecycle logs recorded
-                                                    for this instruction.
-                                                </p>
-                                            )}
+                                                0) && (
+                                                    <p className="text-xs text-text-dim italic">
+                                                        No lifecycle logs recorded
+                                                        for this instruction.
+                                                    </p>
+                                                )}
                                         </div>
                                     </div>
 
