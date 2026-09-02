@@ -19,10 +19,18 @@ import { join } from 'path';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
-    ServeStaticModule.forRoot({
-      rootPath: join(__dirname, '..', '..', 'public'),
-      serveRoot: '/',
-    }),
+    ServeStaticModule.forRoot(
+      {
+        rootPath: join(process.cwd(), 'public'),
+        serveRoot: '/',
+        serveStaticOptions: { index: false },
+      },
+      {
+        rootPath: join(process.cwd(), 'public'),
+        serveRoot: '/api',
+        serveStaticOptions: { index: false },
+      },
+    ),
     PrismaModule,
     EmailModule,
     AuthModule,
