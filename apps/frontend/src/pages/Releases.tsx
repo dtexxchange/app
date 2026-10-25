@@ -17,16 +17,6 @@ const Releases: React.FC = () => {
     const [latest, setLatest] = useState<AppRelease | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
-    const getDownloadUrl = (apkUrl?: string | null) => {
-        if (!apkUrl) return '#';
-        if (apkUrl.startsWith('http://') || apkUrl.startsWith('https://')) {
-            return apkUrl;
-        }
-        const base = (api.defaults.baseURL || '').replace(/\/+$/, '');
-        const filename = apkUrl.split('/').pop();
-        return `${base}/app-releases/download/${filename}`;
-    };
-
     useEffect(() => {
         const fetchReleases = async () => {
             try {
@@ -81,7 +71,7 @@ const Releases: React.FC = () => {
                         </h2>
                         <p className="text-primary font-medium mb-8 relative z-10">Latest Release</p>
                         <a
-                            href={getDownloadUrl(latest.apkUrl)}
+                            href={`/api${latest.apkUrl}`}
                             download
                             className="inline-flex items-center gap-3 px-8 py-4 bg-primary text-bg-dark font-bold rounded-2xl hover:bg-white transition-all transform hover:scale-105 active:scale-95 relative z-10"
                         >
@@ -113,16 +103,6 @@ const Releases: React.FC = () => {
                                                 Released on {format(new Date(release.createdAt), "PPP")}
                                             </p>
                                         </div>
-                                        {release.apkUrl && (
-                                            <a
-                                                href={getDownloadUrl(release.apkUrl)}
-                                                download
-                                                className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-primary hover:text-bg-dark rounded-xl text-xs font-bold transition-all text-white"
-                                            >
-                                                <Download size={16} />
-                                                Download
-                                            </a>
-                                        )}
                                     </div>
                                     {release.changes && (
                                         <div className="mt-4 pt-4 border-t border-white/5">
