@@ -1,60 +1,17 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import * as nodemailer from 'nodemailer';
-import type { Transporter } from 'nodemailer';
+import { Resend } from 'resend';
 
 @Injectable()
 export class EmailService {
-  private readonly logger = new Logger(EmailService.name);
-  private transporter: Transporter;
-  private fromEmail: string;
-  private appName: string;
-  private appUrl: string;
+  private resend: Resend;
   private readonly BRAND_COLOR = '#00FF9D';
   private readonly DARK_BG = '#0A0B0D';
   private readonly PANEL_BG = '#15171C';
   private readonly TEXT_DIM = '#94A3B8';
 
   constructor(private configService: ConfigService) {
-    const host = this.configService.get<string>('SMTP_HOST', 'cp3.offsh.nl');
-    const port = Number(this.configService.get<number | string>('SMTP_PORT', 465));
-    const secure =
-      this.configService.get<string | boolean>('SMTP_SECURE', true) === true ||
-      this.configService.get<string | boolean>('SMTP_SECURE') === 'true' ||
-      port === 465;
-    const user = this.configService.get<string>(
-      'SMTP_USER',
-      'no-reply@equinoxexchange.cc',
-    );
-    const pass = this.configService.get<string>('SMTP_PASS', '');
-
-    this.appName = this.configService.get<string>('APP_NAME', 'Equinox Exchange');
-    this.appUrl = this.configService.get<string>(
-      'APP_URL',
-      'https://equinoxexchange.cc',
-    );
-
-    const defaultFrom = `"${this.appName}" <${user}>`;
-    this.fromEmail = this.configService.get<string>('SMTP_FROM', defaultFrom);
-
-    this.transporter = nodemailer.createTransport({
-      host,
-      port,
-      secure,
-      auth: {
-        user,
-        pass,
-      },
-    });
-  }
-
-  private async sendMail(options: { to: string; subject: string; html: string }) {
-    return this.transporter.sendMail({
-      from: this.fromEmail,
-      to: options.to,
-      subject: options.subject,
-      html: options.html,
-    });
+    this.resend = new Resend(this.configService.get<string>('RESEND_API_KEY'));
   }
 
   private getEmailWrapper(content: string, title: string) {
@@ -70,7 +27,7 @@ export class EmailService {
           <div style="width: 40px; height: 2px; background-color: ${this.BRAND_COLOR}; margin: 0 auto 30px auto;"></div>
           ${content}
           <div style="margin-top: 40px; padding-top: 30px; border-top: 1px solid rgba(255, 255, 255, 0.05);">
-            <p style="color: ${this.TEXT_DIM}; font-size: 12px; margin-bottom: 0;">Protected by ${this.appName} Workspace security.</p>
+            <p style="color: ${this.TEXT_DIM}; font-size: 12px; margin-bottom: 0;">Protected by DtExxchange Workspace security.</p>
           </div>
         </div>
       </div>
@@ -92,13 +49,14 @@ export class EmailService {
     );
 
     try {
-      await this.sendMail({
+      await this.resend.emails.send({
+        from: 'no-reply@trekora.arstyn.com',
         to: email,
-        subject: `Authorization Code - ${this.appName}`,
+        subject: 'Authorization Code - DtExxchange',
         html,
       });
     } catch (error) {
-      this.logger.error('Failed to send OTP email:', error);
+      console.error('Failed to send OTP email:', error);
       throw new Error('Could not send OTP email');
     }
   }
@@ -112,22 +70,22 @@ export class EmailService {
       <p style="color: ${this.TEXT_DIM}; font-size: 16px; line-height: 1.6; margin-bottom: 40px;">
         You can now sign in to your workspace and start managing your assets seamlessly.
       </p>
-      <a href="${this.appUrl}/login" style="display: inline-block; background-color: ${this.BRAND_COLOR}; color: #000000; padding: 16px 40px; border-radius: 12px; font-weight: 700; text-decoration: none; font-size: 15px;">Launch Workspace</a>
+      <a href="https://dtexxchange.netlify.app/login" style="display: inline-block; background-color: ${this.BRAND_COLOR}; color: #000000; padding: 16px 40px; border-radius: 12px; font-weight: 700; text-decoration: none; font-size: 15px;">Launch Workspace</a>
     `,
       'Identity Verified',
     );
 
     try {
-      await this.sendMail({
+      await this.resend.emails.send({
+        from: 'no-reply@trekora.arstyn.com',
         to: email,
-        subject: `Welcome to ${this.appName} - Identity Verified`,
+        subject: 'Welcome to dtexxchange - Identity Verified',
         html,
       });
     } catch (error) {
-      this.logger.error('Failed to send approval email:', error);
+      console.error('Failed to send approval email:', error);
     }
   }
-
   async sendAssignmentAlert(
     adminEmail: string,
     userName: string,
@@ -159,13 +117,14 @@ export class EmailService {
     );
 
     try {
-      await this.sendMail({
+      await this.resend.emails.send({
+        from: 'no-reply@trekora.arstyn.com',
         to: adminEmail,
         subject: `[Alert] Deposit QR Viewed - ${userName}`,
         html,
       });
     } catch (error) {
-      this.logger.error('Failed to send assignment alert email:', error);
+      console.error('Failed to send assignment alert email:', error);
     }
   }
 
@@ -204,13 +163,14 @@ export class EmailService {
     );
 
     try {
-      await this.sendMail({
+      await this.resend.emails.send({
+        from: 'no-reply@trekora.arstyn.com',
         to: adminEmail,
         subject: `[Support Ticket #${readableId}] ${subject}`,
         html,
       });
     } catch (error) {
-      this.logger.error('Failed to send ticket created admin email:', error);
+      console.error('Failed to send ticket created admin email:', error);
     }
   }
 
@@ -251,13 +211,14 @@ export class EmailService {
     );
 
     try {
-      await this.sendMail({
+      await this.resend.emails.send({
+        from: 'no-reply@trekora.arstyn.com',
         to: toEmail,
         subject: `[Re: Ticket #${readableId}] ${subject}`,
         html,
       });
     } catch (error) {
-      this.logger.error('Failed to send ticket reply email:', error);
+      console.error('Failed to send ticket reply email:', error);
     }
   }
 
@@ -292,13 +253,15 @@ export class EmailService {
     );
 
     try {
-      await this.sendMail({
+      await this.resend.emails.send({
+        from: 'no-reply@trekora.arstyn.com',
         to: userEmail,
         subject: `[Status Update: Ticket #${readableId}] ${subject}`,
         html,
       });
     } catch (error) {
-      this.logger.error('Failed to send ticket status email:', error);
+      console.error('Failed to send ticket status email:', error);
     }
   }
 }
+
