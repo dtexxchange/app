@@ -446,58 +446,84 @@ const ReceiptGenerator: React.FC = () => {
                                     />
                                 </div>
 
-                                {/* Destination A/C */}
-                                <div>
-                                    <label className="block text-xs font-medium text-slate-300 mb-1.5">
-                                        Destination A/C
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={destinationAccount}
-                                        onChange={(e) => setDestinationAccount(e.target.value)}
-                                        placeholder="Enter A/C Number"
-                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-primary font-mono"
-                                    />
-                                </div>
-
-                                {/* Bank IFSC */}
-                                <div>
-                                    <label className="block text-xs font-medium text-slate-300 mb-1.5">
-                                        Bank IFSC
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={bankIfsc}
-                                        onChange={(e) => setBankIfsc(e.target.value.toUpperCase())}
-                                        placeholder="Enter IFSC Code"
-                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-primary font-mono uppercase"
-                                    />
-                                </div>
-
-                                {/* Payee UPI */}
-                                <div className="sm:col-span-2">
-                                    <div className="flex items-center justify-between mb-1.5">
-                                        <label className="text-xs font-medium text-slate-300">
-                                            Payee UPI
-                                        </label>
-                                        <div className="flex gap-2">
-                                            <button
-                                                type="button"
-                                                onClick={() => setPayeeUpi("None")}
-                                                className="text-[11px] text-slate-400 hover:text-white"
-                                            >
-                                                Set "None"
-                                            </button>
+                                {transactionType === "UPI" ? (
+                                    /* UPI ID input for UPI mode */
+                                    <div className="sm:col-span-2 space-y-1.5">
+                                        <div className="flex items-center justify-between">
+                                            <label className="text-xs font-medium text-slate-300">
+                                                UPI ID
+                                            </label>
+                                            <span className="text-[11px] text-primary font-medium">
+                                                UPI Mode (Replaces A/C & IFSC)
+                                            </span>
                                         </div>
+                                        <input
+                                            type="text"
+                                            value={upiId}
+                                            onChange={(e) => {
+                                                setUpiId(e.target.value);
+                                                setPayeeUpi(e.target.value);
+                                            }}
+                                            placeholder="Enter UPI ID (e.g. user@okhdfcbank)"
+                                            className="w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-primary font-mono"
+                                        />
                                     </div>
-                                    <input
-                                        type="text"
-                                        value={payeeUpi}
-                                        onChange={(e) => setPayeeUpi(e.target.value)}
-                                        placeholder="None or handle@bank"
-                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-primary"
-                                    />
-                                </div>
+                                ) : (
+                                    <>
+                                        {/* Destination A/C */}
+                                        <div>
+                                            <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                                                Destination A/C
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={destinationAccount}
+                                                onChange={(e) => setDestinationAccount(e.target.value)}
+                                                placeholder="Enter A/C Number"
+                                                className="w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-primary font-mono"
+                                            />
+                                        </div>
+
+                                        {/* Bank IFSC */}
+                                        <div>
+                                            <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                                                Bank IFSC
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={bankIfsc}
+                                                onChange={(e) => setBankIfsc(e.target.value.toUpperCase())}
+                                                placeholder="Enter IFSC Code"
+                                                className="w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-primary font-mono uppercase"
+                                            />
+                                        </div>
+
+                                        {/* Payee UPI */}
+                                        <div className="sm:col-span-2">
+                                            <div className="flex items-center justify-between mb-1.5">
+                                                <label className="text-xs font-medium text-slate-300">
+                                                    Payee UPI
+                                                </label>
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setPayeeUpi("None")}
+                                                        className="text-[11px] text-slate-400 hover:text-white"
+                                                    >
+                                                        Set "None"
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <input
+                                                type="text"
+                                                value={payeeUpi}
+                                                onChange={(e) => setPayeeUpi(e.target.value)}
+                                                placeholder="None or handle@bank"
+                                                className="w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-primary"
+                                            />
+                                        </div>
+                                    </>
+                                )}
                             </div>
                         </div>
 
@@ -837,78 +863,107 @@ const ReceiptGenerator: React.FC = () => {
                                         </div>
                                     </div>
 
-                                    {/* Row 4: Destination A/C */}
-                                    <div style={{ display: "flex", alignItems: "flex-start" }}>
-                                        <div
-                                            style={{
-                                                width: `${labelWidth}px`,
-                                                fontWeight: "700",
-                                                fontSize: "14.5px",
-                                                color: "#000000",
-                                                flexShrink: 0,
-                                            }}
-                                        >
-                                            Destination A/C
+                                    {transactionType === "UPI" ? (
+                                        /* Row for UPI: only UPI ID */
+                                        <div style={{ display: "flex", alignItems: "flex-start" }}>
+                                            <div
+                                                style={{
+                                                    width: `${labelWidth}px`,
+                                                    fontWeight: "700",
+                                                    fontSize: "14.5px",
+                                                    color: "#000000",
+                                                    flexShrink: 0,
+                                                }}
+                                            >
+                                                UPI ID
+                                            </div>
+                                            <div
+                                                style={{
+                                                    fontSize: "14.5px",
+                                                    fontWeight: valueWeight,
+                                                    color: "#000000",
+                                                    wordBreak: "break-all",
+                                                }}
+                                            >
+                                                {upiId || (payeeUpi !== "None" ? payeeUpi : "") || "—"}
+                                            </div>
                                         </div>
-                                        <div
-                                            style={{
-                                                fontSize: "14.5px",
-                                                fontWeight: valueWeight,
-                                                color: "#000000",
-                                                wordBreak: "break-all",
-                                            }}
-                                        >
-                                            {destinationAccount || "—"}
-                                        </div>
-                                    </div>
+                                    ) : (
+                                        <>
+                                            {/* Row 4: Destination A/C */}
+                                            <div style={{ display: "flex", alignItems: "flex-start" }}>
+                                                <div
+                                                    style={{
+                                                        width: `${labelWidth}px`,
+                                                        fontWeight: "700",
+                                                        fontSize: "14.5px",
+                                                        color: "#000000",
+                                                        flexShrink: 0,
+                                                    }}
+                                                >
+                                                    Destination A/C
+                                                </div>
+                                                <div
+                                                    style={{
+                                                        fontSize: "14.5px",
+                                                        fontWeight: valueWeight,
+                                                        color: "#000000",
+                                                        wordBreak: "break-all",
+                                                    }}
+                                                >
+                                                    {destinationAccount || "—"}
+                                                </div>
+                                            </div>
 
-                                    {/* Row 5: Bank IFSC */}
-                                    <div style={{ display: "flex", alignItems: "flex-start" }}>
-                                        <div
-                                            style={{
-                                                width: `${labelWidth}px`,
-                                                fontWeight: "700",
-                                                fontSize: "14.5px",
-                                                color: "#000000",
-                                                flexShrink: 0,
-                                            }}
-                                        >
-                                            Bank IFSC
-                                        </div>
-                                        <div
-                                            style={{
-                                                fontSize: "14.5px",
-                                                fontWeight: valueWeight,
-                                                color: "#000000",
-                                            }}
-                                        >
-                                            {bankIfsc || "—"}
-                                        </div>
-                                    </div>
+                                            {/* Row 5: Bank IFSC */}
+                                            <div style={{ display: "flex", alignItems: "flex-start" }}>
+                                                <div
+                                                    style={{
+                                                        width: `${labelWidth}px`,
+                                                        fontWeight: "700",
+                                                        fontSize: "14.5px",
+                                                        color: "#000000",
+                                                        flexShrink: 0,
+                                                    }}
+                                                >
+                                                    Bank IFSC
+                                                </div>
+                                                <div
+                                                    style={{
+                                                        fontSize: "14.5px",
+                                                        fontWeight: valueWeight,
+                                                        color: "#000000",
+                                                    }}
+                                                >
+                                                    {bankIfsc || "—"}
+                                                </div>
+                                            </div>
 
-                                    {/* Row 6: Payee UPI */}
-                                    <div style={{ display: "flex", alignItems: "flex-start" }}>
-                                        <div
-                                            style={{
-                                                width: `${labelWidth}px`,
-                                                fontWeight: "700",
-                                                fontSize: "14.5px",
-                                                color: "#000000",
-                                                flexShrink: 0,
-                                            }}
-                                        >
-                                            Payee UPI
-                                        </div>
-                                        <div
-                                            style={{
-                                                fontSize: "14.5px",
-                                                fontWeight: valueWeight,
-                                                color: "#000000",
-                                            }}
-                                        >
-                                            {payeeUpi || "None"}
-                                        </div>
-                                    </div>
+                                            {/* Row 6: Payee UPI */}
+                                            <div style={{ display: "flex", alignItems: "flex-start" }}>
+                                                <div
+                                                    style={{
+                                                        width: `${labelWidth}px`,
+                                                        fontWeight: "700",
+                                                        fontSize: "14.5px",
+                                                        color: "#000000",
+                                                        flexShrink: 0,
+                                                    }}
+                                                >
+                                                    Payee UPI
+                                                </div>
+                                                <div
+                                                    style={{
+                                                        fontSize: "14.5px",
+                                                        fontWeight: valueWeight,
+                                                        color: "#000000",
+                                                    }}
+                                                >
+                                                    {payeeUpi || "None"}
+                                                </div>
+                                            </div>
+                                        </>
+                                    )}
 
                                     {/* Row 7: Transaction Date */}
                                     <div style={{ display: "flex", alignItems: "flex-start" }}>
