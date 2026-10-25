@@ -15,6 +15,7 @@ import {
     ShieldCheck,
     Sliders,
     Eye,
+    Plus,
 } from "lucide-react";
 
 const padZero = (n: number) => n.toString().padStart(2, "0");
@@ -30,15 +31,45 @@ const getFormattedNow = () => {
     return `${yyyy}/${mm}/${dd} ${hh}:${min}:${ss}`;
 };
 
-const generateRandomTRN = () => {
-    // BOT + 13 digits
-    const digits = Math.floor(1000000000000 + Math.random() * 9000000000000).toString();
-    return `BOT${digits}`;
+const generateRandomDigits = (length: number): string => {
+    let digits = "";
+    for (let i = 0; i < length; i++) {
+        digits += Math.floor(Math.random() * 10).toString();
+    }
+    return digits;
 };
 
-const generateRandomUTR = () => {
-    // 12 digits
-    return Math.floor(100000000000 + Math.random() * 900000000000).toString();
+const generateRandomTRN = (): string => {
+    // 'BOT' prefix + exactly 13 digits
+    return `BOT${generateRandomDigits(13)}`;
+};
+
+const generateRandomUTR = (): string => {
+    // Exactly 12 digits
+    return generateRandomDigits(12);
+};
+
+const incrementValue = (val: string, fallbackPrefix = "", fixedDigits = 0): string => {
+    if (!val) {
+        return fallbackPrefix ? `${fallbackPrefix}${generateRandomDigits(fixedDigits || 13)}` : generateRandomDigits(fixedDigits || 12);
+    }
+    const match = val.match(/^(.*?)(\d+)$/);
+    if (match) {
+        const prefix = match[1] || fallbackPrefix;
+        const numStr = match[2];
+        try {
+            const incremented = (BigInt(numStr) + 1n).toString();
+            const minLength = fixedDigits > 0 ? fixedDigits : numStr.length;
+            const padded =
+                incremented.length < minLength
+                    ? incremented.padStart(minLength, "0")
+                    : incremented;
+            return `${prefix}${padded}`;
+        } catch {
+            return val;
+        }
+    }
+    return `${val}1`;
 };
 
 export const STATUS_OPTIONS = [
@@ -60,14 +91,15 @@ export const TRANSACTION_TYPES = [
 const ReceiptGenerator: React.FC = () => {
     // State matching all fields in the reference image
     const [title, setTitle] = useState("Transfer Funds Transaction Details");
-    const [trn, setTrn] = useState("BOT1792914488468");
-    const [utr, setUtr] = useState("629884398691");
+    const [trn, setTrn] = useState<string>(() => generateRandomTRN());
+    const [utr, setUtr] = useState<string>(() => generateRandomUTR());
     const [transactionType, setTransactionType] = useState("BANK_CARD");
-    const [destinationAccount, setDestinationAccount] = useState("16320100044340");
-    const [bankIfsc, setBankIfsc] = useState("FDRL0001632");
+    const [destinationAccount, setDestinationAccount] = useState("");
+    const [bankIfsc, setBankIfsc] = useState("");
     const [payeeUpi, setPayeeUpi] = useState("None");
+    const [upiId, setUpiId] = useState("");
     const [transactionDate, setTransactionDate] = useState(getFormattedNow());
-    const [amount, setAmount] = useState("35000.00");
+    const [amount, setAmount] = useState("");
     const [currencySymbol, setCurrencySymbol] = useState("₹");
     const [status, setStatus] = useState("SUCCESS");
 
@@ -99,18 +131,20 @@ const ReceiptGenerator: React.FC = () => {
         setAmount(randAmount);
         // Random account
         setDestinationAccount(Math.floor(10000000000000 + Math.random() * 90000000000000).toString());
+        setUpiId(`user${Math.floor(Math.random() * 90000 + 10000)}@okhdfcbank`);
     };
 
     const handleResetToSample = () => {
         setTitle("Transfer Funds Transaction Details");
-        setTrn("BOT1792914488468");
-        setUtr("629884398691");
+        setTrn(generateRandomTRN());
+        setUtr(generateRandomUTR());
         setTransactionType("BANK_CARD");
-        setDestinationAccount("16320100044340");
-        setBankIfsc("FDRL0001632");
+        setDestinationAccount("");
+        setBankIfsc("");
         setPayeeUpi("None");
-        setTransactionDate("2026/10/25 13:18:08");
-        setAmount("35000.00");
+        setUpiId("");
+        setTransactionDate(getFormattedNow());
+        setAmount("");
         setCurrencySymbol("₹");
         setStatus("SUCCESS");
         setFontFamily("Arial");
@@ -181,7 +215,7 @@ const ReceiptGenerator: React.FC = () => {
         setTimeout(() => setCopiedLink(false), 2000);
     };
 
-    const formattedAmount = `${currencySymbol}${amount}`;
+    const formattedAmount = amount ? `${currencySymbol}${amount}` : "—";
 
     return (
         <div className="min-h-screen bg-[#07080a] text-slate-100 antialiased">
@@ -259,22 +293,48 @@ const ReceiptGenerator: React.FC = () => {
                                         <label className="text-xs font-medium text-slate-300">
                                             TRN (Transaction Reference Number)
                                         </label>
-                                        <button
-                                            type="button"
-                                            onClick={() => setTrn(generateRandomTRN())}
-                                            className="text-[11px] flex items-center gap-1 text-primary hover:underline"
-                                        >
-                                            <RotateCw size={11} /> Auto-Generate
-                                        </button>
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => setTrn((prev) => incrementValue(prev, "BOT", 13))}
+                                                className="text-[11px] flex items-center gap-1 text-primary hover:underline cursor-pointer"
+                                                title="Increment TRN by 1"
+                                            >
+                                                <Plus size={11} /> Increment (+1)
+                                            </button>
+                                            <span className="text-white/20">•</span>
+                                            <button
+                                                type="button"
+                                                onClick={() => setTrn(generateRandomTRN())}
+                                                className="text-[11px] flex items-center gap-1 text-primary hover:underline cursor-pointer"
+                                            >
+                                                <RotateCw size={11} /> Auto-Generate
+                                            </button>
+                                        </div>
                                     </div>
-                                    <div className="relative">
+                                    <div className="flex gap-2">
                                         <input
                                             type="text"
                                             value={trn}
-                                            onChange={(e) => setTrn(e.target.value)}
+                                            onChange={(e) => {
+                                                let clean = e.target.value.toUpperCase();
+                                                if (clean.length > 0 && !clean.startsWith("BOT") && /^\d+$/.test(clean)) {
+                                                    clean = `BOT${clean}`;
+                                                }
+                                                setTrn(clean);
+                                            }}
                                             placeholder="BOT1792914488468"
-                                            className="w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-primary font-mono tracking-wide"
+                                            className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-primary font-mono tracking-wide"
                                         />
+                                        <button
+                                            type="button"
+                                            onClick={() => setTrn((prev) => incrementValue(prev, "BOT", 13))}
+                                            className="px-3.5 py-2.5 bg-white/5 hover:bg-white/10 active:scale-95 border border-white/10 hover:border-primary/50 text-white rounded-xl text-xs font-mono font-bold flex items-center gap-1 transition-all shadow-sm cursor-pointer"
+                                            title="Increment TRN (+1)"
+                                        >
+                                            <Plus size={14} className="text-primary" />
+                                            <span>+1</span>
+                                        </button>
                                     </div>
                                 </div>
 
@@ -284,22 +344,42 @@ const ReceiptGenerator: React.FC = () => {
                                         <label className="text-xs font-medium text-slate-300">
                                             UTR (Unique Transaction Reference)
                                         </label>
-                                        <button
-                                            type="button"
-                                            onClick={() => setUtr(generateRandomUTR())}
-                                            className="text-[11px] flex items-center gap-1 text-primary hover:underline"
-                                        >
-                                            <RotateCw size={11} /> Auto-Generate
-                                        </button>
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => setUtr((prev) => incrementValue(prev, "", 12))}
+                                                className="text-[11px] flex items-center gap-1 text-primary hover:underline cursor-pointer"
+                                                title="Increment UTR by 1"
+                                            >
+                                                <Plus size={11} /> Increment (+1)
+                                            </button>
+                                            <span className="text-white/20">•</span>
+                                            <button
+                                                type="button"
+                                                onClick={() => setUtr(generateRandomUTR())}
+                                                className="text-[11px] flex items-center gap-1 text-primary hover:underline cursor-pointer"
+                                            >
+                                                <RotateCw size={11} /> Auto-Generate
+                                            </button>
+                                        </div>
                                     </div>
-                                    <div className="relative">
+                                    <div className="flex gap-2">
                                         <input
                                             type="text"
                                             value={utr}
                                             onChange={(e) => setUtr(e.target.value)}
                                             placeholder="629884398691"
-                                            className="w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-primary font-mono tracking-wide"
+                                            className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-primary font-mono tracking-wide"
                                         />
+                                        <button
+                                            type="button"
+                                            onClick={() => setUtr((prev) => incrementValue(prev, "", 12))}
+                                            className="px-3.5 py-2.5 bg-white/5 hover:bg-white/10 active:scale-95 border border-white/10 hover:border-primary/50 text-white rounded-xl text-xs font-mono font-bold flex items-center gap-1 transition-all shadow-sm cursor-pointer"
+                                            title="Increment UTR (+1)"
+                                        >
+                                            <Plus size={14} className="text-primary" />
+                                            <span>+1</span>
+                                        </button>
                                     </div>
                                 </div>
 
@@ -375,7 +455,7 @@ const ReceiptGenerator: React.FC = () => {
                                         type="text"
                                         value={destinationAccount}
                                         onChange={(e) => setDestinationAccount(e.target.value)}
-                                        placeholder="16320100044340"
+                                        placeholder="Enter A/C Number"
                                         className="w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-primary font-mono"
                                     />
                                 </div>
@@ -389,7 +469,7 @@ const ReceiptGenerator: React.FC = () => {
                                         type="text"
                                         value={bankIfsc}
                                         onChange={(e) => setBankIfsc(e.target.value.toUpperCase())}
-                                        placeholder="FDRL0001632"
+                                        placeholder="Enter IFSC Code"
                                         className="w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-primary font-mono uppercase"
                                     />
                                 </div>
@@ -449,7 +529,7 @@ const ReceiptGenerator: React.FC = () => {
                                             type="text"
                                             value={amount}
                                             onChange={(e) => setAmount(e.target.value)}
-                                            placeholder="35000.00"
+                                            placeholder="Enter Amount (e.g. 35000.00)"
                                             className="w-full bg-white/5 px-3.5 py-2.5 text-sm text-white focus:outline-none font-mono"
                                         />
                                     </div>

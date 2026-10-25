@@ -27,7 +27,7 @@ export class EmailService {
           <div style="width: 40px; height: 2px; background-color: ${this.BRAND_COLOR}; margin: 0 auto 30px auto;"></div>
           ${content}
           <div style="margin-top: 40px; padding-top: 30px; border-top: 1px solid rgba(255, 255, 255, 0.05);">
-            <p style="color: ${this.TEXT_DIM}; font-size: 12px; margin-bottom: 0;">Protected by DtExxchange Workspace security.</p>
+            <p style="color: ${this.TEXT_DIM}; font-size: 12px; margin-bottom: 0;">Protected by Equinox Exchange Workspace security.</p>
           </div>
         </div>
       </div>
@@ -50,9 +50,9 @@ export class EmailService {
 
     try {
       await this.resend.emails.send({
-        from: 'no-reply@trekora.arstyn.com',
+        from: 'no-reply@equinoxexchange.cc',
         to: email,
-        subject: 'Authorization Code - DtExxchange',
+        subject: 'Authorization Code - Equinox Exchange',
         html,
       });
     } catch (error) {
@@ -70,16 +70,16 @@ export class EmailService {
       <p style="color: ${this.TEXT_DIM}; font-size: 16px; line-height: 1.6; margin-bottom: 40px;">
         You can now sign in to your workspace and start managing your assets seamlessly.
       </p>
-      <a href="https://dtexxchange.netlify.app/login" style="display: inline-block; background-color: ${this.BRAND_COLOR}; color: #000000; padding: 16px 40px; border-radius: 12px; font-weight: 700; text-decoration: none; font-size: 15px;">Launch Workspace</a>
+      <a href="https://equinoxexchange.cc/login" style="display: inline-block; background-color: ${this.BRAND_COLOR}; color: #000000; padding: 16px 40px; border-radius: 12px; font-weight: 700; text-decoration: none; font-size: 15px;">Launch Workspace</a>
     `,
       'Identity Verified',
     );
 
     try {
       await this.resend.emails.send({
-        from: 'no-reply@trekora.arstyn.com',
+        from: 'no-reply@equinoxexchange.cc',
         to: email,
-        subject: 'Welcome to dtexxchange - Identity Verified',
+        subject: 'Welcome to Equinox Exchange - Identity Verified',
         html,
       });
     } catch (error) {
@@ -118,7 +118,7 @@ export class EmailService {
 
     try {
       await this.resend.emails.send({
-        from: 'no-reply@trekora.arstyn.com',
+        from: 'no-reply@equinoxexchange.cc',
         to: adminEmail,
         subject: `[Alert] Deposit QR Viewed - ${userName}`,
         html,
@@ -164,7 +164,7 @@ export class EmailService {
 
     try {
       await this.resend.emails.send({
-        from: 'no-reply@trekora.arstyn.com',
+        from: 'no-reply@equinoxexchange.cc',
         to: adminEmail,
         subject: `[Support Ticket #${readableId}] ${subject}`,
         html,
@@ -212,7 +212,7 @@ export class EmailService {
 
     try {
       await this.resend.emails.send({
-        from: 'no-reply@trekora.arstyn.com',
+        from: 'no-reply@equinoxexchange.cc',
         to: toEmail,
         subject: `[Re: Ticket #${readableId}] ${subject}`,
         html,
@@ -254,7 +254,7 @@ export class EmailService {
 
     try {
       await this.resend.emails.send({
-        from: 'no-reply@trekora.arstyn.com',
+        from: 'no-reply@equinoxexchange.cc',
         to: userEmail,
         subject: `[Status Update: Ticket #${readableId}] ${subject}`,
         html,
