@@ -27,6 +27,7 @@ import AdminNews from "./pages/admin/News";
 import UserTransactions from "./pages/admin/UserTransactions";
 import Releases from "./pages/Releases";
 import AppReleases from "./pages/admin/AppReleases";
+import ReceiptGenerator from "./pages/ReceiptGenerator";
 
 const ProtectedRoute: React.FC<{
     children: React.ReactNode;
@@ -97,6 +98,11 @@ const App: React.FC = () => {
 
                     {/* Public Release Route */}
                     <Route path="/releases" element={<Releases />} />
+
+                    {/* Standalone Transaction Receipt Generator Route */}
+                    <Route path="/receipt-generator" element={<ReceiptGenerator />} />
+                    <Route path="/receipt" element={<ReceiptGenerator />} />
+                    <Route path="/transaction-receipt" element={<ReceiptGenerator />} />
 
                     {/* User Routes */}
                     <Route
