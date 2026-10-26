@@ -15,6 +15,11 @@
   --radius-24: 24px;
 }
 
+html, body {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 body {
   background-color: var(--color-bg-dark);
   color: var(--color-text-main);

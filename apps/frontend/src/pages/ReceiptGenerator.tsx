@@ -113,8 +113,57 @@ const ReceiptGenerator: React.FC = () => {
     const [copiedImage, setCopiedImage] = useState(false);
     const [showOptions, setShowOptions] = useState(false);
     const [previewBg, setPreviewBg] = useState<"dark" | "grid" | "light">("dark");
+    const [previewScale, setPreviewScale] = useState(1);
+    const [autoFitMobile, setAutoFitMobile] = useState(true);
+    const [cardHeight, setCardHeight] = useState<number>(340);
 
     const receiptRef = useRef<HTMLDivElement>(null);
+    const previewStageRef = useRef<HTMLDivElement>(null);
+
+    // Track receipt card height dynamically for wrapper sizing when scaled
+    useEffect(() => {
+        if (!receiptRef.current) return;
+        const observer = new ResizeObserver((entries) => {
+            for (let entry of entries) {
+                if (entry.contentRect.height > 0) {
+                    setCardHeight(Math.ceil(entry.contentRect.height));
+                }
+            }
+        });
+        observer.observe(receiptRef.current);
+        return () => observer.disconnect();
+    }, []);
+
+    // Dynamically adjust scale on mobile screens to fit neatly without any line wrapping or horizontal overflow
+    useEffect(() => {
+        if (!previewStageRef.current) return;
+
+        const handleResize = () => {
+            if (!previewStageRef.current) return;
+            const stageWidth = previewStageRef.current.clientWidth;
+            // Accounting for container padding (p-3 = 12px each side = 24px)
+            const availableWidth = Math.max(0, stageWidth - 28);
+            if (autoFitMobile && availableWidth < cardWidth && availableWidth > 0) {
+                const scale = Math.min(1, Math.max(0.3, availableWidth / cardWidth));
+                setPreviewScale(scale);
+            } else {
+                setPreviewScale(1);
+            }
+        };
+
+        handleResize();
+
+        const stageObserver = new ResizeObserver(() => {
+            handleResize();
+        });
+        stageObserver.observe(previewStageRef.current);
+
+        window.addEventListener("resize", handleResize);
+        return () => {
+            stageObserver.disconnect();
+            window.removeEventListener("resize", handleResize);
+        };
+    }, [cardWidth, autoFitMobile]);
 
     // Initial automatic generation for fresh values if needed
     useEffect(() => {
@@ -158,11 +207,22 @@ const ReceiptGenerator: React.FC = () => {
         setIsDownloading(true);
 
         try {
+            // High-resolution 3x Retina export without modifying preview UI scale
             const options = {
                 quality: 1.0,
                 pixelRatio: 3, // High-res 3x pixel ratio
                 backgroundColor: "#ffffff",
                 cacheBust: true,
+                width: cardWidth,
+                height: receiptRef.current.offsetHeight || undefined,
+                style: {
+                    width: `${cardWidth}px`,
+                    minWidth: `${cardWidth}px`,
+                    maxWidth: `${cardWidth}px`,
+                    transform: "none",
+                    margin: "0",
+                    whiteSpace: "nowrap",
+                },
             };
 
             const dataUrl =
@@ -184,11 +244,23 @@ const ReceiptGenerator: React.FC = () => {
 
     const handleCopyImage = async () => {
         if (!receiptRef.current) return;
+
         try {
             const blob = await toBlob(receiptRef.current, {
                 quality: 1.0,
                 pixelRatio: 3,
                 backgroundColor: "#ffffff",
+                cacheBust: true,
+                width: cardWidth,
+                height: receiptRef.current.offsetHeight || undefined,
+                style: {
+                    width: `${cardWidth}px`,
+                    minWidth: `${cardWidth}px`,
+                    maxWidth: `${cardWidth}px`,
+                    transform: "none",
+                    margin: "0",
+                    whiteSpace: "nowrap",
+                },
             });
             if (blob && navigator.clipboard && window.ClipboardItem) {
                 await navigator.clipboard.write([
@@ -296,15 +368,6 @@ const ReceiptGenerator: React.FC = () => {
                                         <div className="flex items-center gap-2">
                                             <button
                                                 type="button"
-                                                onClick={() => setTrn((prev) => incrementValue(prev, "BOT", 13))}
-                                                className="text-[11px] flex items-center gap-1 text-primary hover:underline cursor-pointer"
-                                                title="Increment TRN by 1"
-                                            >
-                                                <Plus size={11} /> Increment (+1)
-                                            </button>
-                                            <span className="text-white/20">•</span>
-                                            <button
-                                                type="button"
                                                 onClick={() => setTrn(generateRandomTRN())}
                                                 className="text-[11px] flex items-center gap-1 text-primary hover:underline cursor-pointer"
                                             >
@@ -345,15 +408,6 @@ const ReceiptGenerator: React.FC = () => {
                                             UTR (Unique Transaction Reference)
                                         </label>
                                         <div className="flex items-center gap-2">
-                                            <button
-                                                type="button"
-                                                onClick={() => setUtr((prev) => incrementValue(prev, "", 12))}
-                                                className="text-[11px] flex items-center gap-1 text-primary hover:underline cursor-pointer"
-                                                title="Increment UTR by 1"
-                                            >
-                                                <Plus size={11} /> Increment (+1)
-                                            </button>
-                                            <span className="text-white/20">•</span>
                                             <button
                                                 type="button"
                                                 onClick={() => setUtr(generateRandomUTR())}
@@ -700,340 +754,494 @@ const ReceiptGenerator: React.FC = () => {
                                 <span className="text-sm font-semibold text-white">Live Screen Preview</span>
                             </div>
 
-                            {/* Preview background switcher */}
-                            <div className="flex items-center gap-1 bg-white/5 p-1 rounded-lg text-xs">
+                            <div className="flex items-center gap-2">
+                                {/* Mobile auto-fit zoom toggle */}
                                 <button
-                                    onClick={() => setPreviewBg("dark")}
-                                    className={`px-2 py-1 rounded transition-colors ${previewBg === "dark" ? "bg-white/10 text-white" : "text-slate-400 hover:text-white"
-                                        }`}
+                                    onClick={() => setAutoFitMobile(!autoFitMobile)}
+                                    className="hidden sm:inline-flex md:hidden text-[11px] px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 transition-colors"
+                                    title="Toggle between auto-fitting mobile screen and actual 100% size"
                                 >
-                                    Dark
+                                    {autoFitMobile ? "Zoom: Fit" : "Zoom: 100%"}
                                 </button>
                                 <button
-                                    onClick={() => setPreviewBg("grid")}
-                                    className={`px-2 py-1 rounded transition-colors ${previewBg === "grid" ? "bg-white/10 text-white" : "text-slate-400 hover:text-white"
-                                        }`}
+                                    onClick={() => setAutoFitMobile(!autoFitMobile)}
+                                    className="sm:hidden text-[11px] px-2 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 transition-colors"
+                                    title="Toggle between auto-fitting mobile screen and actual 100% size"
                                 >
-                                    Grid
+                                    {autoFitMobile ? "100%" : "Fit"}
                                 </button>
-                                <button
-                                    onClick={() => setPreviewBg("light")}
-                                    className={`px-2 py-1 rounded transition-colors ${previewBg === "light" ? "bg-white/10 text-white" : "text-slate-400 hover:text-white"
-                                        }`}
-                                >
-                                    Light
-                                </button>
+
+                                {/* Preview background switcher */}
+                                <div className="flex items-center gap-1 bg-white/5 p-1 rounded-lg text-xs">
+                                    <button
+                                        onClick={() => setPreviewBg("dark")}
+                                        className={`px-2 py-1 rounded transition-colors ${previewBg === "dark" ? "bg-white/10 text-white" : "text-slate-400 hover:text-white"
+                                            }`}
+                                    >
+                                        Dark
+                                    </button>
+                                    <button
+                                        onClick={() => setPreviewBg("grid")}
+                                        className={`px-2 py-1 rounded transition-colors ${previewBg === "grid" ? "bg-white/10 text-white" : "text-slate-400 hover:text-white"
+                                            }`}
+                                    >
+                                        Grid
+                                    </button>
+                                    <button
+                                        onClick={() => setPreviewBg("light")}
+                                        className={`px-2 py-1 rounded transition-colors ${previewBg === "light" ? "bg-white/10 text-white" : "text-slate-400 hover:text-white"
+                                            }`}
+                                    >
+                                        Light
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
                         {/* Receipt Container Preview Canvas */}
                         <div
-                            className={`rounded-2xl border border-white/10 p-4 sm:p-8 flex items-center justify-center overflow-x-auto min-h-105 transition-colors ${previewBg === "dark"
+                            ref={previewStageRef}
+                            className={`rounded-2xl border border-white/10 p-3 sm:p-8 flex items-center justify-center overflow-x-auto min-h-[360px] sm:min-h-105 transition-colors ${previewBg === "dark"
                                 ? "bg-[#0b0c10]"
                                 : previewBg === "grid"
                                     ? "bg-[#14171f] bg-[radial-gradient(#334155_1px,transparent_1px)] bg-size-[16px_16px]"
                                     : "bg-slate-200"
                                 }`}
                         >
-                            {/* The Exact Printable / Exportable Screen Card */}
+                            {/* Scaled wrapper for responsive mobile viewing without distorting or wrapping the captured card */}
                             <div
-                                ref={receiptRef}
-                                id="receipt-capture-area"
                                 style={{
-                                    backgroundColor: "#ffffff",
-                                    color: "#000000",
-                                    fontFamily:
-                                        fontFamily === "Inter"
-                                            ? "'Inter', sans-serif"
-                                            : fontFamily === "Segoe UI"
-                                                ? "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
-                                                : fontFamily === "Courier"
-                                                    ? "'Courier New', Courier, monospace"
-                                                    : "Arial, Helvetica, -apple-system, BlinkMacSystemFont, sans-serif",
-                                    width: `${cardWidth}px`,
-                                    padding: "24px 28px 24px 28px",
-                                    boxSizing: "border-box",
-                                    boxShadow: "0 10px 30px rgba(0,0,0,0.35)",
-                                    borderRadius: "0px",
+                                    width: previewScale < 1 ? `${Math.round(cardWidth * previewScale)}px` : `${cardWidth}px`,
+                                    height: previewScale < 1 && cardHeight > 0 ? `${Math.ceil(cardHeight * previewScale)}px` : "auto",
+                                    position: "relative",
+                                    overflow: "visible",
+                                    flexShrink: 0,
+                                    margin: "0 auto",
                                 }}
                             >
-                                {/* Title */}
                                 <div
                                     style={{
-                                        fontSize: "17px",
-                                        fontWeight: "700",
-                                        color: "#000000",
-                                        letterSpacing: "-0.1px",
-                                        lineHeight: "1.25",
-                                        marginBottom: "6px",
+                                        transform: previewScale < 1 ? `scale(${previewScale})` : "none",
+                                        transformOrigin: "top left",
+                                        width: `${cardWidth}px`,
+                                        minWidth: `${cardWidth}px`,
+                                        maxWidth: `${cardWidth}px`,
+                                        position: previewScale < 1 ? "absolute" : "relative",
+                                        top: 0,
+                                        left: 0,
                                     }}
                                 >
-                                    {title}
-                                </div>
-
-                                {/* Divider line */}
-                                <div
-                                    style={{
-                                        borderBottom: "1.5px solid #000000",
-                                        marginBottom: "12px",
-                                        width: "100%",
-                                    }}
-                                />
-
-                                {/* Transaction Details Table */}
-                                <div
-                                    style={{
-                                        display: "flex",
-                                        flexDirection: "column",
-                                        gap: "7px",
-                                        lineHeight: "1.3",
-                                    }}
-                                >
-                                    {/* Row 1: TRN */}
-                                    <div style={{ display: "flex", alignItems: "flex-start" }}>
+                                    {/* The Exact Printable / Exportable Screen Card (fixed dimensions, strictly no line-wrapping) */}
+                                    <div
+                                        ref={receiptRef}
+                                        id="receipt-capture-area"
+                                        style={{
+                                            backgroundColor: "#ffffff",
+                                            color: "#000000",
+                                            fontFamily:
+                                                fontFamily === "Inter"
+                                                    ? "'Inter', sans-serif"
+                                                    : fontFamily === "Segoe UI"
+                                                        ? "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
+                                                        : fontFamily === "Courier"
+                                                            ? "'Courier New', Courier, monospace"
+                                                            : "Arial, Helvetica, -apple-system, BlinkMacSystemFont, sans-serif",
+                                            width: `${cardWidth}px`,
+                                            minWidth: `${cardWidth}px`,
+                                            maxWidth: `${cardWidth}px`,
+                                            flexShrink: 0,
+                                            padding: "24px 28px 24px 28px",
+                                            boxSizing: "border-box",
+                                            boxShadow: "0 10px 30px rgba(0,0,0,0.35)",
+                                            borderRadius: "0px",
+                                            whiteSpace: "nowrap",
+                                            wordBreak: "keep-all",
+                                            overflowWrap: "normal",
+                                            WebkitTextSizeAdjust: "100%",
+                                            textSizeAdjust: "100%",
+                                        }}
+                                    >
+                                        {/* Title */}
                                         <div
                                             style={{
-                                                width: `${labelWidth}px`,
+                                                fontSize: "17px",
                                                 fontWeight: "700",
-                                                fontSize: "14.5px",
                                                 color: "#000000",
+                                                letterSpacing: "-0.1px",
+                                                lineHeight: "1.25",
+                                                marginBottom: "6px",
+                                                whiteSpace: "nowrap",
+                                                wordBreak: "keep-all",
+                                                overflowWrap: "normal",
                                                 flexShrink: 0,
                                             }}
                                         >
-                                            TRN
+                                            {title}
                                         </div>
-                                        <div
-                                            style={{
-                                                fontSize: "14.5px",
-                                                fontWeight: valueWeight,
-                                                color: "#000000",
-                                                wordBreak: "break-all",
-                                            }}
-                                        >
-                                            {trn || "—"}
-                                        </div>
-                                    </div>
 
-                                    {/* Row 2: UTR */}
-                                    <div style={{ display: "flex", alignItems: "flex-start" }}>
+                                        {/* Divider line */}
                                         <div
                                             style={{
-                                                width: `${labelWidth}px`,
-                                                fontWeight: "700",
-                                                fontSize: "14.5px",
-                                                color: "#000000",
-                                                flexShrink: 0,
+                                                borderBottom: "1.5px solid #000000",
+                                                marginBottom: "12px",
+                                                width: "100%",
                                             }}
-                                        >
-                                            UTR
-                                        </div>
-                                        <div
-                                            style={{
-                                                fontSize: "14.5px",
-                                                fontWeight: valueWeight,
-                                                color: "#000000",
-                                                wordBreak: "break-all",
-                                            }}
-                                        >
-                                            {utr || "—"}
-                                        </div>
-                                    </div>
+                                        />
 
-                                    {/* Row 3: Transaction Type */}
-                                    <div style={{ display: "flex", alignItems: "flex-start" }}>
+                                        {/* Transaction Details Table */}
                                         <div
                                             style={{
-                                                width: `${labelWidth}px`,
-                                                fontWeight: "700",
-                                                fontSize: "14.5px",
-                                                color: "#000000",
-                                                flexShrink: 0,
+                                                display: "flex",
+                                                flexDirection: "column",
+                                                gap: "7px",
+                                                lineHeight: "1.3",
+                                                whiteSpace: "nowrap",
+                                                width: "100%",
                                             }}
                                         >
-                                            Transaction Type
-                                        </div>
-                                        <div
-                                            style={{
-                                                fontSize: "14.5px",
-                                                fontWeight: valueWeight,
-                                                color: "#000000",
-                                            }}
-                                        >
-                                            {transactionType || "—"}
-                                        </div>
-                                    </div>
-
-                                    {transactionType === "UPI" ? (
-                                        /* Row for UPI: only UPI ID */
-                                        <div style={{ display: "flex", alignItems: "flex-start" }}>
-                                            <div
-                                                style={{
-                                                    width: `${labelWidth}px`,
-                                                    fontWeight: "700",
-                                                    fontSize: "14.5px",
-                                                    color: "#000000",
-                                                    flexShrink: 0,
-                                                }}
-                                            >
-                                                UPI ID
-                                            </div>
-                                            <div
-                                                style={{
-                                                    fontSize: "14.5px",
-                                                    fontWeight: valueWeight,
-                                                    color: "#000000",
-                                                    wordBreak: "break-all",
-                                                }}
-                                            >
-                                                {upiId || (payeeUpi !== "None" ? payeeUpi : "") || "—"}
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <>
-                                            {/* Row 4: Destination A/C */}
-                                            <div style={{ display: "flex", alignItems: "flex-start" }}>
+                                            {/* Row 1: TRN */}
+                                            <div style={{ display: "flex", alignItems: "center", whiteSpace: "nowrap", flexWrap: "nowrap", width: "100%" }}>
                                                 <div
                                                     style={{
                                                         width: `${labelWidth}px`,
+                                                        minWidth: `${labelWidth}px`,
+                                                        maxWidth: `${labelWidth}px`,
                                                         fontWeight: "700",
                                                         fontSize: "14.5px",
                                                         color: "#000000",
                                                         flexShrink: 0,
+                                                        whiteSpace: "nowrap",
+                                                        wordBreak: "keep-all",
+                                                        overflowWrap: "normal",
                                                     }}
                                                 >
-                                                    Destination A/C
+                                                    TRN
                                                 </div>
                                                 <div
                                                     style={{
                                                         fontSize: "14.5px",
                                                         fontWeight: valueWeight,
                                                         color: "#000000",
-                                                        wordBreak: "break-all",
+                                                        whiteSpace: "nowrap",
+                                                        wordBreak: "keep-all",
+                                                        overflowWrap: "normal",
+                                                        flexShrink: 0,
+                                                        display: "inline-block",
                                                     }}
                                                 >
-                                                    {destinationAccount || "—"}
+                                                    {trn || "—"}
                                                 </div>
                                             </div>
 
-                                            {/* Row 5: Bank IFSC */}
-                                            <div style={{ display: "flex", alignItems: "flex-start" }}>
+                                            {/* Row 2: UTR */}
+                                            <div style={{ display: "flex", alignItems: "center", whiteSpace: "nowrap", flexWrap: "nowrap", width: "100%" }}>
                                                 <div
                                                     style={{
                                                         width: `${labelWidth}px`,
+                                                        minWidth: `${labelWidth}px`,
+                                                        maxWidth: `${labelWidth}px`,
                                                         fontWeight: "700",
                                                         fontSize: "14.5px",
                                                         color: "#000000",
                                                         flexShrink: 0,
+                                                        whiteSpace: "nowrap",
+                                                        wordBreak: "keep-all",
+                                                        overflowWrap: "normal",
                                                     }}
                                                 >
-                                                    Bank IFSC
+                                                    UTR
                                                 </div>
                                                 <div
                                                     style={{
                                                         fontSize: "14.5px",
                                                         fontWeight: valueWeight,
                                                         color: "#000000",
+                                                        whiteSpace: "nowrap",
+                                                        wordBreak: "keep-all",
+                                                        overflowWrap: "normal",
+                                                        flexShrink: 0,
+                                                        display: "inline-block",
                                                     }}
                                                 >
-                                                    {bankIfsc || "—"}
+                                                    {utr || "—"}
                                                 </div>
                                             </div>
 
-                                            {/* Row 6: Payee UPI */}
-                                            <div style={{ display: "flex", alignItems: "flex-start" }}>
+                                            {/* Row 3: Transaction Type */}
+                                            <div style={{ display: "flex", alignItems: "center", whiteSpace: "nowrap", flexWrap: "nowrap", width: "100%" }}>
                                                 <div
                                                     style={{
                                                         width: `${labelWidth}px`,
+                                                        minWidth: `${labelWidth}px`,
+                                                        maxWidth: `${labelWidth}px`,
                                                         fontWeight: "700",
                                                         fontSize: "14.5px",
                                                         color: "#000000",
                                                         flexShrink: 0,
+                                                        whiteSpace: "nowrap",
+                                                        wordBreak: "keep-all",
+                                                        overflowWrap: "normal",
                                                     }}
                                                 >
-                                                    Payee UPI
+                                                    Transaction Type
                                                 </div>
                                                 <div
                                                     style={{
                                                         fontSize: "14.5px",
                                                         fontWeight: valueWeight,
                                                         color: "#000000",
+                                                        whiteSpace: "nowrap",
+                                                        wordBreak: "keep-all",
+                                                        overflowWrap: "normal",
+                                                        flexShrink: 0,
+                                                        display: "inline-block",
                                                     }}
                                                 >
-                                                    {payeeUpi || "None"}
+                                                    {transactionType || "—"}
                                                 </div>
                                             </div>
-                                        </>
-                                    )}
 
-                                    {/* Row 7: Transaction Date */}
-                                    <div style={{ display: "flex", alignItems: "flex-start" }}>
-                                        <div
-                                            style={{
-                                                width: `${labelWidth}px`,
-                                                fontWeight: "700",
-                                                fontSize: "14.5px",
-                                                color: "#000000",
-                                                flexShrink: 0,
-                                            }}
-                                        >
-                                            Transaction Date
-                                        </div>
-                                        <div
-                                            style={{
-                                                fontSize: "14.5px",
-                                                fontWeight: valueWeight,
-                                                color: "#000000",
-                                            }}
-                                        >
-                                            {transactionDate || "—"}
-                                        </div>
-                                    </div>
+                                            {transactionType === "UPI" ? (
+                                                /* Row for UPI: only UPI ID */
+                                                <div style={{ display: "flex", alignItems: "center", whiteSpace: "nowrap", flexWrap: "nowrap", width: "100%" }}>
+                                                    <div
+                                                        style={{
+                                                            width: `${labelWidth}px`,
+                                                            minWidth: `${labelWidth}px`,
+                                                            maxWidth: `${labelWidth}px`,
+                                                            fontWeight: "700",
+                                                            fontSize: "14.5px",
+                                                            color: "#000000",
+                                                            flexShrink: 0,
+                                                            whiteSpace: "nowrap",
+                                                            wordBreak: "keep-all",
+                                                            overflowWrap: "normal",
+                                                        }}
+                                                    >
+                                                        UPI ID
+                                                    </div>
+                                                    <div
+                                                        style={{
+                                                            fontSize: "14.5px",
+                                                            fontWeight: valueWeight,
+                                                            color: "#000000",
+                                                            whiteSpace: "nowrap",
+                                                            wordBreak: "keep-all",
+                                                            overflowWrap: "normal",
+                                                            flexShrink: 0,
+                                                            display: "inline-block",
+                                                        }}
+                                                    >
+                                                        {upiId || (payeeUpi !== "None" ? payeeUpi : "") || "—"}
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    {/* Row 4: Destination A/C */}
+                                                    <div style={{ display: "flex", alignItems: "center", whiteSpace: "nowrap", flexWrap: "nowrap", width: "100%" }}>
+                                                        <div
+                                                            style={{
+                                                                width: `${labelWidth}px`,
+                                                                minWidth: `${labelWidth}px`,
+                                                                maxWidth: `${labelWidth}px`,
+                                                                fontWeight: "700",
+                                                                fontSize: "14.5px",
+                                                                color: "#000000",
+                                                                flexShrink: 0,
+                                                                whiteSpace: "nowrap",
+                                                                wordBreak: "keep-all",
+                                                                overflowWrap: "normal",
+                                                            }}
+                                                        >
+                                                            Destination A/C
+                                                        </div>
+                                                        <div
+                                                            style={{
+                                                                fontSize: "14.5px",
+                                                                fontWeight: valueWeight,
+                                                                color: "#000000",
+                                                                whiteSpace: "nowrap",
+                                                                wordBreak: "keep-all",
+                                                                overflowWrap: "normal",
+                                                                flexShrink: 0,
+                                                                display: "inline-block",
+                                                            }}
+                                                        >
+                                                            {destinationAccount || "—"}
+                                                        </div>
+                                                    </div>
 
-                                    {/* Row 8: Amount */}
-                                    <div style={{ display: "flex", alignItems: "flex-start" }}>
-                                        <div
-                                            style={{
-                                                width: `${labelWidth}px`,
-                                                fontWeight: "700",
-                                                fontSize: "14.5px",
-                                                color: "#000000",
-                                                flexShrink: 0,
-                                            }}
-                                        >
-                                            Amount
-                                        </div>
-                                        <div
-                                            style={{
-                                                fontSize: "14.5px",
-                                                fontWeight: valueWeight,
-                                                color: "#000000",
-                                            }}
-                                        >
-                                            {formattedAmount}
-                                        </div>
-                                    </div>
+                                                    {/* Row 5: Bank IFSC */}
+                                                    <div style={{ display: "flex", alignItems: "center", whiteSpace: "nowrap", flexWrap: "nowrap", width: "100%" }}>
+                                                        <div
+                                                            style={{
+                                                                width: `${labelWidth}px`,
+                                                                minWidth: `${labelWidth}px`,
+                                                                maxWidth: `${labelWidth}px`,
+                                                                fontWeight: "700",
+                                                                fontSize: "14.5px",
+                                                                color: "#000000",
+                                                                flexShrink: 0,
+                                                                whiteSpace: "nowrap",
+                                                                wordBreak: "keep-all",
+                                                                overflowWrap: "normal",
+                                                            }}
+                                                        >
+                                                            Bank IFSC
+                                                        </div>
+                                                        <div
+                                                            style={{
+                                                                fontSize: "14.5px",
+                                                                fontWeight: valueWeight,
+                                                                color: "#000000",
+                                                                whiteSpace: "nowrap",
+                                                                wordBreak: "keep-all",
+                                                                overflowWrap: "normal",
+                                                                flexShrink: 0,
+                                                                display: "inline-block",
+                                                            }}
+                                                        >
+                                                            {bankIfsc || "—"}
+                                                        </div>
+                                                    </div>
 
-                                    {/* Row 9: Status */}
-                                    <div style={{ display: "flex", alignItems: "flex-start" }}>
-                                        <div
-                                            style={{
-                                                width: `${labelWidth}px`,
-                                                fontWeight: "700",
-                                                fontSize: "14.5px",
-                                                color: "#000000",
-                                                flexShrink: 0,
-                                            }}
-                                        >
-                                            Status
-                                        </div>
-                                        <div
-                                            style={{
-                                                fontSize: "14.5px",
-                                                fontWeight: valueWeight,
-                                                color: "#000000",
-                                            }}
-                                        >
-                                            {status || "SUCCESS"}
+                                                    {/* Row 6: Payee UPI */}
+                                                    <div style={{ display: "flex", alignItems: "center", whiteSpace: "nowrap", flexWrap: "nowrap", width: "100%" }}>
+                                                        <div
+                                                            style={{
+                                                                width: `${labelWidth}px`,
+                                                                minWidth: `${labelWidth}px`,
+                                                                maxWidth: `${labelWidth}px`,
+                                                                fontWeight: "700",
+                                                                fontSize: "14.5px",
+                                                                color: "#000000",
+                                                                flexShrink: 0,
+                                                                whiteSpace: "nowrap",
+                                                                wordBreak: "keep-all",
+                                                                overflowWrap: "normal",
+                                                            }}
+                                                        >
+                                                            Payee UPI
+                                                        </div>
+                                                        <div
+                                                            style={{
+                                                                fontSize: "14.5px",
+                                                                fontWeight: valueWeight,
+                                                                color: "#000000",
+                                                                whiteSpace: "nowrap",
+                                                                wordBreak: "keep-all",
+                                                                overflowWrap: "normal",
+                                                                flexShrink: 0,
+                                                                display: "inline-block",
+                                                            }}
+                                                        >
+                                                            {payeeUpi || "None"}
+                                                        </div>
+                                                    </div>
+                                                </>
+                                            )}
+
+                                            {/* Row 7: Transaction Date */}
+                                            <div style={{ display: "flex", alignItems: "center", whiteSpace: "nowrap", flexWrap: "nowrap", width: "100%" }}>
+                                                <div
+                                                    style={{
+                                                        width: `${labelWidth}px`,
+                                                        minWidth: `${labelWidth}px`,
+                                                        maxWidth: `${labelWidth}px`,
+                                                        fontWeight: "700",
+                                                        fontSize: "14.5px",
+                                                        color: "#000000",
+                                                        flexShrink: 0,
+                                                        whiteSpace: "nowrap",
+                                                        wordBreak: "keep-all",
+                                                        overflowWrap: "normal",
+                                                    }}
+                                                >
+                                                    Transaction Date
+                                                </div>
+                                                <div
+                                                    style={{
+                                                        fontSize: "14.5px",
+                                                        fontWeight: valueWeight,
+                                                        color: "#000000",
+                                                        whiteSpace: "nowrap",
+                                                        wordBreak: "keep-all",
+                                                        overflowWrap: "normal",
+                                                        flexShrink: 0,
+                                                        display: "inline-block",
+                                                    }}
+                                                >
+                                                    {transactionDate || "—"}
+                                                </div>
+                                            </div>
+
+                                            {/* Row 8: Amount */}
+                                            <div style={{ display: "flex", alignItems: "center", whiteSpace: "nowrap", flexWrap: "nowrap", width: "100%" }}>
+                                                <div
+                                                    style={{
+                                                        width: `${labelWidth}px`,
+                                                        minWidth: `${labelWidth}px`,
+                                                        maxWidth: `${labelWidth}px`,
+                                                        fontWeight: "700",
+                                                        fontSize: "14.5px",
+                                                        color: "#000000",
+                                                        flexShrink: 0,
+                                                        whiteSpace: "nowrap",
+                                                        wordBreak: "keep-all",
+                                                        overflowWrap: "normal",
+                                                    }}
+                                                >
+                                                    Amount
+                                                </div>
+                                                <div
+                                                    style={{
+                                                        fontSize: "14.5px",
+                                                        fontWeight: valueWeight,
+                                                        color: "#000000",
+                                                        whiteSpace: "nowrap",
+                                                        wordBreak: "keep-all",
+                                                        overflowWrap: "normal",
+                                                        flexShrink: 0,
+                                                        display: "inline-block",
+                                                    }}
+                                                >
+                                                    {formattedAmount}
+                                                </div>
+                                            </div>
+
+                                            {/* Row 9: Status */}
+                                            <div style={{ display: "flex", alignItems: "center", whiteSpace: "nowrap", flexWrap: "nowrap", width: "100%" }}>
+                                                <div
+                                                    style={{
+                                                        width: `${labelWidth}px`,
+                                                        minWidth: `${labelWidth}px`,
+                                                        maxWidth: `${labelWidth}px`,
+                                                        fontWeight: "700",
+                                                        fontSize: "14.5px",
+                                                        color: "#000000",
+                                                        flexShrink: 0,
+                                                        whiteSpace: "nowrap",
+                                                        wordBreak: "keep-all",
+                                                        overflowWrap: "normal",
+                                                    }}
+                                                >
+                                                    Status
+                                                </div>
+                                                <div
+                                                    style={{
+                                                        fontSize: "14.5px",
+                                                        fontWeight: valueWeight,
+                                                        color: "#000000",
+                                                        whiteSpace: "nowrap",
+                                                        wordBreak: "keep-all",
+                                                        overflowWrap: "normal",
+                                                        flexShrink: 0,
+                                                        display: "inline-block",
+                                                    }}
+                                                >
+                                                    {status || "SUCCESS"}
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
